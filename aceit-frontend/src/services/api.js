@@ -29,8 +29,10 @@ export const authAPI = {
 };
 
 export const aptitudeAPI = {
-  getQuestions: () => api.get('/aptitude/questions'),
+  getQuestions: (params = {}) => api.get('/aptitude/questions', { params }),
   submitAnswers: (answers) => api.post('/aptitude/submit', { answers }),
+  getTopics: () => api.get('/aptitude/topics'),
+  getDetailedResults: (data) => api.post('/aptitude/detailed-results', data),
 };
 
 export const codingAPI = {

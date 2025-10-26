@@ -8,7 +8,7 @@ router = APIRouter()
 
 # Get aptitude questions for the test (adaptive)
 @router.get("/questions")
-async def get_aptitude_questions(user_id: Optional[str] = None, topic: Optional[str] = None, count: int = 10):
+async def get_aptitude_questions(user_id: Optional[str] = None, topic: Optional[str] = None, count: int = 10, include_explanations: bool = False):
     """Get adaptive aptitude questions based on user proficiency"""
     from database import get_aptitude_questions
     
@@ -21,7 +21,7 @@ async def get_aptitude_questions(user_id: Optional[str] = None, topic: Optional[
     # If no user_id provided, return random questions
     if not user_id:
         selected_questions = random.sample(all_questions, min(count, len(all_questions)))
-        return format_questions(selected_questions)
+        return format_questions(selected_questions, include_explanations)
     
     # If user_id provided, implement adaptive selection
     selected_questions = []
@@ -34,7 +34,7 @@ async def get_aptitude_questions(user_id: Optional[str] = None, topic: Optional[
     # If no topics available, return random questions
     if not topics:
         selected_questions = random.sample(all_questions, min(count, len(all_questions)))
-        return format_questions(selected_questions)
+        return format_questions(selected_questions, include_explanations)
     
     # Select questions adaptively
     questions_per_topic = max(1, count // len(topics))
@@ -73,9 +73,9 @@ async def get_aptitude_questions(user_id: Optional[str] = None, topic: Optional[
     # Limit to requested count
     selected_questions = selected_questions[:count]
     
-    return format_questions(selected_questions)
+    return format_questions(selected_questions, include_explanations)
 
-def format_questions(questions):
+def format_questions(questions, include_explanations=False):
     """Format questions to match frontend expectations"""
     formatted_questions = []
     for question in questions:
@@ -85,10 +85,14 @@ def format_questions(questions):
             "options": question.get("options", []),
             "correct": question.get("correct_answer"),
             "type": question.get("topic", "general"),
-            "explanation": question.get("explanation", ""),
             "difficulty": question.get("difficulty", "easy"),
             "topic": question.get("topic", "general")
         }
+        
+        # Only include explanation if requested
+        if include_explanations:
+            formatted_question["explanation"] = question.get("explanation", "")
+        
         formatted_questions.append(formatted_question)
     
     return formatted_questions
@@ -184,3 +188,40 @@ async def get_topics():
     return {
         "topics": topics
     }
+
+# Get detailed results with explanations
+@router.post("/detailed-results")
+async def get_detailed_results(payload: dict):
+    """Get detailed results with explanations for each question"""
+    from database import questions_data, get_aptitude_questions
+    
+    user_answers = payload.get("answers", {})
+    question_ids = list(user_answers.keys())
+    
+    # Get all aptitude questions
+    all_questions = get_aptitude_questions()
+    
+    # Find the questions that were answered
+    detailed_results = []
+    for question_id in question_ids:
+        # Find the question in the database
+        question = next((q for q in all_questions if q.get("id") == question_id), None)
+        user_answer = user_answers.get(question_id)
+        
+        if question:
+            is_correct = question.get("correct_answer") == user_answer
+            
+            result = {
+                "id": question.get("id"),
+                "question": question.get("question"),
+                "options": question.get("options", []),
+                "correct_answer": question.get("correct_answer"),
+                "user_answer": user_answer,
+                "is_correct": is_correct,
+                "explanation": question.get("explanation", ""),
+                "topic": question.get("topic", "general"),
+                "difficulty": question.get("difficulty", "easy")
+            }
+            detailed_results.append(result)
+    
+    return detailed_results
