@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { resumeAPI } from '../services/api';
+// Import jsPDF for PDF generation
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const Resume = () => {
   const [resumeFile, setResumeFile] = useState(null);
@@ -65,38 +68,62 @@ const Resume = () => {
   };
 
   const downloadReport = () => {
-    // Create a simple text report
+    // Create a PDF report instead of text
     if (!analysisResult) return;
     
-    let report = `=== ACEIT Resume Analysis Report ===\n\n`;
-    report += `Job Role: ${jobRoles.find(r => r.id === analysisResult.job_role)?.name || analysisResult.job_role}\n`;
-    report += `Overall Score: ${analysisResult.overall_score}%\n\n`;
+    const doc = new jsPDF();
     
-    report += `=== ATS Analysis ===\n`;
-    report += `ATS Friendliness: ${analysisResult.ats_analysis.ats_score}%\n`;
-    report += `Keyword Match: ${analysisResult.ats_analysis.keyword_match_score}%\n`;
-    report += `Formatting Score: ${analysisResult.ats_analysis.formatting_score}%\n\n`;
+    // Add title
+    doc.setFontSize(20);
+    doc.text('ACEIT Resume Analysis Report', 105, 20, null, null, 'center');
     
-    report += `=== Skills Analysis ===\n`;
-    report += `Skills Match: ${analysisResult.skills_analysis.match_score}%\n`;
-    report += `Matched Skills: ${analysisResult.skills_analysis.matched_skills.join(', ')}\n`;
-    report += `Missing Skills: ${analysisResult.skills_analysis.missing_skills.join(', ')}\n\n`;
+    // Add job role and overall score
+    doc.setFontSize(12);
+    const jobRoleName = jobRoles.find(r => r.id === analysisResult.job_role)?.name || analysisResult.job_role;
+    doc.text(`Job Role: ${jobRoleName}`, 20, 35);
+    doc.text(`Overall Score: ${analysisResult.overall_score}%`, 20, 45);
     
-    report += `=== Suggestions ===\n`;
-    analysisResult.suggestions.forEach((suggestion, index) => {
-      report += `${index + 1}. ${suggestion}\n`;
+    // Add Contact Information
+    doc.setFontSize(16);
+    doc.text('Contact Information', 20, 60);
+    doc.setFontSize(12);
+    doc.text(`Email: ${analysisResult.contact_info.email}`, 20, 70);
+    doc.text(`Phone: ${analysisResult.contact_info.phone}`, 20, 80);
+    doc.text(`LinkedIn: ${analysisResult.contact_info.linkedin}`, 20, 90);
+    doc.text(`GitHub: ${analysisResult.contact_info.github}`, 20, 100);
+    
+    // Add ATS Analysis
+    doc.setFontSize(16);
+    doc.text('ATS Analysis', 20, 120);
+    doc.setFontSize(12);
+    doc.text(`ATS Score: ${analysisResult.ats_analysis.ats_score}/100`, 20, 130);
+    doc.text(`Contact Info: ${analysisResult.ats_analysis.contact_info_score}/25`, 20, 140);
+    doc.text(`Sections: ${analysisResult.ats_analysis.section_score}/30`, 20, 150);
+    doc.text(`Formatting: ${analysisResult.ats_analysis.formatting_score}/20`, 20, 160);
+    doc.text(`Content: ${analysisResult.ats_analysis.content_score}/25`, 20, 170);
+    
+    // Add Skills Analysis
+    doc.setFontSize(16);
+    doc.text('Skills Analysis', 20, 190);
+    doc.setFontSize(12);
+    doc.text(`Skills Match: ${analysisResult.skills_analysis.match_score}%`, 20, 200);
+    doc.text(`Matched Skills: ${analysisResult.skills_analysis.matched_skills.length}/${analysisResult.skills_analysis.total_required_skills}`, 20, 210);
+    
+    // Add Suggestions
+    doc.setFontSize(16);
+    doc.text('Suggestions', 20, 230);
+    doc.setFontSize(12);
+    
+    // Add suggestions as bullet points
+    analysisResult.suggestions.slice(0, 8).forEach((suggestion, index) => {
+      const yPosition = 240 + (index * 10);
+      if (yPosition < 280) { // Avoid going beyond page
+        doc.text(`• ${suggestion}`, 20, yPosition);
+      }
     });
     
-    // Create and download file
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'resume-analysis-report.txt';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    // Save the PDF
+    doc.save('resume-analysis-report.pdf');
   };
 
   return (
@@ -201,7 +228,7 @@ const Resume = () => {
                     onClick={downloadReport}
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
                   >
-                    📥 Download Report
+                    📥 Download PDF Report
                   </button>
                 </div>
                 
@@ -211,8 +238,8 @@ const Resume = () => {
                     <div className="text-blue-700 font-medium">Overall Score</div>
                   </div>
                   <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-3xl font-bold text-green-600">{analysisResult.ats_analysis.ats_score}%</div>
-                    <div className="text-green-700 font-medium">ATS Friendly</div>
+                    <div className="text-3xl font-bold text-green-600">{analysisResult.ats_analysis.ats_score}/100</div>
+                    <div className="text-green-700 font-medium">ATS Score</div>
                   </div>
                   <div className="text-center p-4 bg-purple-50 rounded-lg">
                     <div className="text-3xl font-bold text-purple-600">{analysisResult.skills_analysis.match_score}%</div>
@@ -229,7 +256,7 @@ const Resume = () => {
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span>ATS Compatibility</span>
-                      <span>{analysisResult.ats_analysis.ats_score}%</span>
+                      <span>{analysisResult.ats_analysis.ats_score}/100</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
@@ -237,7 +264,7 @@ const Resume = () => {
                           analysisResult.ats_analysis.ats_score >= 80 ? 'bg-green-600' : 
                           analysisResult.ats_analysis.ats_score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
                         }`} 
-                        style={{ width: `${analysisResult.ats_analysis.ats_score}%` }}
+                        style={{ width: `${Math.min(100, analysisResult.ats_analysis.ats_score)}%` }}
                       ></div>
                     </div>
                   </div>
@@ -259,44 +286,67 @@ const Resume = () => {
                 </div>
               </div>
 
+              {/* Contact Information */}
+              <div className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
+                  <span className="mr-2">📞</span>
+                  Contact Information
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-3 border rounded">
+                    <div className="text-sm text-gray-500">Email</div>
+                    <div className="font-medium">{analysisResult.contact_info.email}</div>
+                  </div>
+                  <div className="p-3 border rounded">
+                    <div className="text-sm text-gray-500">Phone</div>
+                    <div className="font-medium">{analysisResult.contact_info.phone}</div>
+                  </div>
+                  <div className="p-3 border rounded">
+                    <div className="text-sm text-gray-500">LinkedIn</div>
+                    <div className="font-medium">{analysisResult.contact_info.linkedin}</div>
+                  </div>
+                  <div className="p-3 border rounded">
+                    <div className="text-sm text-gray-500">GitHub</div>
+                    <div className="font-medium">{analysisResult.contact_info.github}</div>
+                  </div>
+                </div>
+              </div>
+
               {/* ATS Analysis */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
                   <span className="mr-2">🔍</span>
-                  ATS Analysis
+                  ATS Analysis (Score: {analysisResult.ats_analysis.ats_score}/100)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div className="p-3 bg-blue-50 rounded">
-                    <div className="font-medium">Keyword Match Score</div>
-                    <div className="text-2xl font-bold text-blue-600">{analysisResult.ats_analysis.keyword_match_score}%</div>
+                    <div className="font-medium">Contact Info</div>
+                    <div className="text-2xl font-bold text-blue-600">{analysisResult.ats_analysis.contact_info_score}/25</div>
                   </div>
                   <div className="p-3 bg-green-50 rounded">
-                    <div className="font-medium">Formatting Score</div>
-                    <div className="text-2xl font-bold text-green-600">{analysisResult.ats_analysis.formatting_score}%</div>
+                    <div className="font-medium">Sections</div>
+                    <div className="text-2xl font-bold text-green-600">{analysisResult.ats_analysis.section_score}/30</div>
+                  </div>
+                  <div className="p-3 bg-purple-50 rounded">
+                    <div className="font-medium">Formatting</div>
+                    <div className="text-2xl font-bold text-purple-600">{analysisResult.ats_analysis.formatting_score}/20</div>
+                  </div>
+                  <div className="p-3 bg-yellow-50 rounded">
+                    <div className="font-medium">Content</div>
+                    <div className="text-2xl font-bold text-yellow-600">{analysisResult.ats_analysis.content_score}/25</div>
                   </div>
                 </div>
                 
-                {analysisResult.ats_analysis.missing_keywords.length > 0 && (
+                {analysisResult.ats_analysis.missing_elements.length > 0 && (
                   <div>
-                    <h4 className="font-medium text-gray-700 mb-2">Recommended Keywords to Add:</h4>
+                    <h4 className="font-medium text-gray-700 mb-2">Missing Elements:</h4>
                     <div className="flex flex-wrap gap-2">
-                      {analysisResult.ats_analysis.missing_keywords.map((keyword, index) => (
-                        <span key={index} className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">
-                          {keyword}
+                      {analysisResult.ats_analysis.missing_elements.map((element, index) => (
+                        <span key={index} className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">
+                          {element}
                         </span>
                       ))}
                     </div>
-                  </div>
-                )}
-                
-                {analysisResult.ats_analysis.formatting_issues.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="font-medium text-gray-700 mb-2">Formatting Issues:</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {analysisResult.ats_analysis.formatting_issues.map((issue, index) => (
-                        <li key={index} className="text-gray-600">{issue}</li>
-                      ))}
-                    </ul>
                   </div>
                 )}
               </div>
@@ -348,40 +398,6 @@ const Resume = () => {
                     </li>
                   ))}
                 </ul>
-              </div>
-
-              {/* Contact Info */}
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
-                  <span className="mr-2">📞</span>
-                  Contact Information Found
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <div className="text-sm text-gray-500">Email</div>
-                    <div className="font-medium">
-                      {analysisResult.contact_info?.email || 'Not found'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">Phone</div>
-                    <div className="font-medium">
-                      {analysisResult.contact_info?.phone || 'Not found'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">LinkedIn</div>
-                    <div className="font-medium">
-                      {analysisResult.contact_info?.linkedin ? '✓ Found' : 'Not found'}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm text-gray-500">GitHub</div>
-                    <div className="font-medium">
-                      {analysisResult.contact_info?.github ? '✓ Found' : 'Not found'}
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           ) : (
