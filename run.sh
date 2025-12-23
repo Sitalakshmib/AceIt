@@ -2,7 +2,7 @@
 
 # Start backend in background
 echo "🚀 Starting Backend on port 8001..."
-cd AceitBackend
+cd aceit-backend
 /usr/local/bin/python3 main.py &
 BACKEND_PID=$!
 
