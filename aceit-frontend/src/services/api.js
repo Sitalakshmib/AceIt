@@ -14,12 +14,21 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Helper function to get current user ID
+const getCurrentUserId = () => {
+  const user = JSON.parse(localStorage.getItem('aceit_user'));
+  return user?.id;
+};
+
 // Real APIs
 export const authAPI = {
   login: async (email, password) => {
     const res = await api.post('/auth/login', { email, password });
-    const { access_token } = res.data;
-    if (access_token) localStorage.setItem('aceit_access_token', access_token);
+    const { access_token, user } = res.data;
+    if (access_token) {
+      localStorage.setItem('aceit_access_token', access_token);
+      localStorage.setItem('aceit_user', JSON.stringify(user));
+    }
     return res;
   },
   register: async (userData) => {
@@ -30,22 +39,45 @@ export const authAPI = {
 
 export const aptitudeAPI = {
   getQuestions: (params = {}) => api.get('/aptitude/questions', { params }),
-  submitAnswers: (answers) => api.post('/aptitude/submit', { answers }),
+  submitAnswers: (answers) => {
+    const userId = getCurrentUserId();
+    return api.post('/aptitude/submit', { 
+      user_id: userId,  // Add user_id here
+      answers 
+    });
+  },
   getTopics: () => api.get('/aptitude/topics'),
   getDetailedResults: (data) => api.post('/aptitude/detailed-results', data),
 };
 
 export const codingAPI = {
   getProblems: () => api.get('/coding/problems'),
-  submitCode: (problemId, code) => api.post('/coding/submit', { problemId, code }),
+  submitCode: (problemId, code) => {
+    const userId = getCurrentUserId();
+    return api.post('/coding/submit', { 
+      problemId, 
+      code,
+      user_id: userId  // Add user_id here too if backend needs it
+    });
+  },
 };
 
 export const resumeAPI = {
-  analyze: (formData) => api.post('/resume/analyze', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  }),
+  analyze: (formData) => {
+    const userId = getCurrentUserId();
+    const formDataWithUserId = new FormData();
+    formDataWithUserId.append('user_id', userId);
+    // Append all files and data from original formData
+    for (const [key, value] of formData.entries()) {
+      formDataWithUserId.append(key, value);
+    }
+    
+    return api.post('/resume/analyze', formDataWithUserId, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
   getJobRoles: () => api.get('/resume/job-roles'),
 };
 

@@ -14,6 +14,7 @@ function solveProblem(input) {
   const [selectedLanguage, setSelectedLanguage] = useState('javascript');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [testResults, setTestResults] = useState(null);
 
   const languages = [
     { id: 'javascript', name: 'JavaScript', extension: 'js', icon: '🟨' },
@@ -53,11 +54,30 @@ function solveProblem(input) {
     try {
       setIsRunning(true);
       setOutput('Running code...\n\n');
+      setTestResults(null);
       
       const currentProblem = problems[selectedProblem];
       const response = await codingAPI.submitCode(currentProblem.id, code);
       
-      setOutput(response.data.output || 'Code executed successfully');
+      // Handle the response from backend
+      const { feedback, passed_tests, total_tests, percentage, problem_title } = response.data;
+      
+      setTestResults({
+        passed: passed_tests,
+        total: total_tests,
+        percentage: percentage,
+        problemTitle: problem_title
+      });
+      
+      setOutput(feedback || 'Code executed successfully');
+      
+      // Show success message if tests passed
+      if (passed_tests === total_tests && total_tests > 0) {
+        setTimeout(() => {
+          setOutput(prev => prev + '\n\n🎉 All tests passed! Progress saved.');
+        }, 500);
+      }
+      
     } catch (err) {
       console.error('Failed to run code:', err);
       setOutput('Error: ' + (err.response?.data?.detail || err.message));
@@ -72,6 +92,7 @@ function solveProblem(input) {
       setCode(problem.starterCode?.[selectedLanguage] || '// Write your solution here');
     }
     setOutput('');
+    setTestResults(null);
   };
 
   const changeProblem = (index) => {
@@ -81,6 +102,7 @@ function solveProblem(input) {
       setCode(problem.starterCode?.[selectedLanguage] || '// Write your solution here');
     }
     setOutput('');
+    setTestResults(null);
   };
 
   const changeLanguage = (langId) => {
@@ -90,6 +112,7 @@ function solveProblem(input) {
       setCode(problem.starterCode?.[langId] || '// Write your solution here');
     }
     setOutput('');
+    setTestResults(null);
   };
 
   if (loading) {
@@ -256,6 +279,30 @@ function solveProblem(input) {
                 {isRunning ? 'Running...' : 'Run Code'}
               </button>
             </div>
+            
+            {/* Test Results Bar */}
+            {testResults && (
+              <div className="p-3 bg-gray-50 border-b">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-medium">Test Results:</span>
+                  <span className={`font-bold ${
+                    testResults.passed === testResults.total ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {testResults.passed}/{testResults.total} passed ({testResults.percentage}%)
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className={`h-2 rounded-full ${
+                      testResults.percentage >= 80 ? 'bg-green-600' : 
+                      testResults.percentage >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}
+                    style={{ width: `${testResults.percentage}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+            
             <pre className="p-4 bg-gray-50 text-sm min-h-[120px] max-h-60 overflow-y-auto whitespace-pre-wrap font-mono">
               {output || "Click 'Run Code' to test your solution..."}
             </pre>

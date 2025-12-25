@@ -4,6 +4,14 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  // DEBUG: Log user information
+  console.log('=== NAVBAR DEBUG ===');
+  console.log('User object:', user);
+  console.log('User email:', user?.email);
+  console.log('User username:', user?.username);
+  console.log('User ID:', user?.id);
+  console.log('=== END DEBUG ===');
+
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

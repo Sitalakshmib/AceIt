@@ -87,16 +87,12 @@ const Aptitude = () => {
     try {
       // Submit answers to backend
       const response = await aptitudeAPI.submitAnswers(answers);
-      
-      const correct = Object.keys(answers).reduce((acc, questionId) => {
-        const question = questions.find(q => q.id === questionId);
-        return acc + (question && question.correct === answers[questionId] ? 1 : 0);
-      }, 0);
+      const { correct, total, percentage } = response.data;
       
       setScore({
         correct,
-        total: questions.length,
-        percentage: (correct / questions.length) * 100
+        total,
+        percentage
       });
     } catch (err) {
       setError('Failed to submit answers: ' + (err.response?.data?.detail || err.message));

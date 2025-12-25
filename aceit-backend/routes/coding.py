@@ -60,10 +60,11 @@ async def get_coding_problem(problem_id: str):
 async def submit_code(payload: dict):
     """
     Submit code for a coding problem
-    Expected input: {"problemId": "code1", "code": "def fibonacci(n):..."}
+    Expected input: {"user_id": "user123", "problemId": "code1", "code": "def fibonacci(n):..."}
     """
     problem_id = payload.get("problemId")
     code = payload.get("code")
+    user_id = payload.get("user_id")  # Get user_id from payload
     
     # Get the problem from database
     problem = next((p for p in questions_data if p.get('id') == problem_id), None)
@@ -87,8 +88,8 @@ async def submit_code(payload: dict):
     # Calculate percentage
     percentage = (passed_tests / total_tests) * 100 if total_tests > 0 else 0
     
-    # Save progress to database
-    progress_data.append({
+    # Create progress record
+    progress_record = {
         "module": "coding",
         "problem_id": problem_id,
         "problem_title": problem.get("title", ""),
@@ -97,7 +98,14 @@ async def submit_code(payload: dict):
         "percentage": percentage,
         "timestamp": datetime.utcnow(),
         "code_submitted": code  # Store the submitted code
-    })
+    }
+    
+    # Add user_id if provided
+    if user_id:
+        progress_record["user_id"] = user_id
+    
+    # Save progress to database
+    progress_data.append(progress_record)
     
     return {
         "problem_id": problem_id,
@@ -105,5 +113,6 @@ async def submit_code(payload: dict):
         "passed_tests": passed_tests,
         "total_tests": total_tests,
         "percentage": round(percentage, 2),
-        "feedback": f"Your code passed {passed_tests} out of {total_tests} test cases"
+        "feedback": f"Your code passed {passed_tests} out of {total_tests} test cases",
+        "user_id": user_id  # Return user_id in response for debugging
     }
