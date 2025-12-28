@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import auth, aptitude, coding, progress, communication, interview, resume
+from routes import auth, aptitude, coding, progress, communication, interview, resume, stt
 
 # Create the main FastAPI application
 app = FastAPI(
@@ -31,6 +31,7 @@ app.include_router(progress.router, prefix="/progress", tags=["Progress Tracking
 app.include_router(communication.router, prefix="/communication", tags=["Communication Skills"])
 app.include_router(interview.router, prefix="/interview", tags=["Mock Interviews"])
 app.include_router(resume.router, prefix="/resume", tags=["Resume Analysis"])
+app.include_router(stt.router, prefix="/stt", tags=["Speech To Text"])
 
 # Root endpoint
 @app.get("/")

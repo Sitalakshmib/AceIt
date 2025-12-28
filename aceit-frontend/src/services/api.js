@@ -41,12 +41,12 @@ export const aptitudeAPI = {
   getQuestions: (params = {}) => api.get('/aptitude/questions', { params }),
   submitAnswers: (answers) => {
     const userId = getCurrentUserId();
-    return api.post('/aptitude/submit', { 
+    return api.post('/aptitude/submit', {
       user_id: userId,  // Add user_id here
-      answers 
+      answers
     });
   },
-  getTopics: () => api.get('/aptitude/topics'),
+  getCategories: () => api.get('/aptitude/categories'),
   getDetailedResults: (data) => api.post('/aptitude/detailed-results', data),
 };
 
@@ -54,8 +54,8 @@ export const codingAPI = {
   getProblems: () => api.get('/coding/problems'),
   submitCode: (problemId, code) => {
     const userId = getCurrentUserId();
-    return api.post('/coding/submit', { 
-      problemId, 
+    return api.post('/coding/submit', {
+      problemId,
       code,
       user_id: userId  // Add user_id here too if backend needs it
     });
@@ -71,7 +71,7 @@ export const resumeAPI = {
     for (const [key, value] of formData.entries()) {
       formDataWithUserId.append(key, value);
     }
-    
+
     return api.post('/resume/analyze', formDataWithUserId, {
       headers: {
         'Content-Type': 'multipart/form-data',

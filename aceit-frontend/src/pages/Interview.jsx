@@ -1,463 +1,376 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+
+// --- COMPONENTS ---
+
+const SetupMode = ({ onStart }) => {
+  const [type, setType] = useState('hr');
+  const [stack, setStack] = useState('python');
+
+  return (
+    <div className="max-w-2xl mx-auto p-10 text-center bg-white rounded-xl shadow-xl mt-10">
+      <h1 className="text-4xl font-extrabold text-gray-800 mb-6 tracking-tight">AI Interview Practice 🤖</h1>
+      <p className="text-gray-600 mb-8 text-lg">
+        Master your interview skills with real-time AI feedback.
+        <br /> We analyze your <strong>speech, confidence, and technical accuracy</strong>.
+      </p>
+
+      <div className="grid grid-cols-2 gap-6 mb-8 text-left">
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">Interview Type</label>
+          <select
+            className="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-500"
+            value={type} onChange={(e) => setType(e.target.value)}
+          >
+            <option value="hr">HR / Behavioral</option>
+            <option value="technical">Technical</option>
+          </select>
+        </div>
+        {type === 'technical' && (
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Tech Stack</label>
+            <select
+              className="w-full p-3 border rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-500"
+              value={stack} onChange={(e) => setStack(e.target.value)}
+            >
+              <option value="python">Python</option>
+              <option value="react">React</option>
+            </select>
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={() => onStart(type, stack)}
+        className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold py-4 px-12 rounded-full text-xl shadow-lg transition transform hover:scale-105"
+      >
+        Start Session 🎤
+      </button>
+    </div>
+  );
+};
+
+const Recorder = ({ onRecordingComplete, isProcessing }) => {
+  const [recording, setRecording] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const chunksRef = useRef([]);
+  const videoRef = useRef(null);
+
+  // Initial Camera Setup
+  useEffect(() => {
+    const startStream = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      } catch (err) {
+        console.error("Camera Error:", err);
+      }
+    };
+    startStream();
+    // Cleanup not strictly simpler for MVP to keep stream open
+  }, []);
+
+  const startRecording = async () => {
+    const stream = videoRef.current.srcObject;
+    const mediaRecorder = new MediaRecorder(stream);
+
+    mediaRecorderRef.current = mediaRecorder;
+    chunksRef.current = [];
+
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+      onRecordingComplete(blob);
+    };
+
+    mediaRecorder.start();
+    setRecording(true);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setRecording(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center">
+      <div className="relative w-full max-w-md aspect-video bg-black rounded-xl overflow-hidden shadow-lg mb-6 border-4 border-gray-100">
+        <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover transform scale-x-[-1]" />
+        {recording && (
+          <div className="absolute top-4 right-4 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse">
+            REC ●
+          </div>
+        )}
+      </div>
+
+      <div className="flex gap-4">
+        {!recording ? (
+          <button
+            onClick={startRecording}
+            disabled={isProcessing}
+            className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-full shadow-md transition-all flex items-center gap-2"
+          >
+            <span>🎙️</span> Start Answer
+          </button>
+        ) : (
+          <button
+            onClick={stopRecording}
+            className="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-8 rounded-full shadow-md transition-all animate-pulse"
+          >
+            ⏹ Stop & Submit
+          </button>
+        )}
+      </div>
+      {isProcessing && <p className="mt-4 text-purple-600 font-semibold animate-bounce">Analyzing Audio...</p>}
+    </div>
+  );
+};
+
+const ReportView = ({ report }) => {
+  if (!report) return null;
+  const { session_summary, metrics, detailed_feedback, recommendation } = report;
+
+  return (
+    <div className="max-w-4xl mx-auto p-8 bg-gray-50 min-h-screen">
+      <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Interview Performance Report 📊</h1>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white p-6 rounded-xl shadow text-center">
+          <div className="text-sm text-gray-500 uppercase font-bold">Overall Score</div>
+          <div className="text-4xl font-extrabold text-purple-600 mt-2">{session_summary.overall_score}</div>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow text-center">
+          <div className="text-sm text-gray-500 uppercase font-bold">Confidence</div>
+          <div className="text-4xl font-bold text-blue-600 mt-2">{metrics.confidence}</div>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow text-center">
+          <div className="text-sm text-gray-500 uppercase font-bold">Technical</div>
+          <div className="text-4xl font-bold text-indigo-600 mt-2">{metrics.technical_depth}</div>
+        </div>
+        <div className="bg-white p-6 rounded-xl shadow text-center">
+          <div className="text-sm text-gray-500 uppercase font-bold">Communication</div>
+          <div className="text-4xl font-bold text-pink-600 mt-2">{metrics.communication}</div>
+        </div>
+      </div>
+
+      {/* Recommendation Banner */}
+      <div className={`p-6 rounded-xl mb-8 text-white font-bold text-lg text-center shadow-md ${session_summary.result === 'Pass' ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-orange-500 to-red-500'}`}>
+        {recommendation}
+      </div>
+
+      {/* Feedback Lists */}
+      <div className="grid md:grid-cols-2 gap-8">
+        <div className="bg-white p-6 rounded-xl shadow">
+          <h3 className="text-xl font-bold text-green-700 mb-4 border-b pb-2">✅ Key Strengths</h3>
+          <ul className="space-y-3">
+            {detailed_feedback.strengths.map((s, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-green-500 mt-1">✔</span>
+                <span className="text-gray-700">{s}</span>
+              </li>
+            ))}
+            {detailed_feedback.strengths.length === 0 && <span className="text-gray-400 italic">No specific strengths detected.</span>}
+          </ul>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow">
+          <h3 className="text-xl font-bold text-orange-700 mb-4 border-b pb-2">💡 Areas for Improvement</h3>
+          <ul className="space-y-3">
+            {detailed_feedback.improvements.map((s, i) => (
+              <li key={i} className="flex items-start gap-2">
+                <span className="text-orange-500 mt-1">⚠</span>
+                <span className="text-gray-700">{s}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// --- MAIN PAGE ---
 
 const Interview = () => {
   const { user } = useAuth();
-  const [isRecording, setIsRecording] = useState(false);
-  const [interviewInProgress, setInterviewInProgress] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [userResponse, setUserResponse] = useState('');
-  const [feedback, setFeedback] = useState('');
-  const [timeSpent, setTimeSpent] = useState(0);
-  const [interviewCompleted, setInterviewCompleted] = useState(false);
-  const [scores, setScores] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [view, setView] = useState('setup'); // setup, session, report
+  const [sessionData, setSessionData] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [feedback, setFeedback] = useState(null);
+  const [report, setReport] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const interviewQuestions = [
-    {
-      id: 1,
-      question: "Tell me about yourself and your background.",
-      category: "Introduction",
-      tips: "Focus on your education, relevant projects, and career goals. Keep it 1-2 minutes.",
-      maxTime: 120,
-      interview_type: "hr"
-    },
-    {
-      id: 2,
-      question: "Why do you want to work at our company?",
-      category: "Motivation",
-      tips: "Research the company and connect your skills to their values and projects.",
-      maxTime: 90,
-      interview_type: "hr"
-    },
-    {
-      id: 3,
-      question: "Describe a challenging project you worked on and how you overcame obstacles.",
-      category: "Behavioral",
-      tips: "Use STAR method: Situation, Task, Action, Result.",
-      maxTime: 120,
-      interview_type: "hr"
-    },
-    {
-      id: 4,
-      question: "What is your greatest strength and how does it apply to this role?",
-      category: "Personal",
-      tips: "Choose a strength relevant to the job and provide specific examples.",
-      maxTime: 90,
-      interview_type: "hr"
-    },
-    {
-      id: 5,
-      question: "Where do you see yourself in 5 years?",
-      category: "Career Goals",
-      tips: "Show ambition but also realistic planning and growth within the company.",
-      maxTime: 60,
-      interview_type: "hr"
-    }
-  ];
-
-  useEffect(() => {
-    let timer;
-    if (isRecording && interviewInProgress) {
-      timer = setInterval(() => {
-        setTimeSpent(prev => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isRecording, interviewInProgress]);
-
-  const submitResponseToBackend = async (question, response, interviewType) => {
-    if (!user?.id) return null;
-    
+  const handleStart = async (type, stack) => {
     try {
-      const payload = {
-        user_id: user.id,
-        question: question,
-        response: response,
-        interview_type: interviewType
-      };
-      
-      const response = await fetch('http://localhost:8001/interview/submit-response', {
+      const res = await fetch('http://localhost:8001/interview/start', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: user?.id || "demo_user",
+          interview_type: type,
+          tech_stack: stack
+        })
       });
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Failed to submit interview response:', error);
-      return null;
+      const data = await res.json();
+      setSessionData(data);
+      setCurrentQuestion(data.current_question);
+      setView('session');
+    } catch (err) {
+      console.error(err);
+      alert("Failed to start session. Check backend!");
     }
   };
 
-  const startInterview = () => {
-    setInterviewInProgress(true);
-    setIsRecording(true);
-    setTimeSpent(0);
-    setUserResponse('');
-    setFeedback('');
-    setScores([]);
-  };
+  const handleAudioSubmit = async (audioBlob) => {
+    setIsProcessing(true);
+    try {
+      // 1. Transcribe (STT)
+      const formData = new FormData();
+      // Important: Send 'file' field, name it 'blob.wav' (backend handles conversion)
+      formData.append('file', audioBlob, 'answer.webm');
 
-  const stopRecording = async () => {
-    setIsRecording(false);
-    
-    const question = interviewQuestions[currentQuestion];
-    if (userResponse.trim() && user?.id) {
-      setLoading(true);
-      
-      // Submit to backend
-      const result = await submitResponseToBackend(
-        question.question,
-        userResponse,
-        question.interview_type
-      );
-      
-      if (result) {
-        // Save score
-        setScores(prev => [...prev, result.overall_score]);
-        
-        // Generate feedback
-        const feedbacks = [
-          `Good response! You spoke for ${timeSpent} seconds. ${result.feedback || 'You covered key points.'}`,
-          `Well structured answer! Your response was ${timeSpent < 30 ? 'a bit short' : timeSpent > question.maxTime ? 'too long' : 'the right length'}. Score: ${result.overall_score}/100`,
-          `Nice answer! Score: ${result.overall_score}/100. For improvement: ${question.tips}`,
-          `Good content! You used ${timeSpent} seconds. Score: ${result.overall_score}/100. Remember to maintain confident body language.`
-        ];
-        
-        const randomFeedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
-        setFeedback(randomFeedback);
+      const sttRes = await fetch('http://localhost:8001/stt/transcribe', {
+        method: 'POST',
+        body: formData
+      });
+      const { text } = await sttRes.json();
+
+      if (!text) {
+        alert("Could not adhere audio. Try again.");
+        setIsProcessing(false);
+        return;
+      }
+
+      // 2. Analyze
+      const analyzeRes = await fetch('http://localhost:8001/interview/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_id: sessionData.session_id,
+          question_id: currentQuestion.id,
+          user_response_text: text,
+          // Mock Video Metrics for MVP
+          video_metrics: { face_visible_pct: 0.95, looking_away_pct: 0.05 },
+          speech_metrics: { audio_duration_seconds: 10 } // Simplified for MVP
+        })
+      });
+      const data = await analyzeRes.json();
+
+      setFeedback({
+        text: data.feedback,
+        score: data.score,
+        user_text: text
+      });
+
+      // Check if report available (session done)
+      if (data.report) {
+        setReport(data.report);
+        // We still show feedback for last question, then transitioning button changes to "View Report"
+      }
+
+      if (data.is_completed && !data.report) {
+        // Fallback if no report present but completed
+        alert("Session Done.");
+      }
+
+      // Prepare next
+      if (data.current_question) {
+        window.nextQ = data.current_question;
       } else {
-        // Fallback mock feedback if backend fails
-        generateMockFeedback();
+        window.nextQ = null;
       }
-      
-      setLoading(false);
-    } else {
-      generateMockFeedback();
+
+    } catch (err) {
+      console.error(err);
+      alert("Error processing answer.");
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const generateMockFeedback = () => {
-    const question = interviewQuestions[currentQuestion];
-    const feedbacks = [
-      `Good response! You spoke for ${timeSpent} seconds. You covered key points about ${question.category.toLowerCase()}. Consider adding more specific examples.`,
-      `Well structured answer! Your response was ${timeSpent < 30 ? 'a bit short' : timeSpent > question.maxTime ? 'too long' : 'the right length'}. Try to emphasize your achievements more.`,
-      `Nice answer! You demonstrated good communication skills. For improvement: ${question.tips}`,
-      `Good content! You used ${timeSpent} seconds. Remember to maintain confident body language and clear articulation.`
-    ];
-    
-    const randomFeedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
-    setFeedback(randomFeedback);
-    
-    // Mock score for demo
-    const mockScore = Math.min(100, Math.floor(timeSpent * 1.5) + 50);
-    setScores(prev => [...prev, mockScore]);
-  };
-
-  const nextQuestion = async () => {
-    if (currentQuestion < interviewQuestions.length - 1) {
-      setCurrentQuestion(prev => prev + 1);
-      setIsRecording(true);
-      setTimeSpent(0);
-      setUserResponse('');
-      setFeedback('');
+  const handleNext = () => {
+    if (report) {
+      setView('report');
     } else {
-      // End interview
-      setIsRecording(false);
-      setInterviewInProgress(false);
-      setInterviewCompleted(true);
-      
-      // Save overall interview progress
-      if (user?.id && scores.length > 0) {
-        const averageScore = scores.reduce((a, b) => a + b, 0) / scores.length;
-        
-        try {
-          await fetch('http://localhost:8001/interview/submit-response', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              user_id: user.id,
-              question: 'Complete Mock Interview',
-              response: 'Completed all questions',
-              interview_type: 'hr_complete',
-              overall_score: averageScore
-            })
-          });
-        } catch (error) {
-          console.error('Failed to save interview completion:', error);
-        }
-      }
+      setFeedback(null);
+      setCurrentQuestion(window.nextQ);
     }
   };
 
-  const restartInterview = () => {
-    setInterviewInProgress(false);
-    setInterviewCompleted(false);
-    setCurrentQuestion(0);
-    setTimeSpent(0);
-    setUserResponse('');
-    setFeedback('');
-    setScores([]);
-  };
+  // --- RENDER SWITCH ---
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-  };
+  if (view === 'setup') return <SetupMode onStart={handleStart} />;
 
-  if (interviewCompleted) {
-    const averageScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
-    
-    return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <div className="w-24 h-24 mx-auto mb-6 bg-green-100 rounded-full flex items-center justify-center">
-            <span className="text-2xl font-bold text-green-600">✓</span>
-          </div>
-          
-          <h2 className="text-3xl font-bold mb-4 text-gray-800">Interview Completed!</h2>
-          <p className="text-xl text-gray-600 mb-6">
-            Great job completing the mock interview!
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">{interviewQuestions.length}</div>
-              <div className="text-gray-600">Questions</div>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{Math.round(averageScore)}/100</div>
-              <div className="text-gray-600">Average Score</div>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
-                {averageScore >= 80 ? 'Excellent' : averageScore >= 60 ? 'Good' : 'Needs Practice'}
-              </div>
-              <div className="text-gray-600">Performance</div>
-            </div>
-          </div>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-            <h3 className="font-semibold text-yellow-800 mb-2">Areas for Improvement:</h3>
-            <ul className="text-left text-yellow-700 text-sm list-disc list-inside">
-              <li>Practice speaking more concisely</li>
-              <li>Include more specific examples in your answers</li>
-              <li>Work on maintaining eye contact</li>
-              <li>Structure responses using STAR method</li>
-            </ul>
-          </div>
-
-          <div className="flex gap-4 justify-center">
-            <button 
-              onClick={restartInterview}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700"
-            >
-              Practice Again
-            </button>
-            <button 
-              onClick={() => window.location.href = '/'}
-              className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!interviewInProgress) {
-    return (
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <div className="w-20 h-20 mx-auto mb-6 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-2xl">🎤</span>
-          </div>
-          
-          <h2 className="text-3xl font-bold mb-4 text-gray-800">AceIt Mock Interview</h2>
-          <p className="text-xl text-gray-600 mb-6">
-            Practice with AI-powered interview questions and get instant feedback on your responses.
-          </p>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="font-semibold mb-3 text-gray-800">What to Expect:</h3>
-              <ul className="text-left text-gray-600 space-y-2">
-                <li>• 5 common interview questions</li>
-                <li>• Voice recording simulation</li>
-                <li>• AI-powered feedback</li>
-                <li>• Time management tips</li>
-                <li>• Progress tracking</li>
-              </ul>
-            </div>
-            
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <h3 className="font-semibold mb-3 text-gray-800">Tips for Success:</h3>
-              <ul className="text-left text-gray-600 space-y-2">
-                <li>• Speak clearly and confidently</li>
-                <li>• Use the STAR method for examples</li>
-                <li>• Keep answers 1-2 minutes long</li>
-                <li>• Maintain good posture</li>
-                <li>• Practice active listening</li>
-              </ul>
-            </div>
-          </div>
-
-          <button
-            onClick={startInterview}
-            className="bg-purple-600 text-white px-8 py-3 rounded-lg hover:bg-purple-700 text-lg font-semibold"
-          >
-            Start Mock Interview
-          </button>
-          
-          <p className="text-gray-500 mt-4 text-sm">
-            Your progress will be saved to your dashboard
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  const question = interviewQuestions[currentQuestion];
-  const progress = ((currentQuestion + 1) / interviewQuestions.length) * 100;
+  if (view === 'report') return <ReportView report={report} />;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      {/* Interview Progress */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-800">Mock Interview</h2>
-          <div className="flex items-center gap-4">
-            <div className="bg-blue-100 text-blue-600 px-3 py-1 rounded-full font-semibold">
-              Q: {currentQuestion + 1}/{interviewQuestions.length}
-            </div>
-            <div className={`px-3 py-1 rounded-full font-semibold ${
-              isRecording ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-600'
-            }`}>
-              {isRecording ? '● Recording' : '⏸️ Paused'}
-            </div>
-          </div>
-        </div>
-        
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className="bg-purple-600 h-2 rounded-full transition-all duration-300" 
-            style={{ width: `${progress}%` }}
-          ></div>
-        </div>
-      </div>
-
-      {/* Question Card */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded text-sm font-medium">
-              {question.category}
-            </span>
-            <h3 className="text-xl font-semibold mt-2 text-gray-800">{question.question}</h3>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-gray-700">{formatTime(timeSpent)}</div>
-            <div className="text-sm text-gray-500">Time Spent</div>
-          </div>
-        </div>
-
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h4 className="font-semibold text-yellow-800 mb-1">💡 Tip:</h4>
-          <p className="text-yellow-700 text-sm">{question.tips}</p>
-        </div>
-      </div>
-
-      {/* Response Area */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 className="text-lg font-semibold mb-3 text-gray-800">Your Response:</h3>
-        <textarea
-          value={userResponse}
-          onChange={(e) => setUserResponse(e.target.value)}
-          placeholder="Type your answer here or speak your response aloud..."
-          className="w-full h-32 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-          disabled={loading}
-        />
-        
-        <div className="flex gap-3 mt-4">
-          <button
-            onClick={() => setIsRecording(!isRecording)}
-            disabled={loading}
-            className={`px-6 py-2 rounded-lg font-semibold ${
-              isRecording 
-                ? 'bg-red-600 hover:bg-red-700 text-white' 
-                : 'bg-green-600 hover:bg-green-700 text-white'
-            } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {isRecording ? '⏸️ Stop Recording' : '● Start Recording'}
-          </button>
-          
-          <button
-            onClick={stopRecording}
-            disabled={!isRecording || loading || !userResponse.trim()}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <span className="flex items-center">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Analyzing...
-              </span>
-            ) : (
-              'Get Feedback'
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* AI Feedback */}
-      {feedback && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6 border-l-4 border-green-500">
-          <h3 className="text-lg font-semibold mb-3 text-gray-800 flex items-center">
-            <span className="text-green-500 mr-2">🤖</span>
-            AI Feedback
-          </h3>
-          <p className="text-gray-700 bg-green-50 p-4 rounded-lg">{feedback}</p>
-          
-          {scores.length > 0 && (
-            <div className="mt-3">
-              <div className="flex justify-between text-sm mb-1">
-                <span>Current Score:</span>
-                <span className="font-bold">{scores[scores.length - 1]}/100</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="h-2 rounded-full bg-green-500"
-                  style={{ width: `${scores[scores.length - 1]}%` }}
-                ></div>
-              </div>
+    <div className="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8 h-[calc(100vh-100px)]">
+      {/* Left Panel: Question */}
+      <div className="flex flex-col justify-center">
+        <div className="bg-white p-10 rounded-2xl shadow-xl border-l-8 border-purple-600">
+          <span className="text-purple-600 font-bold tracking-widest uppercase text-sm">Current Question</span>
+          <h2 className="text-3xl font-bold text-gray-800 mt-4 leading-snug">
+            {currentQuestion?.text}
+          </h2>
+          {currentQuestion?.ai_context && (
+            <div className="mt-4 p-3 bg-blue-50 text-blue-800 text-sm rounded-lg flex items-center gap-2">
+              <span>💡</span> {currentQuestion.ai_context}
             </div>
           )}
         </div>
-      )}
 
-      {/* Navigation */}
-      <div className="flex justify-between">
-        <button
-          onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}
-          disabled={currentQuestion === 0 || loading}
-          className="bg-gray-500 text-white px-6 py-2 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
-        >
-          Previous Question
-        </button>
-        
-        <button
-          onClick={nextQuestion}
-          disabled={(!userResponse.trim() && !feedback) || loading}
-          className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {currentQuestion === interviewQuestions.length - 1 ? 'Finish Interview' : 'Next Question'}
-        </button>
+        {/* Feedback Modal (Overlay or Inline) */}
+        {feedback && (
+          <div className="mt-8 bg-gray-900 text-white p-6 rounded-xl shadow-2xl animate-fade-in relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-2 h-full bg-green-500"></div>
+            <h3 className="font-bold text-xl mb-2 flex justify-between">
+              <span>AI Feedback</span>
+              <span className="bg-green-600 text-xs px-2 py-1 rounded-full">Score: {feedback.score}</span>
+            </h3>
+            <p className="text-gray-300 mb-4 italic">"{feedback.user_text}"</p>
+            <p className="font-semibold text-lg">{feedback.text}</p>
+
+            <button
+              onClick={handleNext}
+              className="w-full mt-6 bg-white text-gray-900 font-bold py-3 rounded-lg hover:bg-gray-100 transition"
+            >
+              {report ? "View Final Report 📊" : "Next Question ➔"}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Right Panel: Recorder or Feedback */}
+      <div className="bg-white rounded-2xl shadow-xl p-6 flex flex-col items-center justify-center relative overflow-hidden">
+        {!feedback ? (
+          <Recorder onRecordingComplete={handleAudioSubmit} isProcessing={isProcessing} />
+        ) : (
+          <div className="w-full h-full flex flex-col items-center justify-center animate-fade-in p-4">
+            <div className="text-6xl mb-4">✅</div>
+            <h3 className="text-2xl font-bold text-gray-800 mb-2">Answer Analyzed!</h3>
+            <div className="bg-purple-50 p-4 rounded-xl w-full mb-6 border border-purple-100">
+              <div className="flex justify-between items-center mb-2">
+                <span className="font-bold text-purple-700">Confidence Score</span>
+                <span className="bg-purple-600 text-white px-3 py-1 rounded-full text-sm font-bold">{feedback.score}/100</span>
+              </div>
+              <p className="text-gray-700 italic">"{feedback.text}"</p>
+            </div>
+
+            <button
+              onClick={handleNext}
+              className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 px-10 rounded-full shadow-lg transition transform hover:scale-105"
+            >
+              {report ? "View Final Report 📊" : "Next Question ➔"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

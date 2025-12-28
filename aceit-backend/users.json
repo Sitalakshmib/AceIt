@@ -5,5 +5,12 @@
     "password": "hashed_password123",
     "id": "6233c6a4-32bb-43c6-b0d8-8ac7a8a04d04",
     "created_at": "2025-12-25T13:21:31.971502"
+  },
+  {
+    "username": "karthika",
+    "email": "karthika@gmail.com",
+    "password": "hashed_karthika",
+    "id": "00a64b17-9201-48cf-a483-79823b7f4302",
+    "created_at": "2025-12-27T06:05:42.718412"
   }
 ]
