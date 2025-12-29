@@ -71,6 +71,7 @@ const Recorder = ({ onRecordingComplete, isProcessing }) => {
   }, []);
 
   const startRecording = async () => {
+    console.log("🟢 Starting Recording...");
     const stream = videoRef.current.srcObject;
     const mediaRecorder = new MediaRecorder(stream);
 
@@ -82,7 +83,9 @@ const Recorder = ({ onRecordingComplete, isProcessing }) => {
     };
 
     mediaRecorder.onstop = () => {
+      console.log("🔴 specific onstop triggered");
       const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+      console.log("📦 Blob created:", blob.size, blob.type);
       onRecordingComplete(blob);
     };
 
@@ -91,9 +94,12 @@ const Recorder = ({ onRecordingComplete, isProcessing }) => {
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current) {
+    console.log("🛑 stopRecording called");
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
       setRecording(false);
+    } else {
+      console.warn("⚠️ MediaRecorder not active or null");
     }
   };
 
@@ -206,6 +212,7 @@ const Interview = () => {
   const [feedback, setFeedback] = useState(null);
   const [report, setReport] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [transcript, setTranscript] = useState(null);
 
   const handleStart = async (type, stack) => {
     try {
@@ -221,6 +228,7 @@ const Interview = () => {
       const data = await res.json();
       setSessionData(data);
       setCurrentQuestion(data.current_question);
+      setTranscript(null);
       setView('session');
     } catch (err) {
       console.error(err);
@@ -229,26 +237,36 @@ const Interview = () => {
   };
 
   const handleAudioSubmit = async (audioBlob) => {
+    console.log("🚀 handleAudioSubmit triggered with blob:", audioBlob.size);
     setIsProcessing(true);
+    setTranscript(null); // Clear previous
     try {
       // 1. Transcribe (STT)
       const formData = new FormData();
       // Important: Send 'file' field, name it 'blob.wav' (backend handles conversion)
       formData.append('file', audioBlob, 'answer.webm');
 
+      console.log("📡 Sending to /stt/transcribe...");
       const sttRes = await fetch('http://localhost:8001/stt/transcribe', {
         method: 'POST',
         body: formData
       });
+
+      if (!sttRes.ok) throw new Error("STT Failed");
+
       const { text } = await sttRes.json();
+      console.log("📝 Transcript received:", text);
+
+      setTranscript(text); // Store transcript immediately
 
       if (!text) {
-        alert("Could not adhere audio. Try again.");
+        alert("Could not hear audio. Try again.");
         setIsProcessing(false);
         return;
       }
 
       // 2. Analyze
+      console.log("🧠 Sending to /interview/analyze...");
       const analyzeRes = await fetch('http://localhost:8001/interview/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -261,12 +279,16 @@ const Interview = () => {
           speech_metrics: { audio_duration_seconds: 10 } // Simplified for MVP
         })
       });
+
+      if (!analyzeRes.ok) throw new Error("Analysis Failed");
+
       const data = await analyzeRes.json();
+      console.log("📊 Analysis received:", data);
 
       setFeedback({
         text: data.feedback,
         score: data.score,
-        user_text: text
+        user_response_text: text
       });
 
       // Check if report available (session done)
@@ -289,13 +311,14 @@ const Interview = () => {
 
     } catch (err) {
       console.error(err);
-      alert("Error processing answer.");
+      alert("Error processing answer: " + err.message);
     } finally {
       setIsProcessing(false);
     }
   };
 
   const handleNext = () => {
+    setTranscript(null); // Reset transcript
     if (report) {
       setView('report');
     } else {
@@ -326,6 +349,14 @@ const Interview = () => {
           )}
         </div>
 
+        {/* Transcript Section */}
+        {transcript && (
+          <div className="mt-6 p-5 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-xl shadow-sm animate-fade-in">
+            <h3 className="text-xs font-bold text-indigo-500 uppercase mb-2 tracking-wider">📝 What the AI heard from you</h3>
+            <p className="text-gray-800 text-lg font-medium leading-relaxed">"{transcript}"</p>
+          </div>
+        )}
+
         {/* Feedback Modal (Overlay or Inline) */}
         {feedback && (
           <div className="mt-8 bg-gray-900 text-white p-6 rounded-xl shadow-2xl animate-fade-in relative overflow-hidden">
@@ -334,8 +365,8 @@ const Interview = () => {
               <span>AI Feedback</span>
               <span className="bg-green-600 text-xs px-2 py-1 rounded-full">Score: {feedback.score}</span>
             </h3>
-            <p className="text-gray-300 mb-4 italic">"{feedback.user_text}"</p>
-            <p className="font-semibold text-lg">{feedback.text}</p>
+            {/* Removed the small italic text since we have the main transcript block now */}
+            <p className="font-semibold text-lg mt-2">{feedback.text}</p>
 
             <button
               onClick={handleNext}

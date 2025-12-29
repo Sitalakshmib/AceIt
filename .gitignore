@@ -1,12 +1,36 @@
-# Python cache
+# =====================
+# Python
+# =====================
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+*.sqlite3
 
 # Virtual environment
 venv/
-
-# Environment variables
 .env
 
+# =====================
+# Node / React
+# =====================
+node_modules/
+dist/
+build/
+
+# =====================
 # OS files
+# =====================
 .DS_Store
+Thumbs.db
+
+# =====================
+# Logs
+# =====================
+*.log
+
+# =====================
+# IDE
+# =====================
+.vscode/
+.idea/

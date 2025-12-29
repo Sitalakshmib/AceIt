@@ -34,7 +34,13 @@ async def transcribe_audio(file: UploadFile = File(...)):
             shutil.copyfileobj(file.file, buffer)
             
         # Transcribe
-        result = MODEL.transcribe(temp_filename)
+        result = MODEL.transcribe(
+            temp_filename, 
+            language="en",
+            temperature=0.0,
+            condition_on_previous_text=False,
+            initial_prompt="This is an interview answer."
+        )
         text = result["text"].strip()
         
         return {"text": text}
