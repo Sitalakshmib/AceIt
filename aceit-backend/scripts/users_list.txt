@@ -1,0 +1,3 @@
+Found 2 users in PostgreSQL:
+- abc (abc@gmail.com)
+- autotester (test_ce2b40d8-9a56-46bc-83f2-2535d92900d5@example.com)
