@@ -11,14 +11,14 @@ function solveProblem(input) {
   const [problems, setProblems] = useState([]);
   const [selectedProblem, setSelectedProblem] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('javascript');
+  const [selectedLanguage, setSelectedLanguage] = useState('python');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [testResults, setTestResults] = useState(null);
 
   const languages = [
-    { id: 'javascript', name: 'JavaScript', extension: 'js', icon: '🟨' },
     { id: 'python', name: 'Python', extension: 'py', icon: '🐍' },
+    { id: 'javascript', name: 'JavaScript', extension: 'js', icon: '🟨' },
     { id: 'java', name: 'Java', extension: 'java', icon: '☕' },
     { id: 'cpp', name: 'C++', extension: 'cpp', icon: '⚡' },
   ];
@@ -37,8 +37,8 @@ function solveProblem(input) {
       console.log('Received problems:', response.data);
       setProblems(response.data);
       if (response.data.length > 0) {
-        // Set default code based on first problem
-        setCode(response.data[0].starterCode?.javascript || '// Write your solution here');
+        // Set default code based on first problem (Python)
+        setCode(response.data[0].starterCode?.python || '# Write your solution here');
       }
     } catch (err) {
       console.error('Failed to fetch problems:', err);
@@ -50,34 +50,34 @@ function solveProblem(input) {
 
   const runCode = async () => {
     if (problems.length === 0) return;
-    
+
     try {
       setIsRunning(true);
       setOutput('Running code...\n\n');
       setTestResults(null);
-      
+
       const currentProblem = problems[selectedProblem];
-      const response = await codingAPI.submitCode(currentProblem.id, code);
-      
+      const response = await codingAPI.submitCode(currentProblem.id, code, selectedLanguage);
+
       // Handle the response from backend
       const { feedback, passed_tests, total_tests, percentage, problem_title } = response.data;
-      
+
       setTestResults({
         passed: passed_tests,
         total: total_tests,
         percentage: percentage,
         problemTitle: problem_title
       });
-      
+
       setOutput(feedback || 'Code executed successfully');
-      
+
       // Show success message if tests passed
       if (passed_tests === total_tests && total_tests > 0) {
         setTimeout(() => {
           setOutput(prev => prev + '\n\n🎉 All tests passed! Progress saved.');
         }, 500);
       }
-      
+
     } catch (err) {
       console.error('Failed to run code:', err);
       setOutput('Error: ' + (err.response?.data?.detail || err.message));
@@ -130,7 +130,7 @@ function solveProblem(input) {
       <div className="p-6 h-screen flex items-center justify-center bg-gray-50">
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
           <div className="text-xl text-red-600">Error: {error}</div>
-          <button 
+          <button
             onClick={fetchProblems}
             className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
           >
@@ -146,7 +146,7 @@ function solveProblem(input) {
       <div className="p-6 h-screen flex items-center justify-center bg-gray-50">
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
           <div className="text-xl">No coding problems available</div>
-          <button 
+          <button
             onClick={fetchProblems}
             className="mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
           >
@@ -162,7 +162,7 @@ function solveProblem(input) {
   return (
     <div className="p-6 h-screen flex flex-col bg-gray-50">
       <h1 className="text-2xl font-bold mb-4 text-gray-800">Coding Practice</h1>
-      
+
       <div className="flex flex-1 gap-6 min-h-0">
         {/* Problem List Sidebar */}
         <div className="w-1/3 bg-white rounded-lg shadow-md p-4 flex flex-col">
@@ -172,23 +172,21 @@ function solveProblem(input) {
               <div
                 key={prob.id}
                 onClick={() => changeProblem(index)}
-                className={`p-3 rounded-lg cursor-pointer transition-all ${
-                  selectedProblem === index 
-                    ? 'bg-blue-100 border-blue-500 border-2' 
-                    : 'bg-gray-50 hover:bg-gray-100 border border-transparent'
-                }`}
+                className={`p-3 rounded-lg cursor-pointer transition-all ${selectedProblem === index
+                  ? 'bg-blue-100 border-blue-500 border-2'
+                  : 'bg-gray-50 hover:bg-gray-100 border border-transparent'
+                  }`}
               >
                 <div className="flex justify-between items-start">
                   <h3 className="font-medium text-gray-800">{prob.title}</h3>
-                  <span className={`text-xs px-2 py-1 rounded-full ${
-                    prob.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
+                  <span className={`text-xs px-2 py-1 rounded-full ${prob.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
                     prob.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
-                  }`}>
+                      'bg-red-100 text-red-800'
+                    }`}>
                     {prob.difficulty}
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{prob.description}</p>
+                <p className="text-sm text-gray-600 mt-1 line-clamp-2">{prob.title}</p>
               </div>
             ))}
           </div>
@@ -199,8 +197,11 @@ function solveProblem(input) {
           {/* Problem Statement */}
           <div className="bg-white rounded-lg shadow-md p-4 mb-4 flex-1 overflow-y-auto">
             <h2 className="text-xl font-semibold mb-2 text-gray-800">{problem.title}</h2>
-            <p className="text-gray-700 mb-4">{problem.description}</p>
-            
+            <div
+              className="text-gray-700 mb-4 prose prose-sm max-w-none"
+              dangerouslySetInnerHTML={{ __html: problem.description }}
+            />
+
             {problem.examples && problem.examples.length > 0 && (
               <div className="mb-4">
                 <h4 className="font-semibold mb-2 text-gray-800">Examples:</h4>
@@ -225,18 +226,17 @@ function solveProblem(input) {
                 <span className="text-white font-mono text-sm">
                   solution.{languages.find(lang => lang.id === selectedLanguage)?.extension}
                 </span>
-                
+
                 {/* Language Selector */}
                 <div className="flex space-x-1 bg-gray-700 rounded-lg p-1">
                   {languages.map(lang => (
                     <button
                       key={lang.id}
                       onClick={() => changeLanguage(lang.id)}
-                      className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
-                        selectedLanguage === lang.id
-                          ? 'bg-blue-600 text-white'
-                          : 'text-gray-300 hover:text-white hover:bg-gray-600'
-                      }`}
+                      className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${selectedLanguage === lang.id
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-300 hover:text-white hover:bg-gray-600'
+                        }`}
                     >
                       <span className="mr-1">{lang.icon}</span>
                       {lang.name}
@@ -244,7 +244,7 @@ function solveProblem(input) {
                   ))}
                 </div>
               </div>
-              
+
               <button
                 onClick={resetCode}
                 className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
@@ -252,7 +252,7 @@ function solveProblem(input) {
                 Reset Code
               </button>
             </div>
-            
+
             <textarea
               value={code}
               onChange={(e) => setCode(e.target.value)}
@@ -279,30 +279,28 @@ function solveProblem(input) {
                 {isRunning ? 'Running...' : 'Run Code'}
               </button>
             </div>
-            
+
             {/* Test Results Bar */}
             {testResults && (
               <div className="p-3 bg-gray-50 border-b">
                 <div className="flex justify-between items-center mb-1">
                   <span className="font-medium">Test Results:</span>
-                  <span className={`font-bold ${
-                    testResults.passed === testResults.total ? 'text-green-600' : 'text-red-600'
-                  }`}>
+                  <span className={`font-bold ${testResults.passed === testResults.total ? 'text-green-600' : 'text-red-600'
+                    }`}>
                     {testResults.passed}/{testResults.total} passed ({testResults.percentage}%)
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full ${
-                      testResults.percentage >= 80 ? 'bg-green-600' : 
+                  <div
+                    className={`h-2 rounded-full ${testResults.percentage >= 80 ? 'bg-green-600' :
                       testResults.percentage >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}
+                      }`}
                     style={{ width: `${testResults.percentage}%` }}
                   ></div>
                 </div>
               </div>
             )}
-            
+
             <pre className="p-4 bg-gray-50 text-sm min-h-[120px] max-h-60 overflow-y-auto whitespace-pre-wrap font-mono">
               {output || "Click 'Run Code' to test your solution..."}
             </pre>
