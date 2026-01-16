@@ -1,9 +1,11 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
+
+export { API_BASE_URL };
 
 // Add token to requests
 api.interceptors.request.use((config) => {
@@ -66,10 +68,14 @@ export const codingAPI = {
 export const resumeAPI = {
   analyze: (formData) => {
     const userId = getCurrentUserId();
+    console.log('[API] resumeAPI.analyze called');
+    console.log('[API] userId from localStorage:', userId);
+
     const formDataWithUserId = new FormData();
-    formDataWithUserId.append('user_id', userId);
+    formDataWithUserId.append('user_id', userId || 'guest_user');
     // Append all files and data from original formData
     for (const [key, value] of formData.entries()) {
+      console.log('[API] Appending:', key, value);
       formDataWithUserId.append(key, value);
     }
 

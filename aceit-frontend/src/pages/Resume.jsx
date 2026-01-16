@@ -43,16 +43,22 @@ const Resume = () => {
 
     setIsAnalyzing(true);
     setError('');
-    
+
     try {
       // Create FormData to send file and other data
       const formData = new FormData();
       formData.append('file', resumeFile);
       formData.append('job_role', jobRole);
       formData.append('user_id', 'user123'); // In a real app, this would come from auth context
-      
+
+      console.log('[Resume] Sending analysis request...');
+      console.log('[Resume] File:', resumeFile.name);
+      console.log('[Resume] Job Role:', jobRole);
+
       const response = await resumeAPI.analyze(formData);
-      
+
+      console.log('[Resume] Response received:', response.data);
+
       if (response.data.error) {
         setError(response.data.error);
         setAnalysisResult(null);
@@ -60,8 +66,9 @@ const Resume = () => {
         setAnalysisResult(response.data);
       }
     } catch (err) {
-      console.error('Analysis error:', err);
-      setError('Failed to analyze resume. Please try again.');
+      console.error('[Resume] Analysis error:', err);
+      console.error('[Resume] Error details:', err.response?.data || err.message);
+      setError('Failed to analyze resume. Error: ' + (err.response?.data?.detail || err.message));
     } finally {
       setIsAnalyzing(false);
     }
@@ -70,19 +77,19 @@ const Resume = () => {
   const downloadReport = () => {
     // Create a PDF report instead of text
     if (!analysisResult) return;
-    
+
     const doc = new jsPDF();
-    
+
     // Add title
     doc.setFontSize(20);
     doc.text('ACEIT Resume Analysis Report', 105, 20, null, null, 'center');
-    
+
     // Add job role and overall score
     doc.setFontSize(12);
     const jobRoleName = jobRoles.find(r => r.id === analysisResult.job_role)?.name || analysisResult.job_role;
     doc.text(`Job Role: ${jobRoleName}`, 20, 35);
     doc.text(`Overall Score: ${analysisResult.overall_score}%`, 20, 45);
-    
+
     // Add Contact Information
     doc.setFontSize(16);
     doc.text('Contact Information', 20, 60);
@@ -91,7 +98,7 @@ const Resume = () => {
     doc.text(`Phone: ${analysisResult.contact_info.phone}`, 20, 80);
     doc.text(`LinkedIn: ${analysisResult.contact_info.linkedin}`, 20, 90);
     doc.text(`GitHub: ${analysisResult.contact_info.github}`, 20, 100);
-    
+
     // Add ATS Analysis
     doc.setFontSize(16);
     doc.text('ATS Analysis', 20, 120);
@@ -101,19 +108,19 @@ const Resume = () => {
     doc.text(`Sections: ${analysisResult.ats_analysis.section_score}/30`, 20, 150);
     doc.text(`Formatting: ${analysisResult.ats_analysis.formatting_score}/20`, 20, 160);
     doc.text(`Content: ${analysisResult.ats_analysis.content_score}/25`, 20, 170);
-    
+
     // Add Skills Analysis
     doc.setFontSize(16);
     doc.text('Skills Analysis', 20, 190);
     doc.setFontSize(12);
     doc.text(`Skills Match: ${analysisResult.skills_analysis.match_score}%`, 20, 200);
     doc.text(`Matched Skills: ${analysisResult.skills_analysis.matched_skills.length}/${analysisResult.skills_analysis.total_required_skills}`, 20, 210);
-    
+
     // Add Suggestions
     doc.setFontSize(16);
     doc.text('Suggestions', 20, 230);
     doc.setFontSize(12);
-    
+
     // Add suggestions as bullet points
     analysisResult.suggestions.slice(0, 8).forEach((suggestion, index) => {
       const yPosition = 240 + (index * 10);
@@ -121,7 +128,7 @@ const Resume = () => {
         doc.text(`• ${suggestion}`, 20, yPosition);
       }
     });
-    
+
     // Save the PDF
     doc.save('resume-analysis-report.pdf');
   };
@@ -129,13 +136,13 @@ const Resume = () => {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">AceIt Resume Analyzer</h1>
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side - Upload & Controls */}
         <div className="lg:col-span-1">
           <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4 text-gray-800">Upload Resume</h2>
-            
+
             <div className="space-y-4">
               {/* Job Role Selection */}
               <div>
@@ -231,7 +238,7 @@ const Resume = () => {
                     📥 Download PDF Report
                   </button>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div className="text-center p-4 bg-blue-50 rounded-lg">
                     <div className="text-3xl font-bold text-blue-600">{analysisResult.overall_score}%</div>
@@ -259,11 +266,10 @@ const Resume = () => {
                       <span>{analysisResult.ats_analysis.ats_score}/100</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full ${
-                          analysisResult.ats_analysis.ats_score >= 80 ? 'bg-green-600' : 
+                      <div
+                        className={`h-2 rounded-full ${analysisResult.ats_analysis.ats_score >= 80 ? 'bg-green-600' :
                           analysisResult.ats_analysis.ats_score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                        }`} 
+                          }`}
                         style={{ width: `${Math.min(100, analysisResult.ats_analysis.ats_score)}%` }}
                       ></div>
                     </div>
@@ -274,11 +280,10 @@ const Resume = () => {
                       <span>{analysisResult.skills_analysis.match_score}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className={`h-2 rounded-full ${
-                          analysisResult.skills_analysis.match_score >= 80 ? 'bg-green-600' : 
+                      <div
+                        className={`h-2 rounded-full ${analysisResult.skills_analysis.match_score >= 80 ? 'bg-green-600' :
                           analysisResult.skills_analysis.match_score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                        }`} 
+                          }`}
                         style={{ width: `${analysisResult.skills_analysis.match_score}%` }}
                       ></div>
                     </div>
@@ -336,7 +341,7 @@ const Resume = () => {
                     <div className="text-2xl font-bold text-yellow-600">{analysisResult.ats_analysis.content_score}/25</div>
                   </div>
                 </div>
-                
+
                 {analysisResult.ats_analysis.missing_elements.length > 0 && (
                   <div>
                     <h4 className="font-medium text-gray-700 mb-2">Missing Elements:</h4>
@@ -369,7 +374,7 @@ const Resume = () => {
                     ))}
                   </div>
                 </div>
-                
+
                 {analysisResult.skills_analysis.missing_skills.length > 0 && (
                   <div>
                     <div className="font-medium mb-2">Missing Skills:</div>
@@ -399,6 +404,112 @@ const Resume = () => {
                   ))}
                 </ul>
               </div>
+
+              {/* AI-Powered Feedback (Gemini) */}
+              {analysisResult.ai_analysis && (
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg shadow-md p-6 border border-purple-200">
+                  <h3 className="text-lg font-semibold mb-4 text-purple-800 flex items-center">
+                    <span className="mr-2">🤖</span>
+                    AI-Powered Insights (Gemini)
+                  </h3>
+
+                  {/* Overall Impression */}
+                  {analysisResult.ai_analysis.overall_impression && (
+                    <div className="mb-6 p-4 bg-white rounded-lg">
+                      <h4 className="font-medium text-gray-700 mb-2">Overall Impression</h4>
+                      <p className="text-gray-600">{analysisResult.ai_analysis.overall_impression}</p>
+                    </div>
+                  )}
+
+                  {/* Interview Readiness */}
+                  {analysisResult.ai_analysis.interview_readiness && (
+                    <div className="mb-6 p-4 bg-white rounded-lg">
+                      <h4 className="font-medium text-gray-700 mb-2">Interview Readiness</h4>
+                      <p className="text-gray-600">{analysisResult.ai_analysis.interview_readiness}</p>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    {/* Strengths */}
+                    {analysisResult.ai_analysis.strengths && analysisResult.ai_analysis.strengths.length > 0 && (
+                      <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                        <h4 className="font-medium text-green-800 mb-2">✅ Strengths</h4>
+                        <ul className="space-y-1">
+                          {analysisResult.ai_analysis.strengths.map((strength, index) => (
+                            <li key={index} className="text-green-700 text-sm">• {strength}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Areas for Improvement */}
+                    {analysisResult.ai_analysis.areas_for_improvement && analysisResult.ai_analysis.areas_for_improvement.length > 0 && (
+                      <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
+                        <h4 className="font-medium text-orange-800 mb-2">⚠️ Areas for Improvement</h4>
+                        <ul className="space-y-1">
+                          {analysisResult.ai_analysis.areas_for_improvement.map((area, index) => (
+                            <li key={index} className="text-orange-700 text-sm">• {area}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actionable Tips from AI */}
+                  {analysisResult.ai_analysis.actionable_tips && analysisResult.ai_analysis.actionable_tips.length > 0 && (
+                    <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <h4 className="font-medium text-blue-800 mb-2">🎯 AI Actionable Tips</h4>
+                      <ul className="space-y-2">
+                        {analysisResult.ai_analysis.actionable_tips.map((tip, index) => (
+                          <li key={index} className="text-blue-700 text-sm flex items-start">
+                            <span className="mr-2">{index + 1}.</span>
+                            <span>{tip}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Keyword Suggestions */}
+                  {analysisResult.ai_analysis.keyword_suggestions && analysisResult.ai_analysis.keyword_suggestions.length > 0 && (
+                    <div className="mb-4">
+                      <h4 className="font-medium text-gray-700 mb-2">🔑 Suggested Keywords for ATS</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {analysisResult.ai_analysis.keyword_suggestions.map((keyword, index) => (
+                          <span key={index} className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                            {keyword}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Formatting Advice */}
+                  {analysisResult.ai_analysis.formatting_advice && (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-medium text-gray-700 mb-2">📄 Formatting Advice</h4>
+                      <p className="text-gray-600 text-sm">{analysisResult.ai_analysis.formatting_advice}</p>
+                    </div>
+                  )}
+
+                  {/* Raw feedback fallback */}
+                  {analysisResult.ai_analysis.raw_feedback && !analysisResult.ai_analysis.overall_impression && (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-medium text-gray-700 mb-2">AI Feedback</h4>
+                      <p className="text-gray-600 text-sm whitespace-pre-wrap">{analysisResult.ai_analysis.raw_feedback}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* AI Error Message */}
+              {analysisResult.ai_error && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-yellow-700 text-sm">
+                    <span className="font-medium">Note:</span> AI analysis was not available: {analysisResult.ai_error}
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
             /* Placeholder before analysis */
