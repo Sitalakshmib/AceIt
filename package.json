@@ -1,0 +1,16 @@
+{
+    "name": "aceit-fullstack",
+    "version": "1.0.0",
+    "description": "Orchestrates AceIt Backend and Frontend",
+    "scripts": {
+        "backend": "cd aceit_backend && venv\\Scripts\\python -m uvicorn main:app --reload --port 8000",
+        "frontend": "cd aceit-frontend && npm run dev",
+        "dev:full": "concurrently \"npm run backend\" \"npm run frontend\""
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
