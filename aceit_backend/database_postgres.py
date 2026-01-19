@@ -17,10 +17,17 @@ if not DATABASE_URL:
     print(f"[INFO] Using SQLite database at: {db_path}")
 
 # For SQLite, we need to add check_same_thread=False for FastAPI development
+# For PostgreSQL, we add connection pooling for better performance
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
-    engine = create_engine(DATABASE_URL)
+    engine = create_engine(
+        DATABASE_URL,
+        pool_pre_ping=True,
+        pool_recycle=300,
+        pool_size=10,
+        max_overflow=20
+    )
 
 SessionLocal = sessionmaker(
     autocommit=False,

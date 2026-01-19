@@ -17,6 +17,13 @@ class AptitudeQuestion(Base):
     difficulty = Column(String)  # "easy", "medium", "hard"
     source = Column(String, default="generated")
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    
+    # Additional metadata for analytics
+    tags = Column(ARRAY(String), default=list)
+    times_attempted = Column(Integer, default=0)
+    times_correct = Column(Integer, default=0)
+    average_time_seconds = Column(Float, default=0.0)
+    last_used = Column(DateTime, nullable=True)
 
 class UserAptitudeProgress(Base):
     __tablename__ = "user_aptitude_progress"
@@ -40,6 +47,18 @@ class UserAptitudeProgress(Base):
     hard_correct = Column(Integer, default=0)
     hard_total = Column(Integer, default=0)
     
-    last_practiced = Column(DateTime, default=datetime.datetime.utcnow)
+    # Adaptive state tracking
+    consecutive_correct = Column(Integer, default=0)
+    consecutive_incorrect = Column(Integer, default=0)
+    last_difficulty_change = Column(DateTime, nullable=True)
     
-    user = relationship("User")
+    # Time tracking
+    total_time_spent_seconds = Column(Integer, default=0)
+    average_time_per_question = Column(Float, default=0.0)
+    
+    # Performance trends
+    recent_accuracy = Column(Float, default=0.0)  # Last 10 questions
+    overall_accuracy = Column(Float, default=0.0)
+    
+    last_practiced = Column(DateTime, default=datetime.datetime.utcnow)
+
