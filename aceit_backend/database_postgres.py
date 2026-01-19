@@ -7,10 +7,20 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+# Fallback to SQLite for development if no PostgreSQL URL provided
 if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL not found")
+    print("[WARNING] DATABASE_URL not found. Using SQLite fallback for development.")
+    DATABASE_URL = "sqlite:///./aceit_dev.db"
+    
+    # Create the database file directory if it doesn't exist
+    db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "aceit_dev.db")
+    print(f"[INFO] Using SQLite database at: {db_path}")
 
-engine = create_engine(DATABASE_URL)
+# For SQLite, we need to add check_same_thread=False for FastAPI development
+if DATABASE_URL.startswith("sqlite"):
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+else:
+    engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(
     autocommit=False,
