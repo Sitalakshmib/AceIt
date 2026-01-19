@@ -1,5 +1,8 @@
 from fastapi import APIRouter, HTTPException
-from database import questions_data, progress_data
+try:
+    from ..database import questions_data, progress_data
+except (ImportError, ValueError):
+    from database import questions_data, progress_data
 from datetime import datetime
 from services.leetcode import get_leetcode_problems, get_problem_details
 from services.code_executor import execute_code

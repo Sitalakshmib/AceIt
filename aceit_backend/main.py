@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from routes import auth, aptitude, coding, progress, communication, interview, resume, stt
+from routes import auth, aptitude, coding, progress, communication, interview, resume, stt, mock_tests, analytics
 import os
 
 print("[INFO] GEMINI_API_KEY loaded:", bool(os.getenv("GEMINI_API_KEY")))
@@ -22,10 +22,6 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
-        "http://localhost:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -41,6 +37,8 @@ app.include_router(communication.router, prefix="/communication", tags=["Communi
 app.include_router(interview.router, prefix="/interview", tags=["Mock Interviews"])
 app.include_router(resume.router, prefix="/resume", tags=["Resume Analysis"])
 app.include_router(stt.router, prefix="/stt", tags=["Speech To Text"])
+app.include_router(mock_tests.router, prefix="/mock-tests", tags=["Mock Tests"])
+app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 
 # Static files (for voice / TTS)
 app.mount("/static", StaticFiles(directory="static"), name="static")
