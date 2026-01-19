@@ -56,11 +56,10 @@ const Navbar = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-                  location.pathname === item.path
-                    ? 'bg-white text-blue-600 shadow-lg transform scale-105'
-                    : 'text-blue-100 hover:bg-blue-500 hover:text-white hover:shadow-md'
-                }`}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${location.pathname === item.path
+                  ? 'bg-white text-blue-600 shadow-lg transform scale-105'
+                  : 'text-blue-100 hover:bg-blue-500 hover:text-white hover:shadow-md'
+                  }`}
               >
                 <span className="text-lg">{item.icon}</span>
                 <span>{item.label}</span>
@@ -121,17 +120,16 @@ const Navbar = () => {
                   key={item.path}
                   to={item.path}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                    location.pathname === item.path
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
-                      : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${location.pathname === item.path
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                    : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                 >
                   <span className="text-lg">{item.icon}</span>
                   <span>{item.label}</span>
                 </Link>
               ))}
-              
+
               {/* Mobile Logout */}
               <button
                 onClick={handleLogout}
@@ -153,7 +151,7 @@ const Navbar = () => {
 
       {/* Background overlay for mobile menu */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />

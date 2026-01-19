@@ -18,8 +18,20 @@ api.interceptors.request.use((config) => {
 
 // Helper function to get current user ID
 const getCurrentUserId = () => {
-  const user = JSON.parse(localStorage.getItem('aceit_user'));
-  return user?.id;
+  try {
+    const userStr = localStorage.getItem('aceit_user');
+    if (!userStr) {
+      console.warn('[API] No user found in localStorage, using guest_user');
+      return 'guest_user';
+    }
+    const user = JSON.parse(userStr);
+    const userId = user?.id || user?.user_id || 'guest_user';
+    console.log('[API] Current user ID:', userId);
+    return userId;
+  } catch (error) {
+    console.error('[API] Error getting user ID:', error);
+    return 'guest_user';
+  }
 };
 
 // Real APIs
@@ -44,12 +56,83 @@ export const aptitudeAPI = {
   submitAnswers: (answers) => {
     const userId = getCurrentUserId();
     return api.post('/aptitude/submit', {
-      user_id: userId,  // Add user_id here
+      user_id: userId,
       answers
     });
   },
   getCategories: () => api.get('/aptitude/categories'),
   getDetailedResults: (data) => api.post('/aptitude/detailed-results', data),
+
+  // New adaptive practice endpoints
+  getNextQuestion: (category, topic = null) => {
+    const userId = getCurrentUserId();
+    const params = new URLSearchParams({ user_id: userId, category });
+    if (topic) params.append('topic', topic);
+    return api.get(`/aptitude/practice/next-question?${params.toString()}`);
+  },
+  submitPracticeAnswer: (questionId, userAnswer, timeSpent) => {
+    const userId = getCurrentUserId();
+    return api.post('/aptitude/practice/submit-answer', {
+      user_id: userId,
+      question_id: questionId,
+      user_answer: userAnswer,
+      time_spent: timeSpent
+    });
+  },
+  getUserProficiency: () => {
+    const userId = getCurrentUserId();
+    return api.get(`/aptitude/proficiency/${userId}`);
+  }
+};
+
+// Mock Test APIs
+export const mockTestAPI = {
+  generateTest: (testType, category = null, topic = null) => {
+    return api.post('/mock-tests/generate', {
+      test_type: testType,
+      category,
+      topic
+    });
+  },
+  getTest: (testId) => api.get(`/mock-tests/${testId}`),
+  startTest: (testId) => {
+    const userId = getCurrentUserId();
+    return api.post(`/mock-tests/${testId}/start`, { user_id: userId });
+  },
+  submitAnswer: (testId, attemptId, questionId, userAnswer, timeSpent) => {
+    return api.post(`/mock-tests/${testId}/submit-answer`, {
+      attempt_id: attemptId,
+      question_id: questionId,
+      user_answer: userAnswer,
+      time_spent: timeSpent
+    });
+  },
+  completeTest: (testId, attemptId) => {
+    return api.post(`/mock-tests/${testId}/complete`, { attempt_id: attemptId });
+  },
+  getResults: (testId, attemptId) => {
+    return api.get(`/mock-tests/${testId}/results/${attemptId}`);
+  },
+  getUserAttempts: () => {
+    const userId = getCurrentUserId();
+    return api.get(`/mock-tests/user/${userId}/attempts`);
+  }
+};
+
+// Analytics APIs
+export const analyticsAPI = {
+  getDashboard: () => {
+    const userId = getCurrentUserId();
+    return api.get(`/analytics/dashboard/${userId}`);
+  },
+  getProgressHistory: (days = 30) => {
+    const userId = getCurrentUserId();
+    return api.get(`/analytics/progress/${userId}`, { params: { days } });
+  },
+  getTopicAnalytics: (topic) => {
+    const userId = getCurrentUserId();
+    return api.get(`/analytics/topic/${userId}/${topic}`);
+  }
 };
 
 export const codingAPI = {
