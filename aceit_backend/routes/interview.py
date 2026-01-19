@@ -20,6 +20,7 @@ class StartRequest(BaseModel):
     user_id: str
     resume_text: Optional[str] = ""
     jd_text: Optional[str] = ""
+    interview_type: Optional[str] = "technical"  # "technical" or "hr"
 
 class NextResponse(BaseModel):
     text: str
@@ -30,9 +31,9 @@ class NextResponse(BaseModel):
 
 @router.post("/start")
 async def start_interview(req: StartRequest, engine: SimVoiceInterviewer = Depends(get_engine)):
-    print(f"[INTERVIEW] /interview/start hit by User: {req.user_id}")
+    print(f"[INTERVIEW] /interview/start hit by User: {req.user_id}, Type: {req.interview_type}")
     try:
-        result = engine.start_interview(req.user_id, req.resume_text, req.jd_text)
+        result = engine.start_interview(req.user_id, req.resume_text, req.jd_text, req.interview_type)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,16 +1,12 @@
 import os
-import shutil
 import whisper
-from gtts import gTTS
-import uuid
 
 # Global Whisper Model (Lazy Loaded)
 _WHISPER_MODEL = None
 
 class VoiceService:
-    def __init__(self, static_dir="static/audio"):
-        self.static_dir = static_dir
-        os.makedirs(self.static_dir, exist_ok=True)
+    def __init__(self):
+        pass
         
     def _load_whisper(self):
         global _WHISPER_MODEL
@@ -45,20 +41,11 @@ class VoiceService:
 
     def synthesize(self, text: str) -> str:
         """
-        Converts text to speech using gTTS.
-        Returns the relative path to the audio file (for frontend access).
+        Text-to-speech synthesis disabled.
+        Audio files are no longer saved to static/audio directory.
+        Returns empty string.
         """
-        try:
-            filename = f"speech_{uuid.uuid4().hex[:8]}.mp3"
-            filepath = os.path.join(self.static_dir, filename)
-            
-            # Generate speech
-            tts = gTTS(text=text, lang='en')
-            tts.save(filepath)
-            
-            return f"/static/audio/{filename}" # Web-accessible path
-        except Exception as e:
-            print(f"[ERROR] TTS Error: {e}")
-            return ""
+        # Audio saving disabled - no longer creating files in static/audio
+        return ""
 
 voice_service = VoiceService()
