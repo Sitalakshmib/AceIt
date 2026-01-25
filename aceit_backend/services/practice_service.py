@@ -111,7 +111,8 @@ class PracticeService:
             "options": question.options,
             "category": question.category,
             "topic": question.topic,
-            "difficulty": question.difficulty
+            "difficulty": question.difficulty,
+            "image_url": question.image_url  # Include chart image for Data Interpretation
         }
     
     @staticmethod

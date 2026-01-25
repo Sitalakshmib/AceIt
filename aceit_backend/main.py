@@ -49,7 +49,7 @@ app.include_router(mock_tests.router, prefix="/mock-tests", tags=["Mock Tests"])
 app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 
 # Static files (for voice / TTS)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="static 2"), name="static")
 
 @app.get("/")
 async def root():
