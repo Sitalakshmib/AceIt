@@ -41,11 +41,31 @@ class VoiceService:
 
     def synthesize(self, text: str) -> str:
         """
-        Text-to-speech synthesis disabled.
-        Audio files are no longer saved to static/audio directory.
-        Returns empty string.
+        Text-to-speech synthesis using gTTS.
+        Saves audio file to static/audio directory.
+        Returns the URL path to the audio file.
         """
-        # Audio saving disabled - no longer creating files in static/audio
-        return ""
+        try:
+            from gtts import gTTS
+            import uuid
+            
+            # Create static/audio directory if it doesn't exist
+            audio_dir = "static/audio"
+            os.makedirs(audio_dir, exist_ok=True)
+            
+            # Generate unique filename
+            filename = f"response_{uuid.uuid4().hex[:8]}.mp3"
+            filepath = os.path.join(audio_dir, filename)
+            
+            # Generate speech
+            tts = gTTS(text=text, lang='en', slow=False)
+            tts.save(filepath)
+            
+            # Return URL path (relative to static mount)
+            return f"/static/audio/{filename}"
+            
+        except Exception as e:
+            print(f"[ERROR] TTS synthesis failed: {e}")
+            return ""  # Return empty string on failure
 
 voice_service = VoiceService()

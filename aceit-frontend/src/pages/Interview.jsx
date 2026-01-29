@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../services/api';
+import VideoPractice from '../components/Interview/VideoPractice';
 
 const Interview = () => {
   const { user } = useAuth();
@@ -14,6 +15,11 @@ const Interview = () => {
   const [interviewType, setInterviewType] = useState('technical'); // 'technical' or 'hr'
 
   const handleStart = async () => {
+    if (interviewType === 'video-practice') {
+      setView('video-practice');
+      return;
+    }
+
     if (!resumeText.trim()) {
       alert('Please enter your resume summary');
       return;
@@ -78,6 +84,11 @@ const Interview = () => {
     }
   };
 
+  // Video Practice View
+  if (view === 'video-practice') {
+    return <VideoPractice onBack={() => setView('setup')} />;
+  }
+
   // Setup View
   if (view === 'setup') {
     return (
@@ -99,8 +110,8 @@ const Interview = () => {
                   type="button"
                   onClick={() => setInterviewType('technical')}
                   className={`p-4 border-2 rounded-lg transition-all ${interviewType === 'technical'
-                      ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
-                      : 'border-gray-300 hover:border-blue-300'
+                    ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                    : 'border-gray-300 hover:border-blue-300'
                     }`}
                 >
                   <div className="text-3xl mb-2">💻</div>
@@ -111,46 +122,64 @@ const Interview = () => {
                   type="button"
                   onClick={() => setInterviewType('hr')}
                   className={`p-4 border-2 rounded-lg transition-all ${interviewType === 'hr'
-                      ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200'
-                      : 'border-gray-300 hover:border-purple-300'
+                    ? 'border-purple-500 bg-purple-50 ring-2 ring-purple-200'
+                    : 'border-gray-300 hover:border-purple-300'
                     }`}
                 >
                   <div className="text-3xl mb-2">👔</div>
                   <div className="font-semibold text-gray-800">HR/Behavioral</div>
                   <div className="text-xs text-gray-600 mt-1">Soft skills, experience, culture fit</div>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setInterviewType('video-practice')}
+                  className={`p-4 border-2 rounded-lg transition-all col-span-2 sm:col-span-1 ${interviewType === 'video-practice'
+                    ? 'border-green-500 bg-green-50 ring-2 ring-green-200'
+                    : 'border-gray-300 hover:border-green-300'
+                    }`}
+                >
+                  <div className="text-3xl mb-2">📹</div>
+                  <div className="font-semibold text-gray-800">Video Presence</div>
+                  <div className="text-xs text-gray-600 mt-1">Eye contact & body language practice</div>
+                </button>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Your Resume Summary *
-              </label>
-              <textarea
-                value={resumeText}
-                onChange={(e) => setResumeText(e.target.value)}
-                placeholder="E.g., Experienced Python Developer with 3 years in backend development, skilled in FastAPI, PostgreSQL..."
-                className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-none"
-                rows="4"
-              />
-            </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Job Description (Optional)
-              </label>
-              <textarea
-                value={jdText}
-                onChange={(e) => setJdText(e.target.value)}
-                placeholder="E.g., Looking for a Backend Engineer with Python expertise..."
-                className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-none"
-                rows="3"
-              />
-            </div>
+
+            {interviewType !== 'video-practice' && (
+              <>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Your Resume Summary *
+                  </label>
+                  <textarea
+                    value={resumeText}
+                    onChange={(e) => setResumeText(e.target.value)}
+                    placeholder="E.g., Experienced Python Developer with 3 years in backend development, skilled in FastAPI, PostgreSQL..."
+                    className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-none"
+                    rows="4"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Job Description (Optional)
+                  </label>
+                  <textarea
+                    value={jdText}
+                    onChange={(e) => setJdText(e.target.value)}
+                    placeholder="E.g., Looking for a Backend Engineer with Python expertise..."
+                    className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-none"
+                    rows="3"
+                  />
+                </div>
+              </>
+            )}
 
             <button
               onClick={handleStart}
-              disabled={isLoading || !resumeText.trim()}
+              disabled={isLoading || (interviewType !== 'video-practice' && !resumeText.trim())}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
             >
               {isLoading ? 'Starting Interview...' : 'Start Interview 🚀'}

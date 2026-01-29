@@ -153,8 +153,9 @@ def extract_contact_info(text: str) -> dict:
     """Extract contact information from resume with improved accuracy"""
     contact_info = {}
     
-    # Extract email with better pattern
-    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    # Extract email with better pattern (works with lowercase)
+    # Note: text is already lowercased by preprocess_text
+    email_pattern = r'\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b'
     emails = re.findall(email_pattern, text)
     contact_info["email"] = emails[0] if emails else "Not found"
     

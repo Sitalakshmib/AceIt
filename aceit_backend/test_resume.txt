@@ -1,9 +1,0 @@
-John Doe
-Email: john.doe@example.com
-Phone: (555) 123-4567
-LinkedIn: linkedin.com/in/johndoe
-GitHub: github.com/johndoe
-
-Experience: 5 years in software development
-Skills: Python, JavaScript, React, Node.js
-Education: B.S. Computer Science
