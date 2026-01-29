@@ -48,19 +48,30 @@ def calculate_next_difficulty(progress: UserAptitudeProgress) -> str:
     return current_diff
 
 def format_questions(questions, include_explanations=False):
-    """Format SQL objects to JSON response"""
+    """Format SQL objects to JSON response with RUNTIME SHUFFLING"""
     formatted = []
     for q in questions:
+        # Runtime Shuffle Logic
+        # Create a copy of options to shuffle
+        shuffled_options = list(q.options) if q.options else []
+        original_correct_idx = q.correct_answer
+        new_correct_idx = 0
+        
+        if shuffled_options and 0 <= original_correct_idx < len(shuffled_options):
+            correct_text = shuffled_options[original_correct_idx]
+            random.shuffle(shuffled_options)
+            new_correct_idx = shuffled_options.index(correct_text)
+        
         item = {
             "id": q.id,
             "question": q.question,
-            "options": q.options,
-            "correct_answer": q.correct_answer, # Providing index for frontend checking if needed, or hide it
+            "options": shuffled_options,
+            "correct_answer": new_correct_idx, # Updated index for shuffled options
             "type": q.topic,
             "topic": q.topic,
             "category": q.category,
             "difficulty": q.difficulty,
-            "image_url": q.image_url  # Include chart image for Data Interpretation
+            "image_url": q.image_url
         }
         if include_explanations:
             item["explanation"] = q.answer_explanation
@@ -72,17 +83,22 @@ def format_questions(questions, include_explanations=False):
 @router.get("/categories")
 async def get_categories(db: Session = Depends(get_db)):
     """Get available aptitude categories and topics"""
-    # Group topics by category
+    # Group topics by category and sort them
     results = db.query(AptitudeQuestion.category, AptitudeQuestion.topic).distinct().all()
     
-    categories = {}
+    categories_raw = {}
     for cat, topic in results:
-        if cat not in categories:
-            categories[cat] = []
-        if topic not in categories[cat]:
-            categories[cat].append(topic)
+        if cat not in categories_raw:
+            categories_raw[cat] = []
+        if topic not in categories_raw[cat]:
+            categories_raw[cat].append(topic)
             
-    return {"categories": categories}
+    # Sort categories and topics within them
+    sorted_categories = {}
+    for cat in sorted(categories_raw.keys()):
+        sorted_categories[cat] = sorted(categories_raw[cat])
+            
+    return {"categories": sorted_categories}
 
 @router.get("/questions")
 async def get_aptitude_questions(
@@ -196,6 +212,24 @@ async def submit_answers(payload: dict, db: Session = Depends(get_db)):
                         progress.hard_total += 1
                         if is_correct: progress.hard_correct += 1
                     
+                    # Recalculate accuracies
+                    if progress.questions_attempted > 0:
+                        progress.overall_accuracy = (progress.questions_correct / progress.questions_attempted) * 100
+                    
+                    # Recent accuracy (last 10)
+                    recent_attempts = db.query(QuestionAttempt)\
+                        .filter(
+                            QuestionAttempt.user_id == user_id,
+                            QuestionAttempt.topic == question.topic,
+                            QuestionAttempt.context == "practice"
+                        )\
+                        .order_by(QuestionAttempt.attempted_at.desc())\
+                        .limit(10).all()
+                    
+                    if recent_attempts:
+                        recent_correct = sum(1 for a in recent_attempts if a.is_correct)
+                        progress.recent_accuracy = (recent_correct / len(recent_attempts)) * 100
+
                     # Recalculate difficulty for next time
                     progress.current_difficulty = calculate_next_difficulty(progress)
                     progress.last_practiced = datetime.datetime.utcnow()
@@ -259,17 +293,24 @@ async def get_user_proficiency(user_id: str, db: Session = Depends(get_db)):
     """Get user's progress via SQL"""
     progress_records = db.query(UserAptitudeProgress).filter(UserAptitudeProgress.user_id == user_id).all()
     
-    data = {}
+    raw_data = {}
     for p in progress_records:
-        if p.category not in data:
-            data[p.category] = {}
-        data[p.category][p.topic] = {
+        if p.category not in raw_data:
+            raw_data[p.category] = {}
+        raw_data[p.category][p.topic] = {
             "level": p.current_difficulty,
             "accuracy": f"{(p.questions_correct / p.questions_attempted * 100):.1f}%" if p.questions_attempted > 0 else "0%",
             "total_solved": p.questions_correct
         }
+    
+    # Sort categories and topics alphabetically
+    sorted_data = {}
+    for cat in sorted(raw_data.keys()):
+        sorted_data[cat] = {}
+        for topic in sorted(raw_data[cat].keys()):
+            sorted_data[cat][topic] = raw_data[cat][topic]
         
-    return {"user_id": user_id, "proficiency": data}
+    return {"user_id": user_id, "proficiency": sorted_data}
 
 
 # ========== PRACTICE MODE ENDPOINTS (IndiaBIX Style) ==========
@@ -316,6 +357,7 @@ async def submit_practice_answer(payload: dict, db: Session = Depends(get_db)):
     question_id = payload.get("question_id")
     user_answer = payload.get("user_answer")
     time_spent = payload.get("time_spent", 0)
+    shuffled_options = payload.get("shuffled_options")  # Frontend sends the options it displayed
     
     if not all([user_id, question_id is not None, user_answer is not None]):
         raise HTTPException(
@@ -325,7 +367,7 @@ async def submit_practice_answer(payload: dict, db: Session = Depends(get_db)):
     
     try:
         feedback = PracticeService.submit_answer(
-            db, user_id, question_id, user_answer, time_spent
+            db, user_id, question_id, user_answer, time_spent, shuffled_options
         )
         return feedback
     except ValueError as e:

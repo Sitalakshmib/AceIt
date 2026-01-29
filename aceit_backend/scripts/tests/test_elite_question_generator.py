@@ -31,7 +31,7 @@ def test_single_question():
         question = generator.generate_question(
             category="Quantitative",
             sub_topic="Probability",
-            difficulty_level="Advanced",
+            difficulty_level="Hard",
             user_level="advanced",
             performance_signals={
                 "accuracy_trend": "high",
@@ -74,17 +74,17 @@ def test_multiple_categories():
         {
             "category": "Quantitative",
             "sub_topic": "Number Systems",
-            "difficulty_level": "Intermediate"
+            "difficulty_level": "Medium"
         },
         {
             "category": "Logical",
             "sub_topic": "Seating Arrangements",
-            "difficulty_level": "Advanced"
+            "difficulty_level": "Hard"
         },
         {
             "category": "Verbal",
             "sub_topic": "Critical Reasoning",
-            "difficulty_level": "Elite"
+            "difficulty_level": "Hard"
         }
     ]
     
@@ -122,7 +122,7 @@ def test_difficulty_progression():
     print("TEST 3: Difficulty Progression")
     print("="*70)
     
-    difficulties = ["Beginner", "Intermediate", "Advanced", "Elite"]
+    difficulties = ["Easy", "Medium", "Hard"]
     generator = EliteQuestionGenerator()
     
     for difficulty in difficulties:
@@ -140,6 +140,9 @@ def test_difficulty_progression():
                 print(f"     Concepts: {len(question['primary_concepts'])} concept(s)")
                 print(f"     Time: {question['time_to_solve_sec']}s")
                 print(f"     Question length: {len(question['question'])} chars")
+                # Check for Scenario
+                if len(question['question']) > 50 and "find" not in question['question'].lower()[:20]:
+                     print("     ✅ Scenario detected")
             else:
                 print(f"  ❌ Failed")
                 
@@ -162,7 +165,7 @@ def test_batch_generation():
         questions = generator.generate_batch(
             category="Quantitative",
             sub_topic="Time & Work",
-            difficulty_level="Intermediate",
+            difficulty_level="Medium",
             count=3
         )
         
@@ -194,7 +197,7 @@ def test_quality_validation():
         "question": "A train travels at 60 km/h for the first half of the journey and 40 km/h for the second half. What is the average speed?",
         "options": ["50 km/h", "48 km/h", "45 km/h", "52 km/h"],
         "correct_option": 1,
-        "difficulty_level": "Intermediate",
+        "difficulty_level": "Medium",
         "primary_concepts": ["average_speed", "harmonic_mean"],
         "trap_explanation": "Option A is tempting as arithmetic mean",
         "optimal_solution_strategy": "Use harmonic mean formula for average speed",
@@ -208,7 +211,7 @@ def test_quality_validation():
         "question": "What is 2+2?",
         "options": ["3", "4", "5", "6"],
         "correct_option": 1,
-        "difficulty_level": "Beginner",
+        "difficulty_level": "Easy",
         "primary_concepts": [],
         "trap_explanation": "Too short",
         "optimal_solution_strategy": "Add",

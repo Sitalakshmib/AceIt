@@ -95,10 +95,12 @@ const PracticeMode = () => {
             setError('');
 
             const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+            // Pass the shuffled options so backend can correctly validate
             const response = await aptitudeAPI.submitPracticeAnswer(
                 currentQuestion.question_id,
                 selectedAnswer,
-                timeSpent
+                timeSpent,
+                currentQuestion.options // These are already shuffled from the server
             );
 
             setFeedback(response.data);

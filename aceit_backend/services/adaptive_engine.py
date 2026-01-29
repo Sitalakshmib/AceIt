@@ -197,9 +197,27 @@ class AdaptiveEngine:
         # Time tracking
         progress.total_time_spent_seconds += time_spent
         if progress.questions_attempted > 0:
-             progress.average_time_per_question = (
+            progress.average_time_per_question = (
                 progress.total_time_spent_seconds / progress.questions_attempted
-             )
+            )
+        
+        # Update overall accuracy
+        if progress.questions_attempted > 0:
+            progress.overall_accuracy = (progress.questions_correct / progress.questions_attempted) * 100
+
+        # Calculate recent accuracy (last 10 questions)
+        recent_attempts = db.query(QuestionAttempt)\
+            .filter(
+                QuestionAttempt.user_id == user_id,
+                QuestionAttempt.topic == question.topic,
+                QuestionAttempt.context == "practice"
+            )\
+            .order_by(QuestionAttempt.attempted_at.desc())\
+            .limit(10).all()
+        
+        if recent_attempts:
+            recent_correct = sum(1 for a in recent_attempts if a.is_correct)
+            progress.recent_accuracy = (recent_correct / len(recent_attempts)) * 100
              
         # --- NEW ADAPTIVE LOGIC ---
         new_difficulty = AdaptiveEngine.calculate_next_difficulty(

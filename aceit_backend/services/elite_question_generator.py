@@ -38,15 +38,15 @@ class EliteQuestionGenerator:
             raise RuntimeError("GEMINI_API_KEY not found in environment variables")
         
         genai.configure(api_key=api_key)
-        # Using stable model instead of experimental to avoid quota issues
-        self.model = genai.GenerativeModel("models/gemini-1.5-flash")
+        # Using stable model
+        self.model = genai.GenerativeModel("models/gemini-2.0-flash")
         
     
     def generate_question(
         self,
         category: str,
         sub_topic: str,
-        difficulty_level: str = "Intermediate",
+        difficulty_level: str = "Medium",
         user_level: Optional[str] = None,
         performance_signals: Optional[Dict] = None
     ) -> Optional[Dict]:
@@ -80,7 +80,7 @@ class EliteQuestionGenerator:
             response = self.model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
-                    temperature=0.9,  # Higher creativity for diverse questions
+                    temperature=0.9,
                     top_p=0.95,
                     top_k=40,
                     max_output_tokens=2048,
@@ -131,14 +131,31 @@ User Performance Signals:
 - Time Taken Trend: {performance_signals.get('time_trend', 'N/A')}
 - Error Pattern: {performance_signals.get('error_pattern', 'N/A')}
 """
+            
+        # Placement Exam Context mapping
+        exam_context_map = {
+            "Easy": "Warm-up / confidence builders. Direct formula application.",
+            "Medium": "Cutoff & shortlisting level. Concept selection + logical reasoning.",
+            "Hard": "Top 10-20% filtering. Multi-step logic, traps, and real-test complexity."
+        }
+        exam_context = exam_context_map.get(difficulty_level, "Standard aptitude test")
         
-        prompt = f"""You are an elite aptitude question architect trained in the standards of CAT, XAT, GMAT, GRE, GATE, and top-tier product company interviews.
+        prompt = f"""You are an elite aptitude question architect for top-tier placement exams (Google, Amazon, TCS Digital, etc) and competitive exams (CAT, GMAT).
 
-Your task is to generate ONE HIGH-INTELLIGENCE aptitude question that is:
-1. Conceptually deep (not formula-based)
-2. Trap-aware (misleading but fair)
-3. Time-efficient (solvable within {difficulty_specs['time_expected_sec']} seconds by a strong candidate)
-4. Discriminatory (clearly separates average from top 5% performers)
+Your task is to generate ONE HIGH-QUALITY "SCENARIO-BASED" aptitude question.
+
+-------------------------
+STRICT SCENARIO REQUIREMENT
+-------------------------
+Every question MUST be wrapped in a realistic short story or scenario.
+DO NOT ask: "Find the compound interest on $5000..."
+INSTEAD ask: "TechCorp invests a surplus of $5.2M in a high-yield bond..." or "Alice is organizing a hackathon..."
+
+Use diverse contexts:
+- Business (Profit/Loss, percentages)
+- Engineering (Time/Work, manufacturing)
+- Daily Life (Travel, shopping)
+- Abstract Logic (Puzzle scenarios)
 
 -------------------------
 QUESTION SPECIFICATIONS
@@ -146,78 +163,61 @@ QUESTION SPECIFICATIONS
 Topic Category: {category}
 Sub-topic: {sub_topic}
 Difficulty Level: {difficulty_level}
-Current User Level: {user_level or 'Not specified'}
-
-{performance_context}
+Exam Context: {exam_context}
 
 -------------------------
-DIFFICULTY CALIBRATION
+DIFFICULTY CALIBRATION (STRICT)
 -------------------------
 {json.dumps(difficulty_specs, indent=2)}
 
 -------------------------
 AVAILABLE CONCEPTS
 -------------------------
-Primary Concepts: {', '.join(concepts[:5])}
-Elite Traps: {', '.join(elite_traps[:3])}
+Primary Concepts: {', '.join(concepts[:6])}
+Elite Traps: {', '.join(elite_traps[:4])}
 
 -------------------------
 GENERATION RULES
 -------------------------
-1. Question must involve {difficulty_specs['reasoning_steps']} reasoning steps
-2. Use {difficulty_specs['concept_count']} concept(s)
-3. Introduce at least ONE {difficulty_specs['trap_level']} trap
-4. Use realistic numbers (no toy values like 1, 2, 3)
-5. Question must be solvable WITHOUT brute force
-6. Create exactly 4 options (A, B, C, D)
-7. Make wrong options tempting based on common mistakes
-
--------------------------
-TRAP DESIGN GUIDELINES
--------------------------
-- Beginner: Calculation errors, unit confusion
-- Intermediate: Conceptual misunderstanding, partial solutions
-- Advanced: Hidden assumptions, data sufficiency traps
-- Elite: Reverse logic, pattern blindness, overthinking traps
+1. **Scenario-Based**: Start with a 1-2 sentence context.
+2. **Difficulty Compliance**:
+   - Easy: Direct application, but still in a scenario.
+   - Medium: Combinations of 2 concepts. subtle traps.
+   - Hard: Hidden constraints, reverse reasoning.
+3. **Diverse Formats**: Do not just use "Solve for X". vary the style:
+   - "Find the odd one out" (in context)
+   - "Statement I vs Statement II sufficiency"
+   - "Match the following" logic
+4. **Options**: 4 distinct options. Wrong options must be "tempting" (based on common errors).
+5. **No Toy Numbers**: Use realistic figures (e.g., $12,450 instead of $100), unless integer logic is the core concept.
 
 -------------------------
 OUTPUT FORMAT (STRICT JSON)
 -------------------------
-You MUST respond with ONLY a valid JSON object (no markdown, no extra text):
+You MUST respond with ONLY a valid JSON object:
 
 {{
-  "question": "Well-structured MCQ question text here",
+  "question": "The full question text including the scenario and the specific question asked.",
   "options": [
-    "Option A text",
-    "Option B text",
-    "Option C text",
-    "Option D text"
+    "Option A",
+    "Option B",
+    "Option C",
+    "Option D"
   ],
   "correct_option": 0,
   "difficulty_level": "{difficulty_level}",
   "primary_concepts": ["concept1", "concept2"],
-  "trap_explanation": "Explain why wrong options are tempting and what mistakes lead to them",
-  "optimal_solution_strategy": "Describe the fastest reasoning path to solve this question",
+  "trap_explanation": "Explain why wrong options are tempting",
+  "optimal_solution_strategy": "Step-by-step reasoning for the fastest solution",
   "common_mistake": "What average students typically do wrong",
   "time_to_solve_sec": {difficulty_specs['time_expected_sec']},
   "follow_up_logic": {{
-      "if_correct": "How to increase complexity for next question",
-      "if_wrong": "What remedial concept to focus on"
+      "if_correct": "How to increase complexity",
+      "if_wrong": "Remedial concept"
   }}
 }}
 
--------------------------
-QUALITY CHECKLIST
--------------------------
-Before finalizing, ensure:
-✓ Question is intellectually rewarding
-✓ Traps are fair but subtle
-✓ Solution exists and is elegant
-✓ Numbers are realistic
-✓ Options are distinct and plausible
-✓ Explanation is clear and educational
-
-Generate the question now. Return ONLY the JSON object, nothing else."""
+Generate the question now. Return ONLY the JSON object."""
 
         return prompt
     
@@ -249,6 +249,27 @@ Generate the question now. Return ONLY the JSON object, nothing else."""
                 if field not in question_data:
                     print(f"[Parse Error] Missing required field: {field}")
                     return None
+            
+            # --- SHUFFLING LOGIC start ---
+            # Shuffle options to ensure randomness even if LLM generates strictly ordered options
+            import random
+            options = question_data["options"]
+            correct_idx = question_data["correct_option"]
+            
+            if 0 <= correct_idx < len(options):
+                correct_answer_text = options[correct_idx]
+                random.shuffle(options)
+                
+                # Find new index of the correct answer
+                new_correct_idx = options.index(correct_answer_text)
+                
+                # Update data
+                question_data["options"] = options
+                question_data["correct_option"] = new_correct_idx
+                print(f"[EliteQGen] Shuffled options. New correct index: {new_correct_idx}")
+            else:
+                print(f"[EliteQGen] Warning: Invalid correct_option index {correct_idx} from LLM")
+            # --- SHUFFLING LOGIC end ---
             
             return question_data
             

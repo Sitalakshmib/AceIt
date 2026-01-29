@@ -70,13 +70,14 @@ export const aptitudeAPI = {
     if (topic) params.append('topic', topic);
     return api.get(`/aptitude/practice/next-question?${params.toString()}`);
   },
-  submitPracticeAnswer: (questionId, userAnswer, timeSpent) => {
+  submitPracticeAnswer: (questionId, userAnswer, timeSpent, shuffledOptions = null) => {
     const userId = getCurrentUserId();
     return api.post('/aptitude/practice/submit-answer', {
       user_id: userId,
       question_id: questionId,
       user_answer: userAnswer,
-      time_spent: timeSpent
+      time_spent: timeSpent,
+      shuffled_options: shuffledOptions
     });
   },
   getUserProficiency: () => {
