@@ -20,7 +20,7 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 relative">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-100 relative">
           <div className="absolute inset-0 tech-pattern opacity-60 pointer-events-none" />
           <div className="relative z-10">
             <Routes>

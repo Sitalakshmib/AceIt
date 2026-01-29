@@ -155,18 +155,18 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white">Welcome back, {user?.username || user?.email || 'Learner'}</h1>
-          <p className="text-slate-300 mt-2">
+          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.username || user?.email || 'Learner'}</h1>
+          <p className="text-gray-600 mt-2">
             Your personalized learning dashboard
             {progressData.overall_score === 0 && (
-              <span className="ml-2 text-sm bg-blue-500/20 text-blue-300 px-2 py-1 rounded-full border border-blue-500/30">
+              <span className="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                 Start Practicing!
               </span>
             )}
           </p>
         </div>
         <div className="mt-4 md:mt-0 flex items-center space-x-2">
-          <div className="text-sm text-slate-400">
+          <div className="text-sm text-gray-500">
             Last updated: {new Date().toLocaleDateString()}
           </div>
         </div>
@@ -175,17 +175,17 @@ const Dashboard = () => {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-slate-800/80 backdrop-blur rounded-2xl shadow-xl p-6 hover:scale-105 transition-transform duration-200 cursor-pointer border border-slate-700 hover:border-blue-500/50">
+          <div key={index} className="bg-white rounded-2xl shadow-lg p-6 hover:scale-105 transition-transform duration-200 cursor-pointer border border-transparent hover:border-blue-100">
             <div className="flex justify-between items-start">
               <div>
-                <p className="text-slate-400 text-sm font-medium">{stat.title}</p>
-                <p className="text-3xl font-bold mt-2 text-white">{stat.value}</p>
-                <p className="text-slate-500 text-sm mt-1">{stat.description}</p>
+                <p className="text-gray-500 text-sm font-medium">{stat.title}</p>
+                <p className="text-3xl font-bold mt-2 text-slate-800">{stat.value}</p>
+                <p className="text-gray-400 text-sm mt-1">{stat.description}</p>
               </div>
-              <div className={`p-3 rounded-xl ${index === 0 ? 'bg-blue-500/10 text-blue-400' :
-                index === 1 ? 'bg-green-500/10 text-green-400' :
-                  index === 2 ? 'bg-purple-500/10 text-purple-400' :
-                    'bg-orange-500/10 text-orange-400'
+              <div className={`p-3 rounded-xl ${index === 0 ? 'bg-blue-50 text-blue-600' :
+                index === 1 ? 'bg-green-50 text-green-600' :
+                  index === 2 ? 'bg-purple-50 text-purple-600' :
+                    'bg-orange-50 text-orange-600'
                 }`}>
                 {stat.icon}
               </div>
@@ -197,20 +197,18 @@ const Dashboard = () => {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Weekly Activity Chart */}
-        <div className="bg-slate-800/80 backdrop-blur rounded-2xl shadow-xl p-6 border border-slate-700">
+        <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex items-center mb-6">
-            <Activity className="h-5 w-5 text-blue-400 mr-2" />
-            <h3 className="text-lg font-semibold text-white">Weekly Activity</h3>
+            <Activity className="h-5 w-5 text-blue-500 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900">Weekly Activity</h3>
           </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                <XAxis dataKey="day" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff' }}
-                />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="day" stroke="#666" />
+                <YAxis stroke="#666" />
+                <Tooltip />
                 <Legend />
                 <Bar dataKey="aptitude" fill="#3B82F6" name="Aptitude Qs" />
                 <Bar dataKey="coding" fill="#10B981" name="Coding Problems" />
@@ -220,10 +218,10 @@ const Dashboard = () => {
         </div>
 
         {/* Skill Distribution Chart */}
-        <div className="bg-slate-800/80 backdrop-blur rounded-2xl shadow-xl p-6 border border-slate-700">
+        <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex items-center mb-6">
-            <PieChartIcon className="h-5 w-5 text-green-400 mr-2" />
-            <h3 className="text-lg font-semibold text-white">Skill Distribution</h3>
+            <PieChartIcon className="h-5 w-5 text-green-500 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900">Skill Distribution</h3>
           </div>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -242,10 +240,7 @@ const Dashboard = () => {
                     <Cell key={`cell-${index}`} fill={SKILL_COLORS[index % SKILL_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip
-                  formatter={(value) => [`${value}%`, 'Score']}
-                  contentStyle={{ backgroundColor: '#1e293b', borderColor: '#334155', color: '#fff' }}
-                />
+                <Tooltip formatter={(value) => [`${value}%`, 'Score']} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -265,14 +260,14 @@ const Dashboard = () => {
               <div
                 key={index}
                 onClick={() => navigate(module.path)}
-                className="flex items-center justify-between p-4 rounded-xl hover:bg-slate-700/50 cursor-pointer transition-colors border border-slate-700 hover:border-slate-600"
+                className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors border border-gray-100"
               >
                 <div className="flex items-center">
                   <span className="text-2xl mr-4">{module.icon}</span>
                   <div>
-                    <h4 className="font-medium text-white">{module.title}</h4>
+                    <h4 className="font-medium text-gray-900">{module.title}</h4>
                     <div className="flex items-center mt-1">
-                      <div className="w-48 bg-slate-700 rounded-full h-2">
+                      <div className="w-48 bg-gray-200 rounded-full h-2">
                         <div
                           className="h-full rounded-full"
                           style={{
@@ -282,13 +277,13 @@ const Dashboard = () => {
                           }}
                         ></div>
                       </div>
-                      <span className="ml-3 text-sm font-medium text-slate-300">{module.score}%</span>
+                      <span className="ml-3 text-sm font-medium">{module.score}%</span>
                     </div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-white">{module.total}</div>
-                  <div className="text-sm text-slate-400">attempts</div>
+                  <div className="text-2xl font-bold">{module.total}</div>
+                  <div className="text-sm text-gray-500">attempts</div>
                 </div>
               </div>
             ))}
@@ -296,54 +291,54 @@ const Dashboard = () => {
         </div>
 
         {/* Recent Activity */}
-        <div className="bg-slate-800/80 backdrop-blur rounded-2xl shadow-xl p-6 border border-slate-700">
+        <div className="bg-white rounded-2xl shadow-lg p-6">
           <div className="flex items-center mb-6">
-            <Calendar className="h-5 w-5 text-orange-400 mr-2" />
-            <h3 className="text-lg font-semibold text-white">Recent Activity</h3>
+            <Calendar className="h-5 w-5 text-orange-500 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
           </div>
           <div className="space-y-4">
             {progressData.recent_activity.length > 0 ? (
               progressData.recent_activity.map((activity, index) => (
-                <div key={index} className="flex items-start p-3 rounded-lg bg-slate-700/30 border border-slate-700/50">
+                <div key={index} className="flex items-start p-3 rounded-lg bg-gray-50">
                   <div className="flex-shrink-0 mt-1">
                     {activity.type === 'aptitude_test' && (
-                      <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center">
-                        <Brain className="h-4 w-4 text-blue-400" />
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Brain className="h-4 w-4 text-blue-600" />
                       </div>
                     )}
                     {activity.type === 'coding_problem' && (
-                      <div className="w-8 h-8 bg-green-500/10 rounded-full flex items-center justify-center">
-                        <Target className="h-4 w-4 text-green-400" />
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Target className="h-4 w-4 text-green-600" />
                       </div>
                     )}
                     {activity.type === 'mock_interview' && (
-                      <div className="w-8 h-8 bg-purple-500/10 rounded-full flex items-center justify-center">
-                        <Users className="h-4 w-4 text-purple-400" />
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <Users className="h-4 w-4 text-purple-600" />
                       </div>
                     )}
                   </div>
                   <div className="ml-3">
-                    <p className="font-medium text-white">
+                    <p className="font-medium text-gray-900">
                       {activity.type === 'coding_problem' ? activity.problem :
                         activity.type === 'aptitude_test' ? 'Aptitude Test' : 'Mock Interview'}
                     </p>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-gray-500">
                       Score: {activity.score}%
                       {activity.success !== undefined && (
-                        <span className={`ml-2 px-1 rounded text-xs ${activity.success ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                        <span className={`ml-2 px-1 rounded text-xs ${activity.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                           {activity.success ? '✓' : '✗'}
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-slate-500 mt-1">{activity.date}</p>
+                    <p className="text-xs text-gray-400 mt-1">{activity.date}</p>
                   </div>
                 </div>
               ))
             ) : (
               <div className="text-center py-8">
-                <AlertCircle className="h-12 w-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-400">No recent activity</p>
-                <p className="text-sm text-slate-500 mt-1">Start practicing to see your progress</p>
+                <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No recent activity</p>
+                <p className="text-sm text-gray-400 mt-1">Start practicing to see your progress</p>
               </div>
             )}
           </div>
@@ -351,20 +346,20 @@ const Dashboard = () => {
       </div>
 
       {/* Recommendations */}
-      <div className="bg-slate-800/80 backdrop-blur rounded-2xl shadow-xl p-6 mb-8 border border-slate-700">
+      <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
         <div className="flex items-center mb-6">
-          <Star className="h-5 w-5 text-indigo-400 mr-2" />
-          <h3 className="text-lg font-semibold text-white">Personalized Recommendations</h3>
+          <Star className="h-5 w-5 text-indigo-500 mr-2" />
+          <h3 className="text-lg font-semibold text-gray-900">Personalized Recommendations</h3>
         </div>
         <div className="space-y-4">
           {progressData.recommendations.map((recommendation, index) => (
-            <div key={index} className="flex items-start p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
+            <div key={index} className="flex items-start p-3 rounded-lg bg-indigo-50">
               <div className="flex-shrink-0 mt-1">
-                <div className="w-6 h-6 bg-indigo-500/20 rounded-full flex items-center justify-center">
-                  <span className="text-indigo-400 text-sm font-bold">{index + 1}</span>
+                <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <span className="text-indigo-600 text-sm font-bold">{index + 1}</span>
                 </div>
               </div>
-              <p className="ml-3 text-sm text-slate-300">{recommendation}</p>
+              <p className="ml-3 text-sm text-gray-700">{recommendation}</p>
             </div>
           ))}
         </div>

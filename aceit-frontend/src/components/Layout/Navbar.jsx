@@ -139,12 +139,12 @@ const Navbar = () => {
 
           {/* Drawer Panel */}
           <div className={`fixed inset-y-0 right-0 max-w-md w-full flex pointer-events-auto transform transition-transform duration-300 ease-in-out ${isProfileOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-            <div className="w-full h-full bg-slate-900 shadow-2xl flex flex-col border-l border-slate-700">
+            <div className="w-full h-full bg-white shadow-2xl flex flex-col">
 
               {/* Header */}
               <div className="h-24 bg-gradient-to-r from-slate-900 to-blue-900 p-6 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center shadow-lg border-2 border-slate-800">
+                  <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center shadow-lg border-2 border-slate-100">
                     <span className="text-blue-900 text-xl font-bold">
                       {user?.username?.charAt(0) || user?.email?.charAt(0) || 'U'}
                     </span>
@@ -163,30 +163,30 @@ const Navbar = () => {
               </div>
 
               {/* Body */}
-              <div className="flex-1 overflow-y-auto p-6 bg-slate-950">
+              <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
                 <div className="space-y-6">
 
                   {/* Account Section */}
                   <div>
                     <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 pl-2">Account</h3>
-                    <div className="bg-slate-800/50 rounded-xl shadow-sm border border-slate-700 overflow-hidden">
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/50 transition-colors border-b border-slate-700">
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors border-b border-slate-100">
                         <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-blue-500/10 text-blue-400 rounded-lg">
+                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
                             <User className="w-5 h-5" />
                           </div>
-                          <span className="text-slate-200 font-medium">Personal Information</span>
+                          <span className="text-slate-700 font-medium">Personal Information</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-500" />
+                        <ChevronRight className="w-4 h-4 text-slate-400" />
                       </button>
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/50 transition-colors">
+                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
                         <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-purple-500/10 text-purple-400 rounded-lg">
+                          <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
                             <Bell className="w-5 h-5" />
                           </div>
-                          <span className="text-slate-200 font-medium">Notifications</span>
+                          <span className="text-slate-700 font-medium">Notifications</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-500" />
+                        <ChevronRight className="w-4 h-4 text-slate-400" />
                       </button>
                     </div>
                   </div>
@@ -194,24 +194,24 @@ const Navbar = () => {
                   {/* Settings Section */}
                   <div>
                     <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 pl-2">Settings</h3>
-                    <div className="bg-slate-800/50 rounded-xl shadow-sm border border-slate-700 overflow-hidden">
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/50 transition-colors border-b border-slate-700">
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors border-b border-slate-100">
                         <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-slate-700/50 text-slate-400 rounded-lg">
+                          <div className="p-2 bg-slate-100 text-slate-600 rounded-lg">
                             <Settings className="w-5 h-5" />
                           </div>
-                          <span className="text-slate-200 font-medium">Preferences</span>
+                          <span className="text-slate-700 font-medium">Preferences</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-500" />
+                        <ChevronRight className="w-4 h-4 text-slate-400" />
                       </button>
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/50 transition-colors">
+                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
                         <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-green-500/10 text-green-400 rounded-lg">
+                          <div className="p-2 bg-green-50 text-green-600 rounded-lg">
                             <HelpCircle className="w-5 h-5" />
                           </div>
-                          <span className="text-slate-200 font-medium">Help & Support</span>
+                          <span className="text-slate-700 font-medium">Help & Support</span>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-500" />
+                        <ChevronRight className="w-4 h-4 text-slate-400" />
                       </button>
                     </div>
                   </div>
@@ -220,15 +220,15 @@ const Navbar = () => {
               </div>
 
               {/* Footer / Logout */}
-              <div className="p-6 bg-slate-900 border-t border-slate-800">
+              <div className="p-6 bg-white border-t border-slate-200">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center justify-center space-x-2 bg-red-500/10 text-red-400 px-4 py-3 rounded-xl text-sm font-bold hover:bg-red-500/20 transition-colors duration-200"
+                  className="w-full flex items-center justify-center space-x-2 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-bold hover:bg-red-100 transition-colors duration-200"
                 >
                   <LogOut className="w-5 h-5" />
                   <span>Log Out</span>
                 </button>
-                <p className="text-center text-xs text-slate-600 mt-4">AceIt v1.0.0</p>
+                <p className="text-center text-xs text-slate-400 mt-4">AceIt v1.0.0</p>
               </div>
 
             </div>
