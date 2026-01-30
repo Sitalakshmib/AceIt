@@ -16,6 +16,7 @@ class AptitudeQuestion(Base):
     category = Column(String)  # "Quantitative", "Logical", "Verbal"
     difficulty = Column(String)  # "easy", "medium", "hard"
     source = Column(String, default="generated")
+    image_url = Column(String, nullable=True)  # For Data Interpretation charts/graphs
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     
     # Additional metadata for analytics
@@ -24,6 +25,26 @@ class AptitudeQuestion(Base):
     times_correct = Column(Integer, default=0)
     average_time_seconds = Column(Float, default=0.0)
     last_used = Column(DateTime, nullable=True)
+    
+    # ===== ELITE METADATA =====
+    # Conceptual depth
+    primary_concepts = Column(ARRAY(String), default=list)  # ["concept1", "concept2"]
+    trap_explanation = Column(String, nullable=True)  # Why wrong options are tempting
+    optimal_solution_strategy = Column(String, nullable=True)  # Fastest reasoning path
+    common_mistake = Column(String, nullable=True)  # What average students do wrong
+    time_to_solve_sec = Column(Integer, default=120)  # Expected solve time
+    
+    # Multi-dimensional difficulty
+    concept_depth = Column(String, default="single")  # single, dual, multi, meta
+    cognitive_load = Column(String, default="low")  # low, medium, high, very_high
+    trap_density = Column(String, default="low")  # low, medium, high
+    
+    # Follow-up logic (stored as JSON string)
+    follow_up_logic = Column(String, nullable=True)  # JSON: {if_correct, if_wrong}
+    
+    # Quality metrics
+    discriminatory_index = Column(Float, default=0.0)  # How well it separates top performers
+    elite_accuracy_rate = Column(Float, default=0.0)  # Accuracy among elite users (80%+ overall)
 
 class UserAptitudeProgress(Base):
     __tablename__ = "user_aptitude_progress"
@@ -59,6 +80,20 @@ class UserAptitudeProgress(Base):
     # Performance trends
     recent_accuracy = Column(Float, default=0.0)  # Last 10 questions
     overall_accuracy = Column(Float, default=0.0)
+    
+    # ===== ERROR PATTERN TRACKING =====
+    conceptual_errors = Column(Integer, default=0)  # Wrong approach, formula misapplication
+    careless_errors = Column(Integer, default=0)  # Calculation mistakes, sign errors
+    overthinking_errors = Column(Integer, default=0)  # Correct approach but overcomplicated
+    time_pressure_errors = Column(Integer, default=0)  # Rushed answers, incomplete reasoning
+    
+    # ===== MULTI-DIMENSIONAL STATE =====
+    current_concept_depth = Column(String, default="single")  # single, dual, multi, meta
+    current_cognitive_load = Column(String, default="low")  # low, medium, high, very_high
+    current_trap_density = Column(String, default="low")  # low, medium, high
+    
+    # Performance classification
+    user_tier = Column(String, default="developing")  # developing, competent, advanced, elite
     
     last_practiced = Column(DateTime, default=datetime.datetime.utcnow)
 

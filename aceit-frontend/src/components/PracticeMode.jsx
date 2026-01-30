@@ -95,10 +95,12 @@ const PracticeMode = () => {
             setError('');
 
             const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
+            // Pass the shuffled options so backend can correctly validate
             const response = await aptitudeAPI.submitPracticeAnswer(
                 currentQuestion.question_id,
                 selectedAnswer,
-                timeSpent
+                timeSpent,
+                currentQuestion.options // These are already shuffled from the server
             );
 
             setFeedback(response.data);
@@ -150,8 +152,8 @@ const PracticeMode = () => {
                                         key={cat}
                                         onClick={() => { setSelectedCategory(cat); setSelectedTopic('all'); }}
                                         className={`p-4 border rounded-lg cursor-pointer transition-all ${selectedCategory === cat
-                                                ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-200'
-                                                : 'hover:bg-gray-50 border-gray-200'
+                                            ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-200'
+                                            : 'hover:bg-gray-50 border-gray-200'
                                             }`}
                                     >
                                         <h3 className="font-bold text-lg">{cat}</h3>
@@ -255,6 +257,21 @@ const PracticeMode = () => {
 
                 {/* Question */}
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+                    {/* Image for Data Interpretation questions */}
+                    {currentQuestion.image_url && (
+                        <div className="mb-6">
+                            <img
+                                src={currentQuestion.image_url}
+                                alt="Question visualization"
+                                className="w-full max-w-2xl mx-auto rounded-lg border-2 border-gray-200 shadow-sm"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    console.error('Failed to load image:', currentQuestion.image_url);
+                                }}
+                            />
+                        </div>
+                    )}
+
                     <div className="text-lg font-medium text-gray-800 mb-6 leading-relaxed">
                         {currentQuestion.question}
                     </div>
@@ -266,8 +283,8 @@ const PracticeMode = () => {
                                 key={idx}
                                 onClick={() => handleAnswerSelect(idx)}
                                 className={`w-full text-left p-4 rounded-lg border-2 transition-all ${selectedAnswer === idx
-                                        ? 'border-blue-500 bg-blue-50 text-blue-800'
-                                        : 'border-gray-200 hover:border-blue-200 hover:bg-gray-50'
+                                    ? 'border-blue-500 bg-blue-50 text-blue-800'
+                                    : 'border-gray-200 hover:border-blue-200 hover:bg-gray-50'
                                     }`}
                             >
                                 <span className="inline-block w-8 font-bold text-gray-400">
@@ -325,6 +342,21 @@ const PracticeMode = () => {
                 {/* Question Review */}
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h3 className="font-semibold text-gray-700 mb-4">Question:</h3>
+
+                    {/* Image for Data Interpretation questions */}
+                    {currentQuestion.image_url && (
+                        <div className="mb-4">
+                            <img
+                                src={currentQuestion.image_url}
+                                alt="Question visualization"
+                                className="w-full max-w-2xl mx-auto rounded-lg border-2 border-gray-200 shadow-sm"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                }}
+                            />
+                        </div>
+                    )}
+
                     <p className="text-gray-800 mb-6">{currentQuestion.question}</p>
 
                     {/* Options with Correct Answer Highlighted */}
@@ -333,10 +365,10 @@ const PracticeMode = () => {
                             <div
                                 key={idx}
                                 className={`p-3 rounded border ${idx === feedback.correct_answer
-                                        ? 'bg-green-100 border-green-400 text-green-800'
-                                        : idx === feedback.user_answer && !isCorrect
-                                            ? 'bg-red-100 border-red-400 text-red-800'
-                                            : 'bg-gray-50 border-gray-200'
+                                    ? 'bg-green-100 border-green-400 text-green-800'
+                                    : idx === feedback.user_answer && !isCorrect
+                                        ? 'bg-red-100 border-red-400 text-red-800'
+                                        : 'bg-gray-50 border-gray-200'
                                     }`}
                             >
                                 <span className="font-bold mr-2">{String.fromCharCode(65 + idx)}.</span>

@@ -49,12 +49,12 @@ class MockTestService:
             for cat, _ in top_cats:
                 distribution[cat] += 1
 
-        difficulty_dist = {"easy": 40, "medium": 40, "hard": 20}
+        difficulty_dist = {"easy": 20, "medium": 40, "hard": 40}
         question_ids = []
         
         for category, count in distribution.items():
-            # Calculate per-difficulty count
-            easy_count = int(count * 0.4)
+            # Calculate per-difficulty count (20% Easy, 40% Medium, 40% Hard)
+            easy_count = int(count * 0.2)
             medium_count = int(count * 0.4)
             hard_count = count - easy_count - medium_count
             
@@ -107,12 +107,12 @@ class MockTestService:
         - 30 minutes duration
         - Balanced difficulty distribution
         """
-        difficulty_dist = {"easy": 40, "medium": 40, "hard": 20}
+        difficulty_dist = {"easy": 20, "medium": 40, "hard": 40}
         question_ids = []
         
-        # Calculate per-difficulty count
+        # Calculate per-difficulty count (20% Easy, 40% Medium, 40% Hard)
         total_questions = 30
-        easy_count = int(total_questions * 0.4)
+        easy_count = int(total_questions * 0.2)
         medium_count = int(total_questions * 0.4)
         hard_count = total_questions - easy_count - medium_count
         
@@ -161,14 +161,14 @@ class MockTestService:
         - 20 minutes duration
         - Balanced difficulty distribution
         """
-        difficulty_dist = {"easy": 40, "medium": 40, "hard": 20}
+        difficulty_dist = {"easy": 20, "medium": 40, "hard": 40}
         question_ids = []
         
-        # Calculate per-difficulty count
-        total_questions = 20
-        easy_count = int(total_questions * 0.4)
-        medium_count = int(total_questions * 0.4)
-        hard_count = total_questions - easy_count - medium_count
+        # Calculate per-difficulty count (2 Easy, 4 Medium, 4 Hard for 10 questions)
+        total_questions = 10
+        easy_count = 2
+        medium_count = 4
+        hard_count = 4
         
         # Fetch questions for each difficulty
         for diff, diff_count in [("easy", easy_count), ("medium", medium_count), ("hard", hard_count)]:

@@ -13,6 +13,7 @@ from models.aptitude_sql import AptitudeQuestion, UserAptitudeProgress
 from models.analytics_sql import QuestionAttempt
 from typing import Dict, Optional
 import datetime
+import random
 
 
 class PracticeService:
@@ -64,6 +65,29 @@ class PracticeService:
         
         attempted_ids = [row[0] for row in attempted_query.all()]
         
+        # --- DIVERSITY LOGIC ---
+        # Get the last 3 questions attempted to ensure broader diversity
+        recent_attempts = db.query(QuestionAttempt.question_id).filter(
+            QuestionAttempt.user_id == user_id,
+            QuestionAttempt.category == category,
+            QuestionAttempt.context == "practice"
+        )
+        if topic:
+            recent_attempts = recent_attempts.filter(QuestionAttempt.topic == topic)
+        recent_attempts = recent_attempts.order_by(QuestionAttempt.attempted_at.desc()).limit(3).all()
+        recent_question_ids = [row[0] for row in recent_attempts]
+        
+        # Build concept frequency map from recent history
+        concept_freq = {}
+        if recent_question_ids:
+            recent_questions = db.query(AptitudeQuestion.primary_concepts).filter(
+                AptitudeQuestion.id.in_(recent_question_ids)
+            ).all()
+            for q in recent_questions:
+                if q.primary_concepts:
+                    for concept in q.primary_concepts:
+                        concept_freq[concept] = concept_freq.get(concept, 0) + 1
+        
         # Query for unattempted questions at current difficulty
         query = db.query(AptitudeQuestion).filter(
             AptitudeQuestion.category == category,
@@ -77,8 +101,31 @@ class PracticeService:
         if attempted_ids:
             query = query.filter(~AptitudeQuestion.id.in_(attempted_ids))
         
-        # Get random question
-        question = query.order_by(func.random()).first()
+        # Get a pool of candidate questions (limit 50 for better selection pool)
+        candidates = query.order_by(func.random()).limit(50).all()
+        
+        # --- SELECT DIVERSE QUESTION ---
+        question = None
+        if candidates:
+            if concept_freq:
+                # Score candidates by concept overlap (Lower score = More diverse)
+                candidate_scores = []
+                for c in candidates:
+                    score = 0
+                    q_concepts = c.primary_concepts or []
+                    for concept in q_concepts:
+                        score += concept_freq.get(concept, 0)
+                    
+                    # Add small random jitter to break ties randomly
+                    score += random.random() * 0.5
+                    candidate_scores.append((score, c))
+                
+                # Sort by score (ascending) and pick the best one
+                candidate_scores.sort(key=lambda x: x[0])
+                question = candidate_scores[0][1]
+            else:
+                # No recent history, just pick randomly
+                question = random.choice(candidates)
         
         # If no questions at current difficulty, try other difficulties
         if not question:
@@ -104,14 +151,28 @@ class PracticeService:
         if not question:
             return None
         
-        # Return question without correct answer
+        # --- RUNTIME SHUFFLE LOGIC ---
+        # Create a shuffled copy of options
+        original_options = list(question.options) if question.options else []
+        shuffled_options = original_options.copy()
+        random.shuffle(shuffled_options)
+        
+        # Create mapping from shuffled index to original index
+        # This allows submit_answer to validate correctly
+        original_correct_idx = question.correct_answer
+        shuffled_correct_idx = shuffled_options.index(original_options[original_correct_idx]) if 0 <= original_correct_idx < len(original_options) else 0
+        
+        # Return question without correct answer, but with shuffled options
         return {
             "question_id": question.id,
             "question": question.question,
-            "options": question.options,
+            "options": shuffled_options,
             "category": question.category,
             "topic": question.topic,
-            "difficulty": question.difficulty
+            "difficulty": question.difficulty,
+            "image_url": question.image_url,
+            # Hidden field for answer validation (frontend should NOT use this)
+            "_shuffled_correct_idx": shuffled_correct_idx
         }
     
     @staticmethod
@@ -120,7 +181,8 @@ class PracticeService:
         user_id: str,
         question_id: str,
         user_answer: int,
-        time_spent: int
+        time_spent: int,
+        shuffled_options: list = None
     ) -> Dict:
         """
         Submit answer and get instant feedback.
@@ -129,8 +191,9 @@ class PracticeService:
             db: Database session
             user_id: User ID
             question_id: Question ID
-            user_answer: Selected answer index
+            user_answer: Selected answer index (in the shuffled options order)
             time_spent: Time spent in seconds
+            shuffled_options: The shuffled options as displayed to the user
             
         Returns:
             Feedback dict with correctness, explanation, and adaptive info
@@ -143,8 +206,27 @@ class PracticeService:
         if not question:
             raise ValueError(f"Question {question_id} not found")
         
-        # Check correctness
-        is_correct = (question.correct_answer == user_answer)
+        # --- HANDLE SHUFFLED OPTIONS VALIDATION ---
+        original_options = list(question.options) if question.options else []
+        original_correct_idx = question.correct_answer
+        correct_text = original_options[original_correct_idx] if 0 <= original_correct_idx < len(original_options) else ""
+        
+        # If frontend sent shuffled_options, use those. Otherwise, assume no shuffling.
+        if shuffled_options and len(shuffled_options) > 0:
+            # User selected from shuffled options
+            selected_text = shuffled_options[user_answer] if 0 <= user_answer < len(shuffled_options) else ""
+            is_correct = (selected_text == correct_text)
+            
+            # Find the correct answer index in the shuffled order for feedback
+            try:
+                shuffled_correct_idx = shuffled_options.index(correct_text)
+            except ValueError:
+                shuffled_correct_idx = original_correct_idx
+        else:
+            # Fallback: no shuffling, use original logic
+            is_correct = (original_correct_idx == user_answer)
+            shuffled_correct_idx = original_correct_idx
+            shuffled_options = original_options
         
         # Update user progress via Adaptive Engine (centralized logic)
         from services.adaptive_engine import AdaptiveEngine, get_or_create_progress
@@ -172,13 +254,13 @@ class PracticeService:
             elif new_difficulty == "easy" and old_difficulty == "medium":
                 adaptive_message = "Let's practice with easier questions."
                 
-        # Return instant feedback
+        # Return instant feedback with shuffled options order preserved
         return {
             "is_correct": is_correct,
             "user_answer": user_answer,
-            "correct_answer": question.correct_answer,
+            "correct_answer": shuffled_correct_idx,  # Index in the shuffled order
             "explanation": question.answer_explanation,
-            "options": question.options,
+            "options": shuffled_options,  # Return the same shuffled order for consistency
             "adaptive_feedback": {
                 "old_difficulty": old_difficulty,
                 "new_difficulty": new_difficulty,
