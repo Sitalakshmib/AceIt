@@ -41,7 +41,10 @@ class SimVoiceInterviewer:
             "answer_count": 0,  # Track answers for periodic feedback
             "status": "active",
             "round": 1,
-            "weak_areas": [] # Track weak concepts
+            "weak_areas": [], # Track weak concepts
+            "start_time": datetime.now(),  # Track start time for duration-based completion
+            "scores": [],  # Track scores for each answer
+            "qa_pairs": []  # Track question-answer pairs with scores
         }
         self.sessions[session_id] = session
         
@@ -53,14 +56,27 @@ class SimVoiceInterviewer:
             initial_text = f"Hello! I've reviewed your project description. It sounds interesting. Let's discuss the architecture and your implementation choices. {q_bank[0] if q_bank else 'Can you give me a high-level overview?'}"
             session["current_q_index"] = 1  # Logic fix: Q1 asked
         elif topic != "realtime" and interview_type == "technical":
-            # Topic-specific mode: Start directly with first technical question (no intro)
-            topic_name = topic.upper() if topic != "dotnet" else ".NET Core"
-            initial_text = f"Hello! Let's practice {topic_name} concepts. {q_bank[0] if q_bank else 'What do you know about this topic?'}"
-            session["current_q_index"] = 1  # Logic fix: Q1 asked
+            # Topic-specific mode: Start directly with basic concept question (no intro)
+            # CRITICAL: First question must be fundamental, not from question bank
+            topic_questions = {
+                "python": "Hello! Let's practice Python concepts. To start, can you explain what Python data types are?",
+                "java": "Hello! Let's practice Java concepts. To start, can you explain what Object-Oriented Programming is in Java?",
+                "sql": "Hello! Let's practice SQL concepts. To start, can you explain what SQL is and what it's used for?",
+                "dotnet": "Hello! Let's practice .NET Core concepts. To start, can you explain what .NET Core is?",
+                "qa": "Hello! Let's practice QA/Testing concepts. To start, can you explain what software testing is?",
+                "php": "Hello! Let's practice PHP concepts. To start, can you explain what PHP is used for?"
+            }
+            initial_text = topic_questions.get(topic, f"Hello! Let's practice {topic.upper()} concepts. {q_bank[0] if q_bank else 'What do you know about this topic?'}")
+            session["current_q_index"] = 1  # First question asked
         else:
-            # Realtime or HR mode: Use standard intro
-            interview_label = "Technical" if interview_type == "technical" else "HR/Behavioral"
-            initial_text = f"Hello! I am your AI Interviewer for this {interview_label} interview. I have prepared {len(q_bank)} questions. Let's begin. Please introduce yourself."
+            # Realtime or HR mode: Use adaptive intro
+            if interview_type == "technical" and topic == "realtime":
+                # Real-Time Adaptive: Clean intro without mentioning question count
+                initial_text = "Hello! I am your AI Interviewer for this Technical interview. This will be an adaptive conversation based on your background and experience. Let's begin. Please introduce yourself and tell me about your technical background."
+            else:
+                # HR mode
+                interview_label = "HR/Behavioral"
+                initial_text = f"Hello! I am your AI Interviewer for this {interview_label} interview. I have prepared {len(q_bank)} questions. Let's begin. Please introduce yourself."
         
         print(f"[SimVoice] Starting {interview_type} interview (Topic: {topic})")
         
@@ -68,6 +84,8 @@ class SimVoiceInterviewer:
         self._add_history(session_id, "assistant", initial_text)
         
         # Generate TTS audio for initial greeting
+        # PRIVACY POLICY: AI audio is generated on-demand via TTS and NOT stored.
+        # Audio URLs are temporary and audio is played in-memory on the client.
         audio_url = voice_service.synthesize(initial_text)
         
         return {
@@ -136,10 +154,13 @@ class SimVoiceInterviewer:
                 return {"text": final_bye, "audio_url": audio_url, "is_completed": True}
 
         # 1. Get User Text
+        # PRIVACY POLICY: Audio is processed in-memory only and NOT persisted.
+        # Temporary audio files are deleted immediately after transcription.
         user_text = text_answer or ""
         if audio_file_path:
             print(f"[SimVoice] Transcribing answer for {session_id}...")
             user_text = voice_service.transcribe(audio_file_path)
+            # Note: Temporary file is deleted by the route handler after this method returns
             
         # Detect weak answer (simple heuristic for now)
         if len(user_text.split()) < 5 or "don't know" in user_text.lower() or "unsure" in user_text.lower():
@@ -152,8 +173,46 @@ class SimVoiceInterviewer:
         # 2. Increment answer count
         session["answer_count"] += 1
         
-        # 3. Check if CURRENT ROUND is complete
-        is_completed = session["current_q_index"] >= len(session["q_bank"])
+        # 3. Check if interview should complete
+        # CRITICAL: 20-minute timer applies to ALL technical interview topics
+        topic = session.get("topic", "realtime")
+        interview_type = session.get("interview_type", "technical")
+        
+        # Calculate elapsed time
+        from datetime import datetime
+        start_time = session.get("start_time")
+        if not start_time:
+            # Initialize start time if not set
+            session["start_time"] = datetime.now()
+            elapsed_minutes = 0
+        else:
+            elapsed_minutes = (datetime.now() - start_time).total_seconds() / 60
+        
+        print(f"[SimVoice] Session: {session_id} | Elapsed: {elapsed_minutes:.2f} min | Status: {session.get('status')} | Type: {interview_type} | Topic: {topic}")
+        
+        # Determine if we should complete
+        is_completing = False
+        is_completed = False
+        
+        # TIMER LOGIC: 10-minute limit for ALL technical interviews
+        if interview_type == "technical":
+            if elapsed_minutes >= 10:  # Changed from 20 to 10 minutes
+                # If already in completing state, this is the final answer
+                if session.get("status") == "completing":
+                    is_completed = True
+                else:
+                    # Mark as completing - accept one more answer, then end gracefully
+                    is_completing = True
+                    session["status"] = "completing"
+            # Also check question count for topic-based modes as a backup
+            elif topic != "realtime":
+                # For topic-based: also complete if all questions are answered
+                if session["current_q_index"] >= len(session["q_bank"]):
+                    is_completed = True
+        elif interview_type == "hr":
+            # HR interviews: question count based completion only
+            is_completed = session["current_q_index"] >= len(session["q_bank"])
+        
         
         # 4. Generate AI Response
         feedback_data = None
@@ -178,13 +237,29 @@ class SimVoiceInterviewer:
                     "quality": ai_response.get("quality", "needs_work"),
                     "feedback_text": ai_response.get("feedback_text", "Thank you for your answer.")
                 }
+                
+                # Store score in scores array for overall calculation
+                session["scores"].append(feedback_data["score"])
+                
+                # Store question-answer pair with score for results generation
+                # Get the previous question (the one the user just answered)
+                if len(session["history"]) >= 2:
+                    prev_question = session["history"][-2].get("content", "") if session["history"][-2]["role"] == "assistant" else ""
+                    user_answer = session["history"][-1].get("content", "") if session["history"][-1]["role"] == "user" else ""
+                    
+                    session["qa_pairs"].append({
+                        "question": prev_question,
+                        "answer": user_answer,
+                        "score": feedback_data["score"]
+                    })
             else:
                 # Backward compatibility - if string is returned
                 next_q_text = ai_response
         
         # 5. Update History & Audio
         self._add_history(session_id, "assistant", next_q_text)
-        session["current_q_index"] += 1
+        # NOTE: current_q_index is now incremented conditionally in _generate_ai_response
+        # based on answer quality (for topic-based modes) or always (for realtime mode)
         
         # Generate TTS audio for AI response
         audio_url = voice_service.synthesize(next_q_text)
@@ -202,13 +277,18 @@ class SimVoiceInterviewer:
         
         return response
 
-    def _generate_question_bank(self, resume, jd, interview_type, topic="realtime", round_num=1, weak_areas=None, project_text=""):
+    def _generate_question_bank(self, resume, jd, interview_type, topic="realtime", round_num=1, weak_areas=None, project_text="", user_id=None):
         """
         Asks LLM to generate list of questions based on JD/Resume, interview type, topic, and round.
+        CRITICAL: Questions are generated dynamically, NOT hardcoded.
+        Duration: ~20 minutes = 10-12 questions at ~2 minutes per question
         """
+        # Calculate question count for ~10 minute session
+        # Typical timing: 1 minute per question (30s question + 30s answer)
+        target_question_count = 10  # Enough for ~10 minutes
+        
         if interview_type == "project":
             # === PROJECT BASED INTERVIEW ===
-            count = 10
             prompt = f"""
 You are generating a PROJECT-BASED INTERVIEW QUESTION BANK.
 
@@ -216,7 +296,7 @@ Project Description: {project_text[:3000]}
 Resume Context: {resume[:1000]}
 
 CRITICAL RULES:
-1. Generate EXACTLY {count} questions strictly about the USER'S PROJECT.
+1. Generate EXACTLY {target_question_count} questions strictly about the USER'S PROJECT.
 2. Questions 1-2: High-Level Architecture & Project Overview.
 3. Questions 3-6: TECHNICAL DEEP DIVE into the tech stack.
    - Example: "You mentioned using Redis. How exactly are you handling cache invalidation?"
@@ -228,114 +308,260 @@ CRITICAL RULES:
 """
 
         elif interview_type == "technical":
-            if topic != "realtime":
-                # === TOPIC-SPECIFIC PRACTICE (PYTHON, JAVA, ETC) ===
-                count = 10  # 10 questions per round for practice
+            if topic == "realtime":
+                # === REALTIME ADAPTIVE (NO PREDEFINED QUESTIONS) ===
+                # For realtime mode, we generate a minimal guidance list
+                # The actual questions will be generated dynamically based on answers
+                prompt = f"""
+You are generating GUIDANCE TOPICS for a REAL-TIME ADAPTIVE technical interview.
+
+Resume: {resume[:2000]}
+Job Description: {jd[:2000]}
+
+CRITICAL RULES:
+1. This is NOT a question bank. These are TOPIC AREAS to explore.
+2. Generate {target_question_count} topic areas based on the candidate's resume.
+3. First topic MUST be: "Introduction and Background"
+4. Remaining topics should be technical areas mentioned in their resume or JD.
+5. These will guide the conversation, but actual questions will be generated dynamically.
+6. Return ONLY a JSON list of topic strings.
+
+Example: ["Introduction and Background", "Python Experience", "Database Design", "API Development", ...]
+"""
+            
+            elif topic in ["python", "java", "sql", "dotnet", "qa", "php"]:
+                # === TOPIC-SPECIFIC PRACTICE ===
+                # Generate TOPIC AREAS (not specific questions) for coverage guidance
+                topic_name = topic.upper() if topic != "dotnet" else ".NET Core"
                 
                 if round_num == 1:
                     prompt = f"""
-You are generating a PRACTICE QUESTION BANK for {topic.upper()}.
+You are creating a TOPIC COVERAGE GUIDE for {topic_name} practice interview.
 Round: 1 (Basics & Foundations)
 
-Resume Context: {resume[:1000]}
-
 CRITICAL RULES:
-1. Generate EXACTLY {count} questions about {topic.upper()} ONLY.
-2. Question 1 MUST be a fundamental concept (e.g. "What is a list in {topic}?").
-3. DO NOT ask "Tell me about yourself" or general intro questions.
-4. Difficulty: EASY → GRADUAL.
-5. Focus: Theory, Syntax, Core Concepts.
-6. NO coding exercises. NO advanced architecture yet.
-7. Return ONLY a JSON list of strings.
+1. Generate EXACTLY {target_question_count} TOPIC AREAS (not questions) about {topic_name}.
+2. These are CONCEPTS to cover, not specific questions.
+3. Start with FUNDAMENTAL concepts, progress to intermediate.
+4. Focus: Theory, Core Concepts, Practical Understanding.
+5. NO advanced topics in Round 1.
+6. Return ONLY a JSON list of topic area strings.
 
-Example for Python: ["What is a tuple?", "Difference between list and tuple?", ...]
+Example for Python: ["Data Types & Variables", "Lists & Tuples", "Dictionaries", "Functions Basics", "String Operations", "Conditional Statements", "Loops", "List Comprehensions", "Exception Handling", "File Handling"]
+
+Example for Java: ["Java Basics & JVM", "Data Types", "OOP Concepts", "Classes & Objects", "Inheritance", "Polymorphism", "Interfaces", "Exception Handling", "Collections Framework", "String Handling"]
+
+Example for SQL: ["SQL Basics", "SELECT Statement", "WHERE Clause", "Data Types", "Primary Keys", "Foreign Keys", "INNER JOIN", "LEFT JOIN", "Aggregate Functions", "GROUP BY"]
+
+Example for .NET: [".NET Core Basics", "CLR & Framework", "C# Fundamentals", "OOP in C#", "ASP.NET Core", "Dependency Injection", "Entity Framework", "MVC Pattern", "Web API", "Middleware"]
+
+Generate for {topic_name}:
 """
                 else:
                     # Round 2: Adaptive (Harder + Weak Areas)
                     weak_context = f"Candidate struggled with: {', '.join(weak_areas)}" if weak_areas else "Candidate performed well in Round 1."
                     prompt = f"""
-You are generating Round 2 PRACTICE QUESTIONS for {topic.upper()}.
+You are creating Round 2 TOPIC COVERAGE GUIDE for {topic_name}.
 Round: 2 (Intermediate & Weak Areas)
 
 Context: {weak_context}
 
 CRITICAL RULES:
-1. Generate EXACTLY {count} questions about {topic.upper()} ONLY.
-2. FIRST 3-4 questions: Retest concepts related to: {weak_areas if weak_areas else 'Core Foundations'}.
-3. REMAINING questions: Increase difficulty to INTERMEDIATE level (e.g., Memory management, advanced features).
-4. NO coding exercises.
-5. Return ONLY a JSON list of strings.
+1. Generate EXACTLY {target_question_count} TOPIC AREAS about {topic_name}.
+2. FIRST 3-4 topics: Related to weak areas: {weak_areas if weak_areas else 'Core Foundations'}.
+3. REMAINING topics: Intermediate level concepts.
+4. Return ONLY a JSON list of topic area strings.
 """
             else:
-                # === REALTIME ADAPTIVE (EXISTING LOGIC) ===
+                # Unsupported topic - fallback
                 prompt = f"""
-You are generating practice interview questions for students and freshers.
-
-Resume: {resume[:2000]}
-Job Description: {jd[:2000]}
-
-CRITICAL RULES:
-1. First 2 questions MUST be VERY EASY and confidence-building:
-   - Examples: "Tell me about yourself", "What programming languages are you comfortable with?"
-   
-2. Questions 3-4 should be BASIC THEORY questions.
-3. Question 5 can be slightly deeper but still THEORY-BASED.
-4. FORBIDDEN: Coding challenges, Algo problems, Tricky questions.
-5. Return ONLY a JSON list of 5 strings.
+Generate {target_question_count} basic technical interview questions suitable for beginners.
+Focus on fundamental programming concepts, data structures, and problem-solving.
+Return ONLY a JSON list of strings.
 """
 
         else:  # HR/Behavioral
             prompt = f"""
-You are an expert HR Interviewer.
-Create a list of 5 behavioral/HR interview questions based on the following context.
+You are an expert HR Interviewer creating a STRICTLY BEHAVIORAL interview question bank.
 
 Resume: {resume[:2000]}
 Job Description: {jd[:2000]}
 
-Rules:
-1. Focus on: Soft skills, teamwork, conflict resolution, leadership, work ethic, culture fit
-2. Use STAR method questions (Situation, Task, Action, Result)
-3. Ask about their experience, challenges faced, and how they handled them
-4. Include questions about their career goals and motivations
-5. Return ONLY a JSON list of strings. Example: ["Question 1", "Question 2"]
+🚨 CRITICAL RULES - FOLLOW ABSOLUTELY:
 
-Examples:
-- "Tell me about a time when you faced a difficult challenge at work. How did you handle it?"
-- "Describe a situation where you had to work with a difficult team member."
-- "What motivates you in your career?"
+1. **NEVER INCLUDE TECHNICAL QUESTIONS**
+   - Do NOT ask about algorithms, code, technical concepts, or technologies
+   - Do NOT test technical knowledge
+   - Even if resume mentions "Python", "AI", "Java", etc., DO NOT ask technical questions about them
+
+2. **USE TECHNICAL BACKGROUND ONLY AS CONTEXT FOR BEHAVIORAL QUESTIONS**
+   - If resume says "AI student":
+     ✅ CORRECT: "Tell me about a time when you faced a challenging problem while learning AI. How did you approach it?"
+     ❌ WRONG: "What is machine learning?" or "Explain neural networks"
+   
+   - If resume says "Python developer":
+     ✅ CORRECT: "Describe a situation where you had to learn a new skill quickly. How did you manage it?"
+     ❌ WRONG: "What are Python decorators?" or "Explain OOP in Python"
+
+3. **BEHAVIORAL QUESTION CATEGORIES (ONLY THESE)**
+   Generate {target_question_count} questions covering these areas:
+   - Communication skills & clarity
+   - Teamwork & collaboration
+   - Conflict management & resolution
+   - Leadership & taking initiative
+   - Stress handling & pressure management
+   - Time management & prioritization
+   - Adaptability & learning from failure
+   - Motivation, goals & career aspirations
+   - Strengths & weaknesses (self-awareness)
+   - Ethical situations & decision-making
+   - Receiving & acting on feedback
+
+4. **QUESTION FORMAT**
+   - Use STAR method questions (Situation, Task, Action, Result)
+   - Focus on experiences, challenges, decisions, and reflections
+   - Use phrases: "Tell me about a time when...", "Describe a situation where...", "How do you handle..."
+
+5. **RETURN FORMAT**
+   - Return ONLY a JSON list of strings
+   - Each string is a complete behavioral question
+   - Example: ["Question 1", "Question 2", ...]
+
+EXAMPLES OF CORRECT BEHAVIORAL QUESTIONS:
+- "Tell me about a time when you faced a difficult challenge. How did you handle it?"
+- "Describe a situation where you had to work with a difficult team member. What did you do?"
+- "How do you manage stress when dealing with multiple deadlines?"
+- "Tell me about a time when you failed at something. What did you learn?"
+- "Describe a situation where you had to adapt to a significant change. How did you handle it?"
+- "What motivates you in your studies/career?"
+- "Tell me about a time when you showed leadership, even if you weren't in a leadership role."
+- "Describe a conflict you had with a peer. How did you resolve it?"
+
+🔒 FINAL CHECK: Before returning, verify that ZERO questions ask for technical explanations or test technical knowledge.
 """
         
         try:
             res = self.llm.generate_response(prompt)
             clean = res.replace("```json", "").replace("```", "").strip()
-            return json.loads(clean)
+            questions = json.loads(clean)
+            
+            # Validate we got a list
+            if not isinstance(questions, list):
+                raise ValueError("LLM did not return a list")
+            
+            # Ensure we have at least some questions
+            if len(questions) < 5:
+                raise ValueError(f"Too few questions generated: {len(questions)}")
+            
+            return questions
+            
         except Exception as e:
             print(f"[ERROR] Question generation failed: {e}")
             # Fallback questions based on type
             if interview_type == "technical":
-                return [
-                    "Tell me about yourself and your background.",
-                    "What programming languages are you comfortable with?",
-                    "What is Object-Oriented Programming?",
-                    "Can you explain what a function is?",
-                    "What projects have you worked on?"
-                ]
+                if topic == "realtime":
+                    return [
+                        "Introduction and Background",
+                        "Programming Languages",
+                        "Object-Oriented Programming",
+                        "Data Structures",
+                        "Database Concepts",
+                        "Web Development",
+                        "Problem Solving",
+                        "Projects",
+                        "Challenges Faced",
+                        "Future Goals"
+                    ]
+                elif topic == "python":
+                    return [
+                        "What is Python?",
+                        "What are Python data types?",
+                        "Explain lists in Python",
+                        "What is the difference between list and tuple?",
+                        "What are dictionaries?",
+                        "Explain functions in Python",
+                        "What is a class in Python?",
+                        "What is inheritance?",
+                        "Explain exception handling",
+                        "What are Python modules?"
+                    ]
+                elif topic == "java":
+                    return [
+                        "What is Java?",
+                        "What is the JVM?",
+                        "What are Java data types?",
+                        "What is OOP in Java?",
+                        "Explain classes and objects",
+                        "What is inheritance in Java?",
+                        "What are interfaces?",
+                        "Explain exception handling",
+                        "What are collections?",
+                        "What is multithreading?"
+                    ]
+                elif topic == "sql":
+                    return [
+                        "What is SQL?",
+                        "What is a database?",
+                        "What is a primary key?",
+                        "What is a foreign key?",
+                        "Explain SELECT statement",
+                        "What are SQL joins?",
+                        "What is normalization?",
+                        "Explain constraints",
+                        "What are indexes?",
+                        "What is a transaction?"
+                    ]
+                elif topic == "dotnet":
+                    return [
+                        "What is .NET Core?",
+                        "Difference between .NET Framework and .NET Core?",
+                        "What is the CLR?",
+                        "What are namespaces?",
+                        "Explain classes in C#",
+                        "What is dependency injection?",
+                        "What is ASP.NET Core?",
+                        "Explain MVC pattern",
+                        "What are middleware?",
+                        "What is Entity Framework?"
+                    ]
+                else:
+                    return [
+                        "Tell me about yourself and your background.",
+                        "What programming languages are you comfortable with?",
+                        "What is Object-Oriented Programming?",
+                        "Can you explain what a function is?",
+                        "What projects have you worked on?",
+                        "What is a database?",
+                        "Explain your problem-solving approach",
+                        "What challenges have you faced?",
+                        "What are your strengths?",
+                        "What are your career goals?"
+                    ]
             elif interview_type == "project":
                 return [
                     "Can you give me a high-level overview of your project's architecture?",
                     "What was the most challenging technical problem you faced in this project?",
-                    "Why did you choose this specific technology stack? What were the alternatives?",
+                    "Why did you choose this specific technology stack?",
                     "How are you handling data security and user authentication?",
-                    "If you had more time, what improvements would you make to the system?",
+                    "If you had more time, what improvements would you make?",
                     "Describe a specific bug you encountered and how you debugged it.",
-                    "How does your application handle scalability?"
+                    "How does your application handle scalability?",
+                    "What testing strategies did you implement?",
+                    "How did you handle error handling?",
+                    "What did you learn from this project?"
                 ]
-            else:
+            else:  # HR
                 return [
-                    "Tell me about a time when you faced a difficult challenge at work.",
-                    "How do you handle conflict in a team?",
-                    "What are your strengths and weaknesses?",
-                    "Where do you see yourself in 5 years?"
+                    "Tell me about yourself and what drives you.",
+                    "Describe a time when you faced a significant challenge. How did you overcome it?",
+                    "How do you handle conflict or disagreement in a team setting?",
+                    "Tell me about your strengths and areas where you'd like to improve.",
+                    "Describe a situation where you had to show leadership or take initiative.",
+                    "What motivates you to do your best work?",
+                    "How do you manage stress and pressure, especially during busy periods?",
+                    "Tell me about a time when you failed or made a mistake. What did you learn?",
+                    "Where do you see yourself in 5 years, and what are your career goals?",
+                    "Describe a situation where you had to adapt to a major change. How did you handle it?"
                 ]
 
     MAX_HISTORY_TURNS = 6  # Limit context to last 6 turns to check drift
@@ -360,35 +586,76 @@ Tone: Professional, curious, engineer-to-engineer.
 """
 
     HR_SYSTEM_PROMPT = """
-You are an experienced HR interviewer conducting a mock interview for practice purposes.
+You are a professional HR interviewer conducting a STRICTLY BEHAVIORAL practice interview.
 
-Your role:
-- Ask HR and behavioral questions suitable for students and fresh graduates.
-- Focus on communication skills, attitude, teamwork, motivation, and self-awareness.
-- Keep the difficulty moderate and supportive.
-- Do NOT ask trick questions or stress-interview questions.
-- Do NOT ask coding or technical questions.
-- Encourage the candidate with natural follow-up questions.
+🚨 CRITICAL RULES - FOLLOW ABSOLUTELY:
 
-Question style:
-- Open-ended and reflective
-- Based on real-life or academic experiences
-- Resume-driven where applicable
+1. **NEVER ASK TECHNICAL QUESTIONS**
+   - Do NOT ask about algorithms, code, technical concepts, or technologies
+   - Do NOT test technical knowledge in any form
+   - Do NOT ask "What is [technical term]?" or "Explain [technical concept]"
+   - Even if the candidate mentions technical skills, DO NOT quiz them on it
 
-Feedback style:
-- Polite, encouraging, and constructive
-- Focus on clarity, confidence, and structure
-- Avoid harsh or judgmental language
+2. **USE TECHNICAL BACKGROUND ONLY AS CONTEXT**
+   - If candidate says "I'm an AI student" or "I work with Python":
+     ✅ CORRECT: "What challenges did you face while learning AI, and how did you overcome them?"
+     ✅ CORRECT: "Tell me about a time when you struggled with a complex subject. How did you handle it?"
+     ❌ WRONG: "What is machine learning?" or "Explain neural networks"
+     ❌ WRONG: "What algorithms did you study?" or "Explain overfitting"
 
-Interview goal:
-Help the student practice HR interviews and improve confidence.
+3. **BEHAVIORAL QUESTION CATEGORIES (ONLY THESE)**
+   - Communication skills & clarity
+   - Teamwork & collaboration
+   - Conflict management & resolution
+   - Leadership & taking initiative
+   - Stress handling & pressure management
+   - Time management & prioritization
+   - Adaptability & learning from failure
+   - Motivation, goals & career aspirations
+   - Strengths & weaknesses (self-awareness)
+   - Ethical situations & decision-making
+   - Receiving & acting on feedback
+
+4. **QUESTION FORMAT**
+   - Use STAR method questions (Situation, Task, Action, Result)
+   - Ask about experiences, challenges, decisions, and reflections
+   - Focus on "Tell me about a time when..." or "Describe a situation where..."
+   - All questions must be experience-based or scenario-based
+
+5. **ADAPTIVE CONVERSATION FLOW**
+   - After each answer, analyze the BEHAVIORAL QUALITY:
+     * Clarity of communication
+     * Depth of reflection
+     * Confidence in delivery
+     * Structure of response (STAR format)
+   - If answer is STRONG: Move to a different behavioral dimension
+   - If answer is WEAK/VAGUE: Ask probing follow-up questions to help them reflect deeper
+   - Guide them gently (this is practice mode, not evaluation)
+
+6. **TONE & STYLE**
+   - Sound human, empathetic, and encouraging
+   - Be supportive and non-judgmental
+   - Never "teach" technical content
+   - Never quiz or test the student
+   - This is a practice HR interview to build confidence
+
+7. **SCORING CRITERIA (BEHAVIORAL ONLY)**
+   - 90-100: Excellent - Clear, structured, reflective, confident delivery
+   - 75-89: Good - Solid answer with some depth, could be more detailed
+   - 60-74: Needs Work - Basic answer but lacks depth or structure
+   - 0-59: Poor - Very vague, unclear, or too brief
+
+Interview Goal:
+Help the student practice HR behavioral interviews and improve communication, confidence, and self-reflection.
 
 When providing periodic feedback (every 2-3 answers):
 - Be encouraging and supportive
-- Highlight what the candidate did well
-- Gently suggest areas to explore more
-- Use phrases like "Great start", "Consider also", "You might want to explore"
+- Highlight what the candidate communicated well
+- Gently suggest how to add more depth or structure
+- Use phrases like "Great reflection", "Consider also sharing", "You might want to elaborate on"
 - Avoid: "Wrong", "Incorrect", "Poor", "Fail"
+
+🔒 FINAL RULE: If a question tests technical knowledge OR asks for technical explanations, DO NOT ask it. This overrides everything else.
 """
 
     TECHNICAL_SYSTEM_PROMPT = """
@@ -440,6 +707,32 @@ When providing periodic feedback (every 2-3 answers):
 - Avoid: "Wrong", "Incorrect", "Poor", "Fail"
 """
 
+
+    def _parse_json_response(self, response_text):
+        """
+        Parse JSON response from LLM, handling common formatting issues.
+        """
+        try:
+            # Remove markdown code blocks if present
+            clean = response_text.strip()
+            if clean.startswith("```json"):
+                clean = clean[7:]  # Remove ```json
+            if clean.startswith("```"):
+                clean = clean[3:]  # Remove ```
+            if clean.endswith("```"):
+                clean = clean[:-3]  # Remove trailing ```
+            
+            clean = clean.strip()
+            
+            # Parse JSON
+            parsed = json.loads(clean)
+            return parsed
+            
+        except json.JSONDecodeError as e:
+            print(f"[SimVoice] JSON Parse Error: {e}")
+            print(f"[SimVoice] Raw response: {response_text[:500]}")
+            raise ValueError(f"Failed to parse JSON response: {e}")
+    
     def _generate_ai_response(self, session):
         """
         Decides what to say next using strict system prompts.
@@ -458,11 +751,11 @@ When providing periodic feedback (every 2-3 answers):
         
         if interview_type == "hr":
             system_prompt = self.HR_SYSTEM_PROMPT
-        elif topic != "realtime" and topic in TOPIC_PROMPTS:
-            # Use topic-specific prompt for focused practice
+        elif topic in TOPIC_PROMPTS:
+            # Use topic-specific prompt (includes realtime, python, java, sql, dotnet, etc.)
             system_prompt = TOPIC_PROMPTS[topic]
         else:
-            # Use general technical prompt for realtime mode
+            # Fallback to general technical prompt
             system_prompt = self.TECHNICAL_SYSTEM_PROMPT
 
         # Construct History
@@ -477,19 +770,117 @@ When providing periodic feedback (every 2-3 answers):
         # Check if we should provide periodic feedback (every 3 answers)
         should_give_periodic_feedback = session.get("answer_count", 0) % 3 == 0 and session.get("answer_count", 0) > 0
         
-        # Next topic from bank (guidance only, LLM should flow naturally)
-        idx = session["current_q_index"]
-        next_topic = session["q_bank"][idx] if idx < len(session["q_bank"]) else "Conclusion"
-        
-        # NEW: Request structured feedback with scoring
-        prompt = f"""
+        # === HR BEHAVIORAL INTERVIEW: STRICTLY BEHAVIORAL LOGIC ===
+        if interview_type == "hr":
+            # HR interviews use question bank as guidance, but adapt based on behavioral quality
+            idx = session["current_q_index"]
+            q_bank = session["q_bank"]
+            
+            # Get current and remaining questions
+            current_question_area = q_bank[min(idx, len(q_bank)-1)] if q_bank else "General behavioral questions"
+            remaining_questions = q_bank[idx:idx+3] if idx < len(q_bank) else ["Closing questions"]
+            
+            prompt = f"""
 {system_prompt}
 
 ### Conversation History
 {history_str}
 
 ### Current Context
-Next Planned Question/Topic: "{next_topic}" (Use this if the previous topic is exhausted, otherwise follow up).
+Interview Progress: Question {session.get('answer_count', 0) + 1} of approximately {len(q_bank)}
+Current Question Area: "{current_question_area}"
+Remaining Question Areas: {remaining_questions}
+Candidate's Last Answer: "{last_user_answer}"
+
+### Your Task - CRITICAL: Return JSON Format
+You must analyze the candidate's last answer and return a JSON object with the following structure:
+
+{{
+    "score": <number 0-100>,
+    "quality": "<excellent|good|needs_work|poor>",
+    "feedback_text": "<brief constructive feedback, 1-2 sentences>",
+    "next_question": "<the next behavioral question to ask>"
+}}
+
+### BEHAVIORAL SCORING GUIDELINES (NOT TECHNICAL):
+- 90-100: Excellent - Clear, structured (STAR format), reflective, confident, detailed
+- 75-89: Good - Solid answer with depth, good communication, could add more detail
+- 60-74: Needs Work - Basic answer but lacks depth, structure, or reflection
+- 0-59: Poor - Very vague, unclear, too brief, or lacks self-awareness
+
+### Quality Mapping:
+- excellent: 90-100
+- good: 75-89
+- needs_work: 60-74
+- poor: 0-59
+
+### Feedback Guidelines:
+1. Be encouraging and supportive
+2. Highlight what they communicated well
+3. Gently suggest how to add more depth or structure
+4. Keep it brief (1-2 sentences max)
+5. Use supportive, non-judgmental language
+
+### Periodic Feedback Mode
+{"PROVIDE MORE DETAILED FEEDBACK NOW - Include overall behavioral progress comment" if should_give_periodic_feedback else "Keep feedback brief and focused on this answer"}
+
+### CRITICAL INSTRUCTIONS FOR HR BEHAVIORAL INTERVIEW:
+1. ANALYZE the candidate's last answer for BEHAVIORAL QUALITY:
+   - Did they use STAR format (Situation, Task, Action, Result)?
+   - Was their communication clear and structured?
+   - Did they show self-reflection and learning?
+   - Was the answer detailed enough?
+
+2. GENERATE the next question based on BEHAVIORAL DEPTH:
+   - If answer was STRONG (score >= 75): Move to a different behavioral dimension
+   - If answer was WEAK/VAGUE (score < 75): Ask probing follow-up to help them reflect deeper
+   
+3. USE TECHNICAL BACKGROUND ONLY AS CONTEXT:
+   - If they mentioned "AI", "Python", "Java", etc., use it for behavioral context
+   - Example: "You mentioned working with AI. Tell me about a time when you faced a setback in that area. How did you handle it?"
+   - DO NOT ask: "What is machine learning?" or "Explain neural networks"
+
+4. BEHAVIORAL QUESTION CATEGORIES TO EXPLORE:
+   - Communication & clarity
+   - Teamwork & collaboration
+   - Conflict management
+   - Leadership & initiative
+   - Stress & pressure handling
+   - Time management
+   - Adaptability & learning from failure
+   - Motivation & goals
+   - Self-awareness (strengths/weaknesses)
+   - Ethics & decision-making
+   - Feedback handling
+
+5. QUESTION FORMAT:
+   - Use "Tell me about a time when..." or "Describe a situation where..."
+   - Focus on experiences, challenges, decisions, reflections
+   - NEVER ask for technical explanations
+
+6. ADAPTIVE FLOW:
+   - Build naturally from their previous responses
+   - If they mentioned a challenge, explore how they handled it
+   - If they mentioned teamwork, ask about conflict or collaboration
+   - Make it feel conversational, not a checklist
+
+🚨 FINAL CHECK: Ensure your next_question is BEHAVIORAL and does NOT test technical knowledge.
+
+CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no extra text.
+"""
+        
+        # CRITICAL FIX: For Real-Time Adaptive mode, do NOT use question bank
+        # For topic-based modes, use question bank as guidance
+        elif topic == "realtime":
+            # Real-Time Adaptive: NO pre-planned topics, fully dynamic
+            prompt = f"""
+{system_prompt}
+
+### Conversation History
+{history_str}
+
+### Current Context
+Interview Progress: Question {session.get('answer_count', 0) + 1} of approximately 10
 Candidate's Last Answer: "{last_user_answer}"
 
 ### Your Task - CRITICAL: Return JSON Format
@@ -524,19 +915,138 @@ You must analyze the candidate's last answer and return a JSON object with the f
 ### Periodic Feedback Mode
 {"PROVIDE MORE DETAILED FEEDBACK NOW - Include overall progress comment" if should_give_periodic_feedback else "Keep feedback brief and focused on this answer"}
 
-### Instructions for Next Question:
-1. ANALYZE the candidate's last response
-2. IF the candidate answered the 'Next Planned Question' already:
-   - SKIP asking it directly
-   - Ask a DEEPER follow-up or move to next topic
-3. IF the candidate mentioned a specific technology/concept:
-   - Acknowledge it explicitly
-   - Bridge it to the next question naturally
-4. TRANSITION smoothly - feel like a conversation, not a checklist
-5. SPEAK DIRECTLY to the candidate. Be natural.
+### CRITICAL INSTRUCTIONS FOR REAL-TIME ADAPTIVE MODE:
+1. ANALYZE the candidate's last answer carefully
+2. EXTRACT specific technologies, concepts, or experiences they mentioned
+3. GENERATE the next question based ONLY on what they said:
+   - If they mentioned a technology (e.g., "Python", "React"), ask them to explain their experience with it
+   - If they described a project, ask about technical choices, challenges, or architecture
+   - If they mentioned a concept, ask them to explain it deeper or give examples
+   - If they struggled, ask a simpler related question
+   - If they excelled, dive deeper into that specific area
+4. DO NOT follow any pre-planned sequence
+5. DO NOT ask generic questions unrelated to their answers
+6. BUILD each question naturally from their previous response
+7. Make it feel like a real conversation, not a checklist
+
+### TRANSCRIPTION ERROR HANDLING (CRITICAL):
+- Audio transcription may sometimes mishear technical terms
+- Example: "autoencoder" might be transcribed as "hordeu encoder" or similar
+- If you encounter an UNCLEAR or NON-EXISTENT technical term:
+  * DO NOT ignore it
+  * DO NOT assume you know what they meant
+  * POLITELY ask for clarification
+  * Example: "I heard you mention 'hordeu encoder' - could you clarify what you meant? Did you mean 'autoencoder' or something else?"
+- This helps correct transcription errors and ensures accurate conversation
+
+Example Flow:
+- Student: "I work with Python and Django"
+- You: "Great! Can you tell me about a specific Django project you've worked on?"
+- Student: "I built a REST API for user authentication"
+- You: "Interesting! How did you handle JWT token management in your API?"
 
 CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no extra text.
 """
+        else:
+            # Topic-Based Practice: Use topic areas as COVERAGE GUIDE, not fixed sequence
+            # CRITICAL: LLM decides actual questions based on student's answer quality
+            idx = session["current_q_index"]
+            topic_areas = session["q_bank"]  # These are topic areas, not questions
+            
+            # Determine which topic area we're currently exploring
+            current_topic_area = topic_areas[min(idx, len(topic_areas)-1)] if topic_areas else "General Concepts"
+            remaining_topics = topic_areas[idx:] if idx < len(topic_areas) else []
+            
+            prompt = f"""
+{system_prompt}
+
+### Conversation History
+{history_str}
+
+### Current Context
+Current Topic Area: "{current_topic_area}"
+Remaining Topic Areas to Cover: {remaining_topics[:3] if remaining_topics else ["Interview nearing completion"]}
+Interview Progress: Question {session.get('answer_count', 0) + 1} of approximately 10
+Candidate's Last Answer: "{last_user_answer}"
+
+### Your Task - CRITICAL: Return JSON Format
+You must analyze the candidate's last answer and return a JSON object with the following structure:
+
+{{
+    "score": <number 0-100>,
+    "quality": "<excellent|good|needs_work|poor>",
+    "feedback_text": "<brief constructive feedback, 1-2 sentences>",
+    "answer_analysis": "<what student understood well / what they missed>",
+    "next_action": "<move_forward|clarify_same_concept|teach_basics>",
+    "next_question": "<the next question to ask>"
+}}
+
+### Scoring Guidelines:
+- 90-100: Excellent - Comprehensive, accurate, well-explained with examples
+- 75-89: Good - Solid understanding, mostly accurate, could be more detailed
+- 60-74: Needs Work - Basic understanding but missing key points or clarity
+- 0-59: Poor - Incorrect, very brief, or shows lack of understanding
+
+### Quality Mapping:
+- excellent: 90-100
+- good: 75-89
+- needs_work: 60-74
+- poor: 0-59
+
+### Feedback Guidelines:
+1. Be encouraging and constructive
+2. Highlight what they did well (if applicable)
+3. Gently point out what could be improved
+4. Keep it brief (1-2 sentences max)
+5. Use supportive language
+
+### Periodic Feedback Mode
+{"PROVIDE MORE DETAILED FEEDBACK NOW - Include overall progress comment" if should_give_periodic_feedback else "Keep feedback brief and focused on this answer"}
+
+### CRITICAL ADAPTIVE TEACHING LOGIC:
+
+**ANALYZE the student's last answer quality:**
+
+1. **If answer is WEAK or INCORRECT (score < 60):**
+   - next_action: "teach_basics"
+   - DO NOT move to a new topic
+   - Stay on the SAME concept
+   - Ask a SIMPLER sub-question to build understanding
+   - Provide hints or break down the concept
+   - Example: "Let me ask it differently - can you explain what [simpler aspect] means?"
+   - GOAL: Help them understand the current concept before moving on
+
+2. **If answer is PARTIAL (score 60-74):**
+   - next_action: "clarify_same_concept"
+   - Stay on the SAME concept
+   - Ask a clarifying follow-up question
+   - Help them complete their understanding
+   - Example: "You mentioned [X], can you also explain [Y] which is related?"
+   - GOAL: Deepen understanding of current concept
+
+3. **If answer is GOOD or EXCELLENT (score >= 75):**
+   - next_action: "move_forward"
+   - Acknowledge their understanding
+   - Move to a NEW concept from the remaining topic areas
+   - Gradually increase depth
+   - Example: "Great explanation! Now let's discuss [next topic area]..."
+   - GOAL: Progress through the curriculum
+
+### Topic Area Coverage:
+- Use "Current Topic Area" and "Remaining Topic Areas" as GUIDES
+- These are NOT specific questions - generate questions dynamically
+- Ensure you cover different concepts, not just one
+- If student struggles with a topic, spend more time on it
+- If student excels, move through topics faster
+
+### TRANSCRIPTION ERROR HANDLING:
+- Audio transcription may mishear technical terms
+- If you encounter unclear/non-existent terms, politely ask for clarification
+- Example: "I heard you mention '[unclear term]' - could you clarify what you meant?"
+
+CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no extra text.
+"""
+        
         
         try:
             res = self.llm.generate_response(prompt)
@@ -565,12 +1075,38 @@ CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no extra text.
                 parsed["feedback_text"] = "Thank you for your answer."
             
             if "next_question" not in parsed:
-                parsed["next_question"] = f"Let's move on to: {next_topic}"
+                # For realtime mode, generate a generic follow-up
+                # For topic-based modes, use the next_topic from question bank
+                if topic == "realtime":
+                    parsed["next_question"] = "Can you tell me more about your experience?"
+                else:
+                    idx = session["current_q_index"]
+                    next_topic = session["q_bank"][idx] if idx < len(session["q_bank"]) else "Conclusion"
+                    parsed["next_question"] = f"Let's move on to: {next_topic}"
+            
             
             # Store score in session for analytics
             if "scores" not in session:
                 session["scores"] = []
             session["scores"].append(parsed["score"])
+            
+            # Handle topic index increment based on mode
+            if topic == "realtime":
+                # Realtime mode: Always increment (no fixed topic areas)
+                session["current_q_index"] += 1
+            elif "next_action" in parsed:
+                # Topic-based mode: Increment conditionally based on answer quality
+                next_action = parsed["next_action"]
+                if next_action == "move_forward":
+                    # Good answer - move to next topic area
+                    session["current_q_index"] += 1
+                elif next_action in ["clarify_same_concept", "teach_basics"]:
+                    # Weak/partial answer - stay on same topic area
+                    # Don't increment current_q_index
+                    pass
+            else:
+                # Fallback: increment if next_action not provided
+                session["current_q_index"] += 1
             
             # Store the full feedback in session for retrieval
             session["last_feedback"] = {
@@ -585,11 +1121,18 @@ CRITICAL: Return ONLY valid JSON. No markdown, no code blocks, no extra text.
         except Exception as e:
             print(f"[SimVoice ERROR] Generate AI Response failed: {e}")
             # Fallback response
+            fallback_question = "Can you tell me more about your experience?"
+            if topic != "realtime":
+                idx = session.get("current_q_index", 0)
+                q_bank = session.get("q_bank", [])
+                next_topic = q_bank[idx] if idx < len(q_bank) else "Conclusion"
+                fallback_question = f"Let's move on to: {next_topic}"
+            
             return {
                 "score": 50,
                 "quality": "needs_work",
                 "feedback_text": "Thank you for your answer.",
-                "next_question": f"Let's move on to: {next_topic}"
+                "next_question": fallback_question
             }
     
     def _generate_project_response(self, session):

@@ -42,27 +42,25 @@ class VoiceService:
     def synthesize(self, text: str) -> str:
         """
         Text-to-speech synthesis using gTTS.
-        Saves audio file to static/audio directory.
-        Returns the URL path to the audio file.
+        Returns base64 encoded audio string (data URI).
+        NO FILES SAVED TO DISK.
         """
         try:
             from gtts import gTTS
-            import uuid
+            import io
+            import base64
             
-            # Create static/audio directory if it doesn't exist
-            audio_dir = "static/audio"
-            os.makedirs(audio_dir, exist_ok=True)
-            
-            # Generate unique filename
-            filename = f"response_{uuid.uuid4().hex[:8]}.mp3"
-            filepath = os.path.join(audio_dir, filename)
-            
-            # Generate speech
+            # Generate speech to memory buffer
             tts = gTTS(text=text, lang='en', slow=False)
-            tts.save(filepath)
+            mp3_fp = io.BytesIO()
+            tts.write_to_fp(mp3_fp)
             
-            # Return URL path (relative to static mount)
-            return f"/static/audio/{filename}"
+            # Encode to base64
+            mp3_fp.seek(0)
+            b64_data = base64.b64encode(mp3_fp.read()).decode("utf-8")
+            
+            # Return Data URI
+            return f"data:audio/mp3;base64,{b64_data}"
             
         except Exception as e:
             print(f"[ERROR] TTS synthesis failed: {e}")

@@ -50,14 +50,15 @@ async def process_answer(
     try:
         temp_file = None
         if audio_file:
-            # Save upload momentarily
+            # Save upload momentarily for transcription
+            # PRIVACY POLICY: Audio is NOT persisted. Temporary file is deleted immediately after processing.
             temp_file = f"temp_{session_id}_{audio_file.filename}"
             with open(temp_file, "wb") as buffer:
                 shutil.copyfileobj(audio_file.file, buffer)
         
         result = engine.process_answer(session_id, audio_file_path=temp_file, text_answer=text_answer)
         
-        # Cleanup
+        # Cleanup - Delete temporary audio file immediately
         if temp_file and os.path.exists(temp_file):
             os.remove(temp_file)
             
@@ -133,6 +134,35 @@ async def get_results(session_id: str, engine: SimVoiceInterviewer = Depends(get
             weak_topics = list(set(session["weak_areas"]))[:3]
             recommendations.append(f"Review these topics: {', '.join(weak_topics)}")
         
+        # Generate model answers for questions where score < 75
+        # This helps students learn how to improve their interview responses
+        model_answers = []
+        qa_pairs = session.get("qa_pairs", [])
+        
+        if qa_pairs:
+            for qa in qa_pairs:
+                if qa.get("score", 100) < 75:
+                    # Generate model answer for this question
+                    try:
+                        model_answer = _generate_model_answer(
+                            question=qa["question"],
+                            user_answer=qa["answer"],
+                            score=qa["score"],
+                            topic=session.get("topic", "general"),
+                            interview_type=session.get("interview_type", "technical"),
+                            llm=engine.llm
+                        )
+                        
+                        model_answers.append({
+                            "question": qa["question"],
+                            "your_answer": qa["answer"],
+                            "your_score": qa["score"],
+                            "model_answer": model_answer
+                        })
+                    except Exception as e:
+                        print(f"[ERROR] Failed to generate model answer: {e}")
+                        # Continue with other questions even if one fails
+        
         return {
             "session_id": session_id,
             "interview_type": session.get("interview_type", "technical"),
@@ -145,6 +175,7 @@ async def get_results(session_id: str, engine: SimVoiceInterviewer = Depends(get
             "weaknesses": weaknesses if weaknesses else ["Great job! No major weaknesses identified"],
             "recommendations": recommendations,
             "question_review": question_review,
+            "model_answers": model_answers,  # NEW: Model answers for learning
             "performance_rating": (
                 "Excellent" if overall_score >= 85 else
                 "Good" if overall_score >= 70 else
@@ -155,4 +186,47 @@ async def get_results(session_id: str, engine: SimVoiceInterviewer = Depends(get
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def _generate_model_answer(question: str, user_answer: str, score: int, topic: str, interview_type: str, llm):
+    """
+    Generate an ideal interview answer for a question where the student scored low.
+    This is a learning aid to help students understand how to answer better.
+    """
+    prompt = f"""
+You are an expert interview coach helping a student improve their interview skills.
+
+Interview Type: {interview_type}
+Topic: {topic}
+
+Question Asked: "{question}"
+
+Student's Answer: "{user_answer}"
+Score Received: {score}/100
+
+Your Task:
+Generate an IDEAL interview answer that demonstrates how this question should be answered.
+
+Guidelines:
+1. Keep it conversational and natural (like a real interview response)
+2. Length: 3-5 sentences (not too long, interview-appropriate)
+3. Include:
+   - Clear explanation of the concept
+   - A simple real-world example or analogy if applicable
+   - Demonstrates understanding without being overly technical
+4. Tone: Professional but friendly, suitable for a fresher/student interview
+5. DO NOT mention the student's mistakes or score
+6. DO NOT use phrases like "A better answer would be..." or "You should have said..."
+7. Simply provide the ideal answer as if YOU are answering the question
+
+Return ONLY the model answer text, nothing else.
+"""
+    
+    try:
+        response = llm.generate_response(prompt)
+        return response.strip() if response else "Practice explaining this concept with clear examples and real-world applications."
+    except Exception as e:
+        print(f"[ERROR] Model answer generation failed: {e}")
+        return "Practice explaining this concept with clear examples and real-world applications."
+
 
