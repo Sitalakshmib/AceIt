@@ -1,41 +1,53 @@
 import os
 import time
 import google.generativeai as genai
+from openai import OpenAI
+from groq import Groq
+from typing import List, Dict, Any
 
 class LLMClient:
     # Model pool - ordered by preference (quality -> speed)
-    # Each model has separate free-tier quota limits
+    # Each model entry specifies its provider and model ID
     MODELS = [
-        "gemini-2.5-flash",      # Best quality, 20 req/day
-        "gemini-2.0-flash",      # Good balance, separate quota
-        "gemini-flash-latest",   # Auto-updating, separate quota
-        "gemini-2.5-flash-lite", # Fastest, separate quota
+        {"provider": "groq", "id": "llama-3.3-70b-versatile"}, # Primary: High speed & quality
+        {"provider": "openai", "id": "gpt-4o-mini"},          # Secondary: Reliable & cheap
+        {"provider": "groq", "id": "mixtral-8x7b-32768"},     # Fallback: Extremely fast
+        {"provider": "openai", "id": "gpt-4o"},               # Final Backup: High intelligence
     ]
     
     def __init__(self):
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            raise RuntimeError("GEMINI_API_KEY not found")
-        genai.configure(api_key=api_key)
+        # Initialize Google Gemini
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        if gemini_api_key:
+            genai.configure(api_key=gemini_api_key)
+            self.gemini_available = True
+        else:
+            print("[LLM] WARNING: GEMINI_API_KEY not found")
+            self.gemini_available = False
+            
+        # Initialize OpenAI
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        if openai_api_key:
+            self.openai_client = OpenAI(api_key=openai_api_key)
+            self.openai_available = True
+        else:
+            print("[LLM] WARNING: OPENAI_API_KEY not found")
+            self.openai_available = False
+
+        # Initialize Groq
+        groq_api_key = os.getenv("GROQ_API_KEY")
+        if groq_api_key:
+            self.groq_client = Groq(api_key=groq_api_key)
+            self.groq_available = True
+        else:
+            print("[LLM] WARNING: GROQ_API_KEY not found")
+            self.groq_available = False
+            
         self.current_model_index = 0
-        
-    def _get_model(self, model_name: str):
-        """Get a GenerativeModel instance for the given model name."""
-        return genai.GenerativeModel(model_name)
         
     def generate_response(self, prompt: str, max_retries: int = None) -> str:
         """
-        Generate response with automatic model rotation on rate limits.
-        
-        Args:
-            prompt: The prompt to generate content for
-            max_retries: Maximum number of models to try (default: all models)
-            
-        Returns:
-            Generated text response
-            
-        Raises:
-            Exception: If all models fail or encounter non-rate-limit errors
+        Generate response with automatic model rotation across providers on failures.
         """
         if max_retries is None:
             max_retries = len(self.MODELS)
@@ -43,41 +55,76 @@ class LLMClient:
         last_error = None
         
         for attempt in range(max_retries):
-            model_name = self.MODELS[self.current_model_index % len(self.MODELS)]
+            model_info = self.MODELS[self.current_model_index % len(self.MODELS)]
+            provider = model_info["provider"]
+            model_id = model_info["id"]
             
             try:
-                print(f"[LLM] Trying model: {model_name} (attempt {attempt + 1}/{max_retries})")
-                print(f"[LLM] Generating content with prompt len: {len(prompt)}...")
+                print(f"[LLM] Trying {provider} model: {model_id} (attempt {attempt + 1}/{max_retries})")
                 
-                model = self._get_model(model_name)
-                response = model.generate_content(prompt)
+                if provider == "google":
+                    if not self.gemini_available:
+                        raise Exception("Gemini API key missing")
+                    model = genai.GenerativeModel(model_id)
+                    response = model.generate_content(prompt)
+                    return response.text
                 
-                print(f"[LLM] SUCCESS with {model_name}")
-                return response.text
+                elif provider == "openai":
+                    if not self.openai_available:
+                        raise Exception("OpenAI API key missing")
+                    response = self.openai_client.chat.completions.create(
+                        model=model_id,
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.7,
+                    )
+                    return response.choices[0].message.content
+
+                elif provider == "groq":
+                    if not self.groq_available:
+                        raise Exception("Groq API key missing")
+                    chat_completion = self.groq_client.chat.completions.create(
+                        messages=[{"role": "user", "content": prompt}],
+                        model=model_id,
+                        temperature=0.7,
+                    )
+                    return chat_completion.choices[0].message.content
                 
             except Exception as e:
                 error_str = str(e)
+                print(f"[LLM] Error with {model_id}: {error_str}")
                 
-                # Check if it's a rate limit error (429)
-                if "429" in error_str or "quota" in error_str.lower() or "rate limit" in error_str.lower():
-                    print(f"[LLM] WARNING: Rate limit hit on {model_name}, rotating to next model...")
+                # Check for rate limit or quota errors
+                is_rate_limit = any(kw in error_str.lower() for kw in ["429", "quota", "rate limit", "busy", "exhausted"])
+                
+                if is_rate_limit or "API key missing" in error_str:
+                    print(f"[LLM] Rotating to next model due to: {error_str[:50]}...")
                     self.current_model_index += 1
                     last_error = e
-                    
-                    # If this was the last model, add a small delay before retrying
-                    if attempt == max_retries - 1:
-                        print(f"[LLM] All models exhausted. Last error: {error_str}")
-                    
                     continue
                 else:
-                    # Non-rate-limit error, fail immediately
-                    print(f"[LLM ERROR] Non-rate-limit error on {model_name}: {e}")
-                    raise e
+                    # Non-temporary error, but we'll try rotating anyway for robustness
+                    print(f"[LLM] Critical error, trying next model anyway...")
+                    self.current_model_index += 1
+                    last_error = e
+                    continue
         
-        # All models failed with rate limits
-        error_msg = f"All {max_retries} models exhausted due to rate limits. Please try again later."
+        error_msg = f"All {max_retries} AI providers exhausted. Please try again later."
         print(f"[LLM ERROR]: {error_msg}")
-        if last_error:
-            raise Exception(error_msg) from last_error
-        else:
-            raise Exception(error_msg)
+        raise Exception(error_msg) from last_error
+
+    def generate_response_from_messages(self, messages: List[Dict], max_retries: int = None) -> str:
+        """
+        Adapts messages list and routes to provider-specific logic.
+        """
+        # Flattening to single prompt for consistent multi-provider support
+        
+        formatted_prompt = ""
+        for msg in messages:
+            role = "Coach" if msg['role'] == 'assistant' else "Student"
+            if msg['role'] == 'system':
+                role = "SYSTEM"
+            formatted_prompt += f"{role}: {msg['content']}\n"
+        
+        formatted_prompt += "\nCoach:"
+        
+        return self.generate_response(formatted_prompt, max_retries)

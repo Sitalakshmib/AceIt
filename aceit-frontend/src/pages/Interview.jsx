@@ -189,7 +189,7 @@ const Interview = () => {
       setMessages(prev => [...prev, { role: 'user', text: textToSend }]);
       setUserInput('');
     } else if (audioBlob) {
-      setMessages(prev => [...prev, { role: 'user', text: '🎤 [Audio Answer Sent]' }]);
+      setMessages(prev => [...prev, { role: 'user', text: '[Audio Answer Sent]' }]);
     }
 
     setIsLoading(true);
@@ -228,7 +228,7 @@ const Interview = () => {
         setTimeout(() => setView('completed'), 3000);
       }
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'ai', text: '❌ Error: ' + err.message }]);
+      setMessages(prev => [...prev, { role: 'ai', text: 'Error: ' + err.message }]);
     } finally {
       setIsLoading(false);
     }
@@ -245,7 +245,7 @@ const Interview = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-6">
         <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full">
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-800 mb-2">🤖 AI Interview</h1>
+            <h1 className="text-4xl font-bold text-gray-800 mb-2">AI Interview</h1>
             <p className="text-gray-600">Chat-based mock interview powered by Gemini AI</p>
           </div>
 
@@ -264,7 +264,7 @@ const Interview = () => {
                     : 'border-gray-300 hover:border-blue-300'
                     }`}
                 >
-                  <div className="text-3xl mb-2">💻</div>
+                  <div className="text-3xl mb-2"></div>
                   <div className="font-semibold text-gray-800">Technical</div>
                   <div className="text-xs text-gray-600 mt-1">Theory, concepts, explanation-based</div>
                 </button>
@@ -276,7 +276,7 @@ const Interview = () => {
                     : 'border-gray-300 hover:border-purple-300'
                     }`}
                 >
-                  <div className="text-3xl mb-2">👔</div>
+                  <div className="text-3xl mb-2"></div>
                   <div className="font-semibold text-gray-800">HR/Behavioral</div>
                   <div className="text-xs text-gray-600 mt-1">Soft skills, experience, culture fit</div>
                 </button>
@@ -288,7 +288,7 @@ const Interview = () => {
                     : 'border-gray-300 hover:border-green-300'
                     }`}
                 >
-                  <div className="text-3xl mb-2">📹</div>
+                  <div className="text-3xl mb-2"></div>
                   <div className="font-semibold text-gray-800">Video Presence</div>
                   <div className="text-xs text-gray-600 mt-1">Eye contact & body language practice</div>
                 </button>
@@ -314,8 +314,8 @@ const Interview = () => {
                 </select>
                 <p className="text-xs text-gray-500 mt-2">
                   {topic === 'realtime'
-                    ? '💡 Adaptive interview that builds questions from your answers. Starts with introduction.'
-                    : '💡 Focused practice on specific topic. Starts directly with concepts, no introduction.'}
+                    ? ' Adaptive interview that builds questions from your answers. Starts with introduction.'
+                    : ' Focused practice on specific topic. Starts directly with concepts, no introduction.'}
                 </p>
               </div>
             )}
@@ -357,7 +357,7 @@ const Interview = () => {
               disabled={isLoading || (interviewType !== 'video-practice' && !resumeText.trim())}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg"
             >
-              {isLoading ? 'Starting Interview...' : 'Start Interview 🚀'}
+              {isLoading ? 'Starting Interview...' : 'Start Interview'}
             </button>
           </div>
         </div>
@@ -372,7 +372,7 @@ const Interview = () => {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6 text-center">
-            <div className="text-6xl mb-4">🎉</div>
+            <div className="text-6xl mb-4"></div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Interview Completed!</h1>
             <p className="text-gray-600">Great job! Here's your performance summary.</p>
           </div>
@@ -402,11 +402,11 @@ const Interview = () => {
               {/* Strengths */}
               {results.strengths && results.strengths.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-4">💪 Strengths</h2>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">Strengths</h2>
                   <ul className="space-y-2">
                     {results.strengths.map((strength, idx) => (
                       <li key={idx} className="flex items-start gap-2">
-                        <span className="text-green-500 mt-1">✓</span>
+                        <span className="text-green-500 mt-1"></span>
                         <span className="text-gray-700">{strength}</span>
                       </li>
                     ))}
@@ -417,11 +417,11 @@ const Interview = () => {
               {/* Recommendations */}
               {results.recommendations && results.recommendations.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-4">💡 Recommendations</h2>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">Recommendations</h2>
                   <ul className="space-y-2">
                     {results.recommendations.map((rec, idx) => (
                       <li key={idx} className="flex items-start gap-2">
-                        <span className="text-blue-500 mt-1">→</span>
+                        <span className="text-blue-500 mt-1"></span>
                         <span className="text-gray-700">{rec}</span>
                       </li>
                     ))}
@@ -432,7 +432,7 @@ const Interview = () => {
               {/* Model Answers - Learning Opportunities */}
               {results.model_answers && results.model_answers.length > 0 && (
                 <div className="bg-white rounded-2xl shadow-2xl p-8 mb-6">
-                  <h2 className="text-2xl font-bold text-gray-800 mb-4">📝 Learning Opportunities</h2>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-4">Learning Opportunities</h2>
                   <p className="text-gray-600 mb-6">
                     Here are ideal answers for questions where you can improve. Use these as learning references.
                   </p>
@@ -449,7 +449,7 @@ const Interview = () => {
 
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-3">
                           <p className="text-sm font-semibold text-green-800 mb-2">
-                            💡 How you could answer this better in an interview:
+                            How you could answer this better in an interview:
                           </p>
                           <p className="text-gray-700 leading-relaxed">{item.model_answer}</p>
                         </div>
@@ -578,7 +578,7 @@ const Interview = () => {
                         }}
                         className="mt-2 text-xs flex items-center gap-1 text-blue-500 hover:text-blue-700"
                       >
-                        🔊 Replay Audio
+                        Replay Audio
                       </button>
                     )}
                     {/* Display Feedback if present */}
@@ -606,7 +606,7 @@ const Interview = () => {
             <div className="flex justify-start">
               <div className="bg-white px-6 py-4 rounded-2xl shadow-md border border-gray-200">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">🤖</span>
+                  <span className="text-2xl"></span>
                   <div className="flex gap-1">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>

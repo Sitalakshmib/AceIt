@@ -135,6 +135,44 @@ export const analyticsAPI = {
   getTopicAnalytics: (topic) => {
     const userId = getCurrentUserId();
     return api.get(`/analytics/topic/${userId}/${topic}`);
+  },
+  getDailyProgress: (days = 7) => {
+    const userId = getCurrentUserId();
+    return api.get(`/analytics/daily-progress?user_id=${userId}&days=${days}&_t=${Date.now()}`);
+  },
+  getMockReport: () => {
+    const userId = getCurrentUserId();
+    return api.get(`/analytics/mock-report?user_id=${userId}&_t=${Date.now()}`);
+  },
+  getAICoach: () => {
+    const userId = getCurrentUserId();
+    return api.get(`/analytics/ai-coach?user_id=${userId}&_t=${Date.now()}`);
+  },
+  getOverallSummary: () => {
+    const userId = getCurrentUserId();
+    return api.get(`/analytics/overall-summary?user_id=${userId}&_t=${Date.now()}`);
+  },
+  startCoach: () => {
+    const userId = getCurrentUserId();
+    const formData = new FormData();
+    formData.append('user_id', userId);
+    return api.post('/analytics/coach/start', formData);
+  },
+  sendCoachMessage: (sessionId, textMessage = null, audioBlob = null) => {
+    const formData = new FormData();
+    formData.append('session_id', sessionId);
+    if (textMessage) formData.append('text_message', textMessage);
+    if (audioBlob) formData.append('audio_file', audioBlob, 'coach_audio.webm');
+    return api.post('/analytics/coach/answer', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  generateCoachAudio: (text) => {
+    const formData = new FormData();
+    formData.append('text', text);
+    return api.post('/analytics/coach/audio', formData);
   }
 };
 

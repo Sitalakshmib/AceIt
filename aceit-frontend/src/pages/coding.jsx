@@ -17,10 +17,10 @@ function solveProblem(input) {
   const [testResults, setTestResults] = useState(null);
 
   const languages = [
-    { id: 'python', name: 'Python', extension: 'py', icon: '🐍' },
-    { id: 'javascript', name: 'JavaScript', extension: 'js', icon: '🟨' },
-    { id: 'java', name: 'Java', extension: 'java', icon: '☕' },
-    { id: 'cpp', name: 'C++', extension: 'cpp', icon: '⚡' },
+    { id: 'python', name: 'Python', extension: 'py', icon: '' },
+    { id: 'javascript', name: 'JavaScript', extension: 'js', icon: '' },
+    { id: 'java', name: 'Java', extension: 'java', icon: '' },
+    { id: 'cpp', name: 'C++', extension: 'cpp', icon: '' },
   ];
 
   // Fetch coding problems on component mount
@@ -74,7 +74,7 @@ function solveProblem(input) {
       // Show success message if tests passed
       if (passed_tests === total_tests && total_tests > 0) {
         setTimeout(() => {
-          setOutput(prev => prev + '\n\n🎉 All tests passed! Progress saved.');
+          setOutput(prev => prev + '\n\nAll tests passed! Progress saved.');
         }, 500);
       }
 

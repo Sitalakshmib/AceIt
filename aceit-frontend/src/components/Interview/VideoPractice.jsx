@@ -532,16 +532,16 @@ const VideoPractice = ({ onBack }) => {
     const updateFeedbackUI = (conf, eye, stable, tense, smiling) => {
         // ... audio check logic (omitted) ...
 
-        let faceStatus = 'Composed ✅';
-        if (tense) faceStatus = 'Tension Detected ⚠️';
-        else if (smiling) faceStatus = 'Warm & Engaging ✅'; // Override composed if smiling
+        let faceStatus = 'Composed';
+        if (tense) faceStatus = 'Tension Detected';
+        else if (smiling) faceStatus = 'Warm & Engaging'; // Override composed if smiling
 
         setLiveFeedback({
             confidence: Math.round(conf),
-            eyeContact: eye ? 'Focused ✅' : 'Distracted ⚠️',
-            headStability: stable ? 'Steady ✅' : 'Moving ⚠️',
+            eyeContact: eye ? 'Focused' : 'Distracted',
+            headStability: stable ? 'Steady' : 'Moving',
             tension: faceStatus, // Dynamic label
-            voice: 'Active 🎙️',
+            voice: 'Active',
             status: mode === 'answering' ? 'Analyzing...' : 'Ready'
         });
     };
@@ -575,7 +575,7 @@ const VideoPractice = ({ onBack }) => {
         return (
             <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6 flex flex-col items-center">
                 <div className="max-w-5xl w-full bg-white rounded-2xl shadow-2xl p-8">
-                    <h1 className="text-4xl font-bold text-gray-800 mb-2 text-center">Professional AI Analysis 🎯</h1>
+                    <h1 className="text-4xl font-bold text-gray-800 mb-2 text-center">Professional AI Analysis</h1>
                     <p className="text-center text-gray-600 mb-8">Detailed performance insights with explainability</p>
 
                     <div className="space-y-8">
@@ -621,7 +621,7 @@ const VideoPractice = ({ onBack }) => {
                                         {/* Left: Speech Delivery (Backend) */}
                                         <div>
                                             <h4 className="text-sm font-bold text-gray-700 uppercase mb-4 flex items-center gap-2">
-                                                <span>🎙️</span> Speech & Hesitation
+                                                <span></span> Speech & Hesitation
                                             </h4>
 
                                             {hesitation ? (
@@ -630,7 +630,7 @@ const VideoPractice = ({ onBack }) => {
                                                     {feedback.speech_delivery?.observations?.map((obs, i) => (
                                                         <div key={i} className="bg-orange-50 p-3 rounded-lg border border-orange-100">
                                                             <div className="flex items-start gap-2">
-                                                                <span className="text-orange-500 mt-0.5">ℹ️</span>
+                                                                <span className="text-orange-500 mt-0.5"></span>
                                                                 <div>
                                                                     <p className="text-sm font-medium text-gray-800">{obs}</p>
                                                                     {isExpanded && feedback.speech_delivery?.explanations?.[i] && (
@@ -661,7 +661,7 @@ const VideoPractice = ({ onBack }) => {
                                         {/* Right: Visual Presence (Frontend) */}
                                         <div>
                                             <h4 className="text-sm font-bold text-gray-700 uppercase mb-4 flex items-center gap-2">
-                                                <span>👁️</span> Visual Communication
+                                                <span></span> Visual Communication
                                             </h4>
 
                                             <div className="space-y-4">
@@ -711,7 +711,7 @@ const VideoPractice = ({ onBack }) => {
                                         <div className="flex gap-2">
                                             {visualFeedback.suggestions?.concat(feedback.improvement_suggestions || []).slice(0, 2).map((sugg, i) => (
                                                 <span key={i} className="text-xs bg-white border border-gray-200 px-2 py-1 rounded text-gray-600">
-                                                    💡 {sugg}
+                                                    {sugg}
                                                 </span>
                                             ))}
                                         </div>
@@ -730,7 +730,7 @@ const VideoPractice = ({ onBack }) => {
 
                     <div className="mt-8 flex justify-center gap-4">
                         <button onClick={startSession} className="px-8 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg transition-all transform hover:scale-105">
-                            Practice Again 🔄
+                            Practice Again
                         </button>
                         <button onClick={onBack} className="px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all">
                             Back to Menu
@@ -746,7 +746,7 @@ const VideoPractice = ({ onBack }) => {
             {/* Header */}
             <div className="w-full max-w-5xl flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">📸 Interview Presence & Communication Practice</h1>
+                    <h1 className="text-2xl font-bold text-gray-800">Interview Presence & Communication Practice</h1>
                     <p className="text-gray-600">Professional non-verbal communication training. Microphone and Camera required.</p>
                 </div>
                 <button onClick={onBack} className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium">Exit</button>
@@ -760,9 +760,9 @@ const VideoPractice = ({ onBack }) => {
                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-gray-900/90 text-white p-8 text-center backdrop-blur-sm">
                             <h3 className="text-3xl font-bold mb-4">Start Session?</h3>
                             <ul className="text-left space-y-2 mb-8 text-gray-300">
-                                <li>👀 <b>Eye Contact</b> Analysis</li>
-                                <li>😊 <b>Facial Tension</b> & Expression Analysis</li>
-                                <li>🎙️ <b>Voice Confidence</b> & Hesitation Analysis</li>
+                                <li><b>Eye Contact</b> Analysis</li>
+                                <li><b>Facial Tension</b> & Expression Analysis</li>
+                                <li><b>Voice Confidence</b> & Hesitation Analysis</li>
                             </ul>
                             <button
                                 onClick={startSession}
@@ -772,7 +772,7 @@ const VideoPractice = ({ onBack }) => {
                                     : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                                     }`}
                             >
-                                {isModelLoaded ? 'Start Session 🚀' : 'Loading AI...'}
+                                {isModelLoaded ? 'Start Session' : 'Loading AI...'}
                             </button>
                         </div>
                     )}
@@ -828,7 +828,7 @@ const VideoPractice = ({ onBack }) => {
                     <div className="bg-gray-100 p-3 rounded-lg border border-gray-200">
                         <div className="flex justify-between items-center mb-1">
                             <div className="text-xs font-bold text-gray-400 uppercase">Input Level</div>
-                            <div className="text-xs font-bold text-gray-600">{micVolume > 20 ? 'DETECTED 🔊' : 'SILENT 🤫'}</div>
+                            <div className="text-xs font-bold text-gray-600">{micVolume > 20 ? 'DETECTED' : 'SILENT'}</div>
                         </div>
                         <div className="w-full h-2 bg-gray-300 rounded-full overflow-hidden">
                             <div

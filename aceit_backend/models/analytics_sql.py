@@ -45,5 +45,9 @@ class UserAnalytics(Base):
     average_mock_score = Column(Float, default=0.0)
     best_mock_score = Column(Integer, default=0)
     
+    # AI Coaching Cache
+    last_ai_insight = Column(JSON, nullable=True)
+    last_ai_generated_at = Column(DateTime, nullable=True)
+    
     last_updated = Column(DateTime, default=datetime.datetime.utcnow)
 

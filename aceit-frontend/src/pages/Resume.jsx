@@ -513,7 +513,7 @@ const Resume = () => {
                     id="resume-upload"
                   />
                   <label htmlFor="resume-upload" className="cursor-pointer">
-                    <div className="text-4xl mb-2">📄</div>
+                    <div className="text-4xl mb-2"></div>
                     <p className="text-gray-600 mb-2">
                       {resumeFile ? resumeFile.name : 'Click to upload resume'}
                     </p>
@@ -551,7 +551,7 @@ const Resume = () => {
 
           {/* Quick Tips */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6">
-            <h3 className="font-semibold text-yellow-800 mb-2">💡 Resume Tips</h3>
+            <h3 className="font-semibold text-yellow-800 mb-2">Resume Tips</h3>
             <ul className="text-yellow-700 text-sm space-y-1">
               <li>• Use action verbs and quantifiable results</li>
               <li>• Include relevant keywords from job description</li>
@@ -569,7 +569,7 @@ const Resume = () => {
               {/* Overall Score - Enhanced */}
               <div className="bg-gradient-to-br from-white to-gray-50 rounded-xl shadow-lg p-8 border border-gray-100">
                 <SectionHeader
-                  icon="📊"
+                  icon=""
                   title="Resume Analysis Summary"
                   subtitle={`Analysis for ${jobRoles.find(r => r.id === analysisResult.job_role)?.name || analysisResult.job_role}`}
                 >
@@ -577,7 +577,7 @@ const Resume = () => {
                     onClick={downloadReport}
                     className="bg-gradient-to-r from-green-600 to-green-700 text-white px-5 py-2.5 rounded-lg hover:from-green-700 hover:to-green-800 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
                   >
-                    <span>📥</span>
+                    <span></span>
                     <span className="font-semibold">Download PDF Report</span>
                   </button>
                 </SectionHeader>
@@ -599,7 +599,7 @@ const Resume = () => {
                 </div>
 
                 {/* Overall Feedback */}
-                <InsightCard type="info" icon="📝" title="Overall Assessment">
+                <InsightCard type="info" icon="" title="Overall Assessment">
                   <p className="leading-relaxed">{analysisResult.overall_feedback}</p>
                 </InsightCard>
 
@@ -619,7 +619,7 @@ const Resume = () => {
               {/* Contact Information */}
               <div className="bg-white rounded-lg shadow-md p-6">
                 <h3 className="text-lg font-semibold mb-4 text-gray-800 flex items-center">
-                  <span className="mr-2">📞</span>
+                  <span className="mr-2"></span>
                   Contact Information
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -645,32 +645,32 @@ const Resume = () => {
               {/* ATS Analysis - Enhanced */}
               <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-100">
                 <SectionHeader
-                  icon="🔍"
+                  icon=""
                   title="ATS Compatibility Analysis"
                   subtitle={`Overall ATS Score: ${analysisResult.ats_analysis.ats_score}/100`}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   <MetricCard
-                    icon="📧"
+                    icon=""
                     label="Contact Information"
                     value={`${analysisResult.ats_analysis.contact_info_score}/25`}
                     color="blue"
                   />
                   <MetricCard
-                    icon="📑"
+                    icon=""
                     label="Resume Sections"
                     value={`${analysisResult.ats_analysis.section_score}/30`}
                     color="green"
                   />
                   <MetricCard
-                    icon="✨"
+                    icon=""
                     label="Formatting Quality"
                     value={`${analysisResult.ats_analysis.formatting_score}/20`}
                     color="purple"
                   />
                   <MetricCard
-                    icon="📝"
+                    icon=""
                     label="Content Quality"
                     value={`${analysisResult.ats_analysis.content_score}/25`}
                     color="orange"
@@ -687,7 +687,7 @@ const Resume = () => {
                 </div>
 
                 {analysisResult.ats_analysis.missing_elements.length > 0 && (
-                  <InsightCard type="warning" icon="⚠️" title="Missing Elements">
+                  <InsightCard type="warning" icon="" title="Missing Elements">
                     <div className="flex flex-wrap gap-2">
                       {analysisResult.ats_analysis.missing_elements.map((element, index) => (
                         <span key={index} className="bg-orange-100 text-orange-800 px-3 py-1.5 rounded-lg text-sm font-medium border border-orange-200">
@@ -702,7 +702,7 @@ const Resume = () => {
               {/* Skills Analysis - Enhanced */}
               <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-100">
                 <SectionHeader
-                  icon="🛠️"
+                  icon=""
                   title="Skills Match Analysis"
                   subtitle={`${analysisResult.skills_analysis.matched_skills_count} of ${analysisResult.skills_analysis.total_required_skills} required skills found`}
                 />
@@ -719,7 +719,7 @@ const Resume = () => {
 
                 {/* Matched Skills */}
                 {analysisResult.skills_analysis.matched_skills.length > 0 && (
-                  <InsightCard type="success" icon="✅" title={`Matched Skills (${analysisResult.skills_analysis.matched_skills_count})`}>
+                  <InsightCard type="success" icon="" title={`Matched Skills (${analysisResult.skills_analysis.matched_skills_count})`}>
                     <div className="flex flex-wrap gap-2">
                       {analysisResult.skills_analysis.matched_skills.map((skill, index) => (
                         <SkillTag key={index} skill={skill} matched={true} />
@@ -730,7 +730,7 @@ const Resume = () => {
 
                 {/* Missing Skills */}
                 {analysisResult.skills_analysis.missing_skills.length > 0 && (
-                  <InsightCard type="warning" icon="📌" title="Recommended Skills to Add">
+                  <InsightCard type="warning" icon="" title="Recommended Skills to Add">
                     <div className="flex flex-wrap gap-2">
                       {analysisResult.skills_analysis.missing_skills.map((skill, index) => (
                         <SkillTag key={index} skill={skill} matched={false} />
@@ -743,7 +743,7 @@ const Resume = () => {
               {/* Suggestions - Enhanced */}
               <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg shadow-lg p-6 border border-blue-200">
                 <SectionHeader
-                  icon="💡"
+                  icon=""
                   title="Actionable Recommendations"
                   subtitle="Prioritized steps to improve your resume"
                 />
@@ -789,14 +789,14 @@ const Resume = () => {
                   <AIInsightPanel title="AI-Powered Insights">
                     {/* Overall Impression */}
                     {analysisResult.ai_analysis.overall_impression && (
-                      <AISectionCard icon="💭" title="Overall Impression" color="blue">
+                      <AISectionCard icon="" title="Overall Impression" color="blue">
                         <p>{analysisResult.ai_analysis.overall_impression}</p>
                       </AISectionCard>
                     )}
 
                     {/* Interview Readiness */}
                     {analysisResult.ai_analysis.interview_readiness && (
-                      <AISectionCard icon="🎯" title="Interview Readiness" color="green">
+                      <AISectionCard icon="" title="Interview Readiness" color="green">
                         <p>{analysisResult.ai_analysis.interview_readiness}</p>
                       </AISectionCard>
                     )}
@@ -806,7 +806,6 @@ const Resume = () => {
                       <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl p-6 border-2 border-purple-200 shadow-sm">
                         <div className="flex items-center mb-5">
                           <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center text-white text-2xl shadow-md mr-4">
-                            💡
                           </div>
                           <div>
                             <h4 className="text-xl font-bold text-purple-900">AI Actionable Tips</h4>
@@ -836,7 +835,7 @@ const Resume = () => {
 
                     {/* Keyword Suggestions */}
                     {analysisResult.ai_analysis.keyword_suggestions && analysisResult.ai_analysis.keyword_suggestions.length > 0 && (
-                      <AISectionCard icon="🔑" title="Suggested Keywords for ATS" color="gray">
+                      <AISectionCard icon="" title="Suggested Keywords for ATS" color="gray">
                         <div className="flex flex-wrap gap-2">
                           {analysisResult.ai_analysis.keyword_suggestions.map((keyword, index) => (
                             <span key={index} className="bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 px-4 py-2 rounded-full text-sm font-medium border border-purple-200 shadow-sm">
@@ -849,14 +848,14 @@ const Resume = () => {
 
                     {/* Formatting Advice */}
                     {analysisResult.ai_analysis.formatting_advice && (
-                      <AISectionCard icon="📄" title="Formatting Advice" color="gray">
+                      <AISectionCard icon="" title="Formatting Advice" color="gray">
                         <p>{analysisResult.ai_analysis.formatting_advice}</p>
                       </AISectionCard>
                     )}
 
                     {/* Raw feedback fallback */}
                     {analysisResult.ai_analysis.raw_feedback && !analysisResult.ai_analysis.overall_impression && (
-                      <AISectionCard icon="🤖" title="AI Feedback" color="gray">
+                      <AISectionCard icon="" title="AI Feedback" color="gray">
                         <p className="whitespace-pre-wrap">{analysisResult.ai_analysis.raw_feedback}</p>
                       </AISectionCard>
                     )}
@@ -876,7 +875,7 @@ const Resume = () => {
           ) : (
             /* Empty State - Enhanced */
             <EmptyState
-              icon="📊"
+              icon=""
               title="Upload Your Resume to Get Started"
               description="Get AI-powered analysis of your resume with detailed feedback and improvement suggestions."
               features={[

@@ -167,7 +167,7 @@ const Dashboard = () => {
       score: progressData.aptitude.average_score,
       total: progressData.aptitude.tests_taken,
       color: 'bg-blue-100 text-blue-600',
-      icon: '🧠',
+      icon: '',
       path: '/aptitude'
     },
     {
@@ -175,7 +175,7 @@ const Dashboard = () => {
       score: progressData.coding.average_success_rate,
       total: progressData.coding.problems_attempted,
       color: 'bg-green-100 text-green-600',
-      icon: '💻',
+      icon: '',
       path: '/coding'
     },
     {
@@ -183,7 +183,7 @@ const Dashboard = () => {
       score: 65,
       total: 3,
       color: 'bg-purple-100 text-purple-600',
-      icon: '🎤',
+      icon: '',
       path: '/interview'
     },
   ];

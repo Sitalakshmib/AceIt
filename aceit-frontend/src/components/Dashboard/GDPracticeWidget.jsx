@@ -79,7 +79,7 @@ const GDPracticeWidget = () => {
             {/* Error Message */}
             {error && (
                 <div className="mb-6 p-4 bg-red-50 text-red-700 rounded-xl border border-red-100 flex items-center">
-                    <span className="mr-2">⚠️</span> {error}
+                    <span className="mr-2"></span> {error}
                 </div>
             )}
 

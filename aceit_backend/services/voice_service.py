@@ -8,35 +8,35 @@ class VoiceService:
     def __init__(self):
         pass
         
-    def _load_whisper(self):
-        global _WHISPER_MODEL
-        if _WHISPER_MODEL is None:
-            print("Loading Whisper model...")
-            try:
-                _WHISPER_MODEL = whisper.load_model("base")
-                print("Whisper loaded.")
-            except Exception as e:
-                print(f"[ERROR] Whisper load failed: {e}")
-                raise RuntimeError("STT Model failed to load.")
-
     def transcribe(self, file_path: str) -> str:
         """
-        Transcribes audio file using Whisper.
+        Transcribes audio file using Groq Whisper API (Fast & Fail-safe).
         """
-        # Fallback check (if file doesn't exist)
         if not os.path.exists(file_path):
              return "Error: Audio file not found."
 
         try:
-            self._load_whisper()
-            result = _WHISPER_MODEL.transcribe(
-                file_path,
-                language="en",
-                fp16=False # safe for CPU
-            )
-            return result["text"].strip()
+            from groq import Groq
+            api_key = os.getenv("GROQ_API_KEY")
+            if not api_key:
+                return "Error: GROQ_API_KEY missing for voice input."
+                
+            client = Groq(api_key=api_key)
+            
+            with open(file_path, "rb") as file:
+                transcription = client.audio.transcriptions.create(
+                    file=(os.path.basename(file_path), file.read()),
+                    model="whisper-large-v3-turbo",
+                    response_format="json",
+                    language="en",
+                    temperature=0.0
+                )
+            
+            text = transcription.text.strip()
+            return text
+            
         except Exception as e:
-            print(f"[ERROR] Transcription error: {e}")
+            print(f"[ERROR] Groq STT error: {e}")
             return "I could not hear that clearly."
 
     def synthesize(self, text: str) -> str:

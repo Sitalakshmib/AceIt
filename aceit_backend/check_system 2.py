@@ -76,25 +76,13 @@ def check_python_packages():
     ]
     
     missing = []
-    package_map = {
-        'python-jose': 'jose',
-        'google.generativeai': 'google.generativeai',
-        'python-multipart': 'multipart' # python-multipart usually imports as multipart
-    }
-
     for package in required_packages:
-        import_name = package_map.get(package, package.replace('-', '_'))
         try:
-            __import__(import_name)
+            __import__(package.replace('-', '_'))
             print(f"  ✅ {package}")
         except ImportError:
-            # Try original name as fallback
-            try:
-                __import__(package)
-                print(f"  ✅ {package}")
-            except ImportError:
-                print(f"  ❌ {package} (tried importing '{import_name}')")
-                missing.append(package)
+            print(f"  ❌ {package}")
+            missing.append(package)
     
     return len(missing) == 0, missing
 

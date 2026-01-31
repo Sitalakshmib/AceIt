@@ -270,7 +270,7 @@ const MockTest = () => {
                             disabled={loading || (testType === 'section_wise' && !selectedCategory) || (testType === 'topic_wise' && (!selectedCategory || !selectedTopic))}
                             className="w-full bg-blue-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors shadow-lg"
                         >
-                            {loading ? 'Generating Test...' : 'Start Mock Test 🚀'}
+                            {loading ? 'Generating Test...' : 'Start Mock Test'}
                         </button>
                     </div>
                 </div>
@@ -435,7 +435,7 @@ const MockTest = () => {
                                         <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                                         Submitting...
                                     </>
-                                ) : 'Submit Test ✓'}
+                                ) : 'Submit Test'}
                             </button>
                         ) : (
                             <button
