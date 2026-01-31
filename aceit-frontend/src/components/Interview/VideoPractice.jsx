@@ -58,6 +58,7 @@ const VideoPractice = ({ onBack }) => {
     });
 
     const [sessionReport, setSessionReport] = useState([]);
+    const [showExplain, setShowExplain] = useState({}); // Track which report items have 'Explain' expanded
 
     // Loop Control
     const lastProcessTimeRef = useRef(0);
@@ -319,12 +320,35 @@ const VideoPractice = ({ onBack }) => {
     };
 
     const generateFeedback = (eye, stability, tension) => {
-        const tips = [];
-        if (eye < 60) tips.push("Maintain more eye contact.");
-        if (stability < 60) tips.push("Keep head steady.");
-        if (tension > 30) tips.push("Relax facial muscles.");
-        if (tips.length === 0) return "Excellent visual presence!";
-        return tips.join(" ");
+        const feedback = {
+            summary: "Professional presence analysis complete.",
+            details: [],
+            suggestions: []
+        };
+
+        // Qualitative Observation (Not Judgment)
+        if (eye < 60) {
+            feedback.details.push("Frequent gaze shifts away from camera observed.");
+            feedback.suggestions.push("Focus consistently on the camera lens to signal attentiveness.");
+        } else {
+            feedback.details.push("Maintained strong, consistent eye contact.");
+        }
+
+        if (stability < 60) {
+            feedback.details.push("Detectable head movement or fidgeting.");
+            feedback.suggestions.push("Aim for a stable, grounded posture.");
+        }
+
+        // Tension is now a percentage (average tension score)
+        // If tension metric > 30 (on 0-100 scale), it's noticeable
+        if (tension > 20) {
+            feedback.details.push("Micro-expressions of tension observed (e.g., brow or mouth compression).");
+            feedback.suggestions.push("Practice conscious facial relaxation techniques before answering.");
+        } else {
+            feedback.details.push("Facial expression remained composed and professional.");
+        }
+
+        return feedback;
     };
 
     const nextStep = () => {
@@ -415,7 +439,7 @@ const VideoPractice = ({ onBack }) => {
         // Fallback for no detection
         if (!result.faceLandmarks || result.faceLandmarks.length === 0) {
             if (performance.now() - lastFeedbackTimeRef.current > 1000) {
-                updateFeedbackUI(0, false, false, false); // Reset
+                updateFeedbackUI(0, false, false, false, false); // Reset
             }
             return;
         }
@@ -423,72 +447,101 @@ const VideoPractice = ({ onBack }) => {
         const landmarks = result.faceLandmarks[0];
         const blendshapes = result.faceBlendshapes[0].categories;
 
-        // 1. Eye Contact
+        // 1. Eye Contact (High Accuracy)
         const noseTip = landmarks[1];
         const leftCheek = landmarks[234];
         const rightCheek = landmarks[454];
         const faceCenterX = (leftCheek.x + rightCheek.x) / 2;
-        const isLookingAtCam = Math.abs(noseTip.x - faceCenterX) < 0.05;
+        // Tighter threshold for professional contact
+        const isLookingAtCam = Math.abs(noseTip.x - faceCenterX) < 0.04;
 
-        // 2. Head Stability
+        // 2. Head Stability & Movement (Nodding vs Fidgeting)
         noseHistoryRef.current.push(noseTip);
-        if (noseHistoryRef.current.length > 30) noseHistoryRef.current.shift();
+        if (noseHistoryRef.current.length > 50) noseHistoryRef.current.shift();
+
+        // Calculate recent movement intensity
         let movement = 0;
+        let verticalMovement = 0; // For nodding detection
         if (noseHistoryRef.current.length > 5) {
             const first = noseHistoryRef.current[0];
             const last = noseHistoryRef.current[noseHistoryRef.current.length - 1];
             movement = Math.sqrt(Math.pow(last.x - first.x, 2) + Math.pow(last.y - first.y, 2));
+            verticalMovement = Math.abs(last.y - first.y);
         }
-        const isStable = movement < 0.15;
 
-        // 3. Facial Tension
-        const browDownL = blendshapes.find(b => b.categoryName === 'browDownLeft')?.score || 0;
-        const browDownR = blendshapes.find(b => b.categoryName === 'browDownRight')?.score || 0;
-        const isTense = (browDownL + browDownR) > 1.2;
+        // Distinguish stable vs nodding vs fidgeting
+        const isStable = movement < 0.10;
+        const isNodding = verticalMovement > 0.05 && movement < 0.15; // Controlled vertical movement
+
+        // 3. Facial Expression Nuance (Professional Composure)
+        const getScore = (name) => blendshapes.find(b => b.categoryName === name)?.score || 0;
+
+        // Tension Indicators (More Sensitive & Granular)
+        // 1. Brow Tension (worry/focus)
+        const browTension = getScore('browDownLeft') + getScore('browDownRight') + getScore('browInnerUp');
+        // 2. Mouth Tension (pursing/tightness)
+        const mouthTension = getScore('mouthPressLeft') + getScore('mouthPressRight') + getScore('mouthShrugUpper');
+        // 3. Eye Tension (squinting/stress)
+        const eyeTension = getScore('eyeSquintLeft') + getScore('eyeSquintRight');
+
+        // Composite Tension Score (Weighted)
+        // Thresholds are typically low for these micro-expressions
+        const currentTensionRaw = (browTension * 0.4) + (mouthTension * 0.4) + (eyeTension * 0.2);
+
+        // Normalize: > 0.3 is "Detectably Tense", > 0.6 is "High Tension"
+        // We want a 0-1 score for stat tracking
+        const normalizedTension = Math.min(currentTensionRaw / 0.8, 1.0);
+        const isTense = normalizedTension > 0.2; // Lower threshold to catch micro-tensions
+
+        // Positive Indicators (Warmth) - Not directly "Confidence" but "Engagement"
+        const smile = getScore('mouthSmileLeft') + getScore('mouthSmileRight');
+        const isSmiling = smile > 0.4;
 
         // Update Answer Stats
         if (mode === 'answering') {
             answerStatsRef.current.frames++;
             if (isLookingAtCam) answerStatsRef.current.goodEyeContactFrames++;
-            if (isStable) answerStatsRef.current.stableHeadFrames++;
-            if (isTense) answerStatsRef.current.tenseFrames++;
+            if (isStable || isNodding) answerStatsRef.current.stableHeadFrames++;
+
+            // Accumulate tension level
+            if (isTense) answerStatsRef.current.tenseFrames++; // Count frames where ANY tension is visible
         }
 
-        // Live Confidence Calculation
-        let liveConf = 50;
-        if (isLookingAtCam) liveConf += 20;
-        if (isStable) liveConf += 10;
-        if (!isTense) liveConf += 10;
-        if (liveConf > 100) liveConf = 100;
+        // Live Professional Presence Calculation (Weighted Algorithm)
+        // Formula: 50% Eye Contact + 30% Head Stability + 20% Facial Composure
+
+        const eyeScore = isLookingAtCam ? 100 : 0;
+        const headScore = (isStable || isNodding) ? 100 : 50; // Moving isn't always bad
+        const composureScore = Math.max(0, 100 - (normalizedTension * 100)); // Lower tension = higher composure
+
+        // Interactive "Bump" for smiling (Warmth) - small bonus, not driver
+        const warmthBonus = isSmiling ? 5 : 0;
+
+        let livePresence = (eyeScore * 0.5) + (headScore * 0.3) + (composureScore * 0.2) + warmthBonus;
+
+        // Damping/Smoothing could be added here, but raw update is fine for live meter (it has CSS transition)
+        livePresence = Math.min(Math.max(livePresence, 10), 100); // 10-100 Range
 
         // Update UI
-        if (performance.now() - lastFeedbackTimeRef.current > 200) {
-            updateFeedbackUI(liveConf, isLookingAtCam, isStable, isTense);
+        if (performance.now() - lastFeedbackTimeRef.current > 150) { // Faster updates (150ms)
+            updateFeedbackUI(livePresence, isLookingAtCam, isStable, isTense, isSmiling);
             lastFeedbackTimeRef.current = performance.now();
         }
     };
 
-    const updateFeedbackUI = (conf, eye, stable, tense) => {
-        // Audio Feedback Check
-        // Since we don't have direct access to last volume in this func, we rely on cumulative
-        // But for live feedback, let's use the stats trend or a "speaking" indicator
+    const updateFeedbackUI = (conf, eye, stable, tense, smiling) => {
+        // ... audio check logic (omitted) ...
 
-        // Simple visualizer check:
-        // This runs after analyzeLow, so vol should be somewhat current.
-        // But let's just toggle based on total history ratio for now:
-        const total = answerStatsRef.current.speechFrames + answerStatsRef.current.silenceFrames;
-        if (total > 5) {
-            // Check last few frames? Hard without history.
-            // Let's use the micVolume state we just set (async but close enough for UI)
-            // Note: micVolume state update might lag, but 'voiceMsg' is for Display.
-        }
+        let faceStatus = 'Composed ✅';
+        if (tense) faceStatus = 'Tension Detected ⚠️';
+        else if (smiling) faceStatus = 'Warm & Engaging ✅'; // Override composed if smiling
 
         setLiveFeedback({
             confidence: Math.round(conf),
-            eyeContact: eye ? 'Good Contact ✅' : 'Looking Away ⚠️',
-            headStability: stable ? 'Steady ✅' : 'Moving too much ⚠️',
-            tension: tense ? 'Relax Face 🧘' : 'Relaxed ✅',
-            voice: 'Active 🎙️', // Replaced by Mic Bar below
+            eyeContact: eye ? 'Focused ✅' : 'Distracted ⚠️',
+            headStability: stable ? 'Steady ✅' : 'Moving ⚠️',
+            tension: faceStatus, // Dynamic label
+            voice: 'Active 🎙️',
             status: mode === 'answering' ? 'Analyzing...' : 'Ready'
         });
     };
@@ -530,36 +583,22 @@ const VideoPractice = ({ onBack }) => {
                             const hesitation = item.hesitationData;
                             const feedback = hesitation?.feedback || {};
                             const temporal = hesitation?.temporal_progression || {};
-                            const fillers = hesitation?.filler_words || {};
-                            const pauses = hesitation?.pauses || {};
+                            const visualFeedback = item.visualFeedback || {};
+
+                            const isExpanded = showExplain[idx];
+                            const toggleExplain = () => setShowExplain(prev => ({ ...prev, [idx]: !prev[idx] }));
 
                             return (
-                                <div key={idx} className="border-2 border-gray-200 p-6 rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-lg">
-                                    <h3 className="text-xl font-bold text-gray-800 mb-6 pb-3 border-b-2 border-blue-100">
-                                        Question {idx + 1}: {item.question}
-                                    </h3>
-
-                                    {/* Presence Summary */}
-                                    <div className="mb-6 bg-blue-50 p-4 rounded-xl border border-blue-200">
-                                        <h4 className="text-sm font-bold text-blue-900 uppercase mb-2 flex items-center gap-2">
-                                            <span>📊</span> Presence Summary
-                                        </h4>
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <p className="text-lg font-semibold text-gray-800">
-                                                    {feedback.summary || `Overall Confidence: ${getQualitativeLabel(item.confidence)}`}
-                                                </p>
-                                                {temporal.trend && (
-                                                    <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
-                                                        <span className="text-lg">
-                                                            {temporal.trend === 'improving' ? '↑' : temporal.trend === 'declining' ? '↓' : '→'}
-                                                        </span>
-                                                        {temporal.progression}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            {/* Confidence Gauge */}
-                                            <div className="relative w-24 h-24">
+                                <div key={idx} className="border border-gray-200 rounded-2xl bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                    {/* Header */}
+                                    <div className="bg-gray-50 p-6 border-b border-gray-100 flex justify-between items-start">
+                                        <div>
+                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Question {idx + 1}</span>
+                                            <h3 className="text-xl font-bold text-gray-800 mt-1">{item.question}</h3>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            {/* Composite Score Circle */}
+                                            <div className="relative w-16 h-16">
                                                 <svg viewBox="0 0 100 100" className="transform -rotate-90">
                                                     <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="8" />
                                                     <circle
@@ -571,117 +610,119 @@ const VideoPractice = ({ onBack }) => {
                                                         strokeLinecap="round"
                                                     />
                                                 </svg>
-                                                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                                    <span className="text-2xl font-bold text-gray-800">{item.confidence}</span>
-                                                    <span className="text-xs text-gray-500">Score</span>
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                    <span className="text-sm font-bold text-gray-700">{Math.round(item.confidence)}</span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Visual Cues */}
-                                    <div className="mb-6">
-                                        <h4 className="text-sm font-bold text-gray-700 uppercase mb-3 flex items-center gap-2">
-                                            <span>👁️</span> Visual Cues
-                                        </h4>
-                                        <div className="grid grid-cols-3 gap-3">
-                                            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                                                <div className="text-xs text-gray-500 uppercase font-bold mb-1">Eye Contact</div>
-                                                <div className="text-lg font-semibold text-gray-800">{getQualitativeLabel(item.eyeMetric)}</div>
-                                                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                                                    <div
-                                                        className={`h-2 rounded-full ${item.eyeMetric > 75 ? 'bg-green-500' : item.eyeMetric > 50 ? 'bg-blue-500' : 'bg-orange-400'}`}
-                                                        style={{ width: `${item.eyeMetric}%` }}
-                                                    ></div>
-                                                </div>
-                                            </div>
-                                            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                                                <div className="text-xs text-gray-500 uppercase font-bold mb-1">Head Stability</div>
-                                                <div className="text-lg font-semibold text-gray-800">{getQualitativeLabel(item.stabilityMetric)}</div>
-                                                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                                                    <div
-                                                        className={`h-2 rounded-full ${item.stabilityMetric > 75 ? 'bg-green-500' : item.stabilityMetric > 50 ? 'bg-blue-500' : 'bg-orange-400'}`}
-                                                        style={{ width: `${item.stabilityMetric}%` }}
-                                                    ></div>
-                                                </div>
-                                            </div>
-                                            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                                                <div className="text-xs text-gray-500 uppercase font-bold mb-1">Composure</div>
-                                                <div className="text-lg font-semibold text-gray-800">Good</div>
-                                                <div className="text-xs text-gray-500 mt-1">Facial tension low</div>
-                                            </div>
-                                        </div>
-                                        <div className="mt-3 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                            💡 {item.visualFeedback}
-                                        </div>
-                                    </div>
-
-                                    {/* Speech Delivery */}
-                                    {hesitation && (
-                                        <div className="mb-6">
-                                            <h4 className="text-sm font-bold text-gray-700 uppercase mb-3 flex items-center gap-2">
-                                                <span>🎙️</span> Speech Delivery
+                                    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {/* Left: Speech Delivery (Backend) */}
+                                        <div>
+                                            <h4 className="text-sm font-bold text-gray-700 uppercase mb-4 flex items-center gap-2">
+                                                <span>🎙️</span> Speech & Hesitation
                                             </h4>
-                                            <div className="space-y-3">
-                                                {feedback.speech_delivery?.observations?.map((obs, i) => (
-                                                    <div key={i} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                                                        <div className="flex items-start gap-2">
-                                                            <span className="text-orange-500 font-bold">⚠</span>
-                                                            <div className="flex-1">
-                                                                <p className="font-medium text-gray-800">{obs}</p>
-                                                                {feedback.speech_delivery?.explanations?.[i] && (
-                                                                    <p className="text-sm text-gray-600 mt-1 italic">
-                                                                        → {feedback.speech_delivery.explanations[i]}
-                                                                    </p>
-                                                                )}
+
+                                            {hesitation ? (
+                                                <div className="space-y-4">
+                                                    {/* Observations */}
+                                                    {feedback.speech_delivery?.observations?.map((obs, i) => (
+                                                        <div key={i} className="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                                                            <div className="flex items-start gap-2">
+                                                                <span className="text-orange-500 mt-0.5">ℹ️</span>
+                                                                <div>
+                                                                    <p className="text-sm font-medium text-gray-800">{obs}</p>
+                                                                    {isExpanded && feedback.speech_delivery?.explanations?.[i] && (
+                                                                        <p className="text-xs text-gray-600 mt-1 pl-1 border-l-2 border-orange-200">
+                                                                            Because: {feedback.speech_delivery.explanations[i]}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
 
-                                                {/* Patterns Detected */}
-                                                {feedback.patterns_detected?.length > 0 && (
-                                                    <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                                                        <div className="text-xs font-bold text-purple-900 uppercase mb-2">Patterns Detected</div>
-                                                        {feedback.patterns_detected.map((pattern, i) => (
-                                                            <p key={i} className="text-sm text-gray-700">• {pattern}</p>
+                                                    {/* Positive Notes */}
+                                                    {feedback.positive_notes?.length > 0 && (
+                                                        <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                                                            <p className="text-xs font-bold text-green-800 uppercase mb-1">Strengths</p>
+                                                            <ul className="list-disc list-inside text-sm text-gray-700">
+                                                                {feedback.positive_notes.map((note, i) => <li key={i}>{note}</li>)}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-gray-500 italic">Audio analysis unavailable.</p>
+                                            )}
+                                        </div>
+
+                                        {/* Right: Visual Presence (Frontend) */}
+                                        <div>
+                                            <h4 className="text-sm font-bold text-gray-700 uppercase mb-4 flex items-center gap-2">
+                                                <span>👁️</span> Visual Communication
+                                            </h4>
+
+                                            <div className="space-y-4">
+                                                {/* Visual Summary */}
+                                                <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <span className="text-xs uppercase font-bold text-blue-800">Visual Summary</span>
+                                                        <span className="text-xs bg-white px-2 py-0.5 rounded shadow-sm text-gray-600">Frontend Analysis</span>
+                                                    </div>
+                                                    <ul className="space-y-2">
+                                                        {visualFeedback.details?.map((detail, i) => (
+                                                            <li key={i} className="text-sm text-gray-700 flex items-start gap-2">
+                                                                <span className="text-blue-500 mt-0.5">•</span>
+                                                                {detail}
+                                                            </li>
                                                         ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
+                                                    </ul>
+                                                </div>
 
-                                    {/* Positive Notes */}
-                                    {feedback.positive_notes?.length > 0 && (
-                                        <div className="mb-6 bg-green-50 p-4 rounded-lg border border-green-200">
-                                            <h4 className="text-sm font-bold text-green-900 uppercase mb-2 flex items-center gap-2">
-                                                <span>✓</span> Strengths
-                                            </h4>
-                                            <div className="space-y-1">
-                                                {feedback.positive_notes.map((note, i) => (
-                                                    <p key={i} className="text-sm text-gray-700">• {note}</p>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Improvement Suggestions */}
-                                    {feedback.improvement_suggestions?.length > 0 && (
-                                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                            <h4 className="text-sm font-bold text-blue-900 uppercase mb-3 flex items-center gap-2">
-                                                <span>🎯</span> Top Improvement Suggestions
-                                            </h4>
-                                            <div className="space-y-2">
-                                                {feedback.improvement_suggestions.map((suggestion, i) => (
-                                                    <div key={i} className="flex items-start gap-2">
-                                                        <span className="text-blue-600 font-bold">{i + 1}.</span>
-                                                        <p className="text-sm text-gray-700 font-medium">{suggestion}</p>
+                                                {/* Metrics Bars */}
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <div className="flex justify-between text-xs mb-1">
+                                                            <span className="text-gray-500">Eye Contact</span>
+                                                            <span className="font-medium text-gray-700">{getQualitativeLabel(item.eyeMetric)}</span>
+                                                        </div>
+                                                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${item.eyeMetric}%` }}></div>
+                                                        </div>
                                                     </div>
-                                                ))}
+                                                    <div>
+                                                        <div className="flex justify-between text-xs mb-1">
+                                                            <span className="text-gray-500">Head Stability</span>
+                                                            <span className="font-medium text-gray-700">{getQualitativeLabel(item.stabilityMetric)}</span>
+                                                        </div>
+                                                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-purple-500 rounded-full" style={{ width: `${item.stabilityMetric}%` }}></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                    )}
+                                    </div>
+
+                                    {/* Footer: Actions & Toggle */}
+                                    <div className="bg-gray-50 px-6 py-4 border-t border-gray-100 flex justify-between items-center">
+                                        <div className="flex gap-2">
+                                            {visualFeedback.suggestions?.concat(feedback.improvement_suggestions || []).slice(0, 2).map((sugg, i) => (
+                                                <span key={i} className="text-xs bg-white border border-gray-200 px-2 py-1 rounded text-gray-600">
+                                                    💡 {sugg}
+                                                </span>
+                                            ))}
+                                        </div>
+                                        <button
+                                            onClick={toggleExplain}
+                                            className="text-sm font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                                        >
+                                            {isExpanded ? 'Hide Explanations' : 'Explain My Feedback'}
+                                            <span>{isExpanded ? '▲' : '▼'}</span>
+                                        </button>
+                                    </div>
                                 </div>
                             );
                         })}
@@ -705,8 +746,8 @@ const VideoPractice = ({ onBack }) => {
             {/* Header */}
             <div className="w-full max-w-5xl flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">📸 Video Presence Coach</h1>
-                    <p className="text-gray-600">Real Audio-Visual Analysis. Microphone and Camera required.</p>
+                    <h1 className="text-2xl font-bold text-gray-800">📸 Interview Presence & Communication Practice</h1>
+                    <p className="text-gray-600">Professional non-verbal communication training. Microphone and Camera required.</p>
                 </div>
                 <button onClick={onBack} className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium">Exit</button>
             </div>
@@ -771,7 +812,7 @@ const VideoPractice = ({ onBack }) => {
                     {/* Confidence Meter */}
                     <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
                         <div className="flex justify-between items-end mb-2">
-                            <h4 className="text-sm font-bold text-gray-500 uppercase">Confidence Score</h4>
+                            <h4 className="text-sm font-bold text-gray-500 uppercase">Professional Presence</h4>
                             <span className="text-3xl font-bold text-blue-600">{liveFeedback.confidence}</span>
                         </div>
                         <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
@@ -808,12 +849,14 @@ const VideoPractice = ({ onBack }) => {
                             <div className="font-semibold text-gray-700">{liveFeedback.headStability}</div>
                         </div>
                         <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div className="text-xs font-bold text-gray-400 mb-1">FACE</div>
-                            <div className="font-semibold text-gray-700">{liveFeedback.tension}</div>
+                            <div className="text-gray-400 text-xs uppercase font-bold text-center">Face</div>
+                            <div className={`mt-1 font-bold text-center ${liveFeedback.tension.includes('✅') ? 'text-green-600' : 'text-orange-500'}`}>
+                                {liveFeedback.tension}
+                            </div>
                         </div>
-                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div className="text-xs font-bold text-gray-400 mb-1">STATUS</div>
-                            <div className="font-semibold text-gray-700">{liveFeedback.status}</div>
+                        <div className="bg-white p-3 rounded-lg border border-gray-100">
+                            <div className="text-gray-400 text-xs uppercase font-bold text-center">Status</div>
+                            <div className="mt-1 font-bold text-center text-blue-600">{liveFeedback.status}</div>
                         </div>
                     </div>
 

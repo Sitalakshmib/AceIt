@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from routes import auth, aptitude, coding, progress, communication, interview, resume, stt, mock_tests, analytics, video_presence
+from routes import auth, aptitude, coding, progress, communication, interview, resume, stt, mock_tests, analytics, video_presence, gd_practice
 import os
 
 print("[INFO] GEMINI_API_KEY loaded:", bool(os.getenv("GEMINI_API_KEY")))
@@ -40,6 +40,7 @@ app.include_router(stt.router, prefix="/stt", tags=["Speech To Text"])
 app.include_router(mock_tests.router, prefix="/mock-tests", tags=["Mock Tests"])
 app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 app.include_router(video_presence.router, prefix="/video-presence", tags=["Video Presence Interview"])
+app.include_router(gd_practice.router, prefix="/gd", tags=["Group Discussion"])
 
 # Static files (for voice / TTS)
 app.mount("/static", StaticFiles(directory="static"), name="static")
