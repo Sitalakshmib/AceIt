@@ -34,7 +34,7 @@ class MockTestAttempt(Base):
     accuracy_percentage = Column(Float, default=0.0)
     status = Column(String, default="in_progress")  # "in_progress", "completed", "abandoned"
     
-    # user = relationship("User")
+    user = relationship("User")
     mock_test = relationship("MockTest")
 
 class MockTestResponse(Base):

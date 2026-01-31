@@ -272,7 +272,6 @@ const PracticeMode = () => {
                             />
                         </div>
                     )}
-
                     <div className="text-lg font-medium text-gray-800 mb-6 leading-relaxed">
                         {currentQuestion.question}
                     </div>
@@ -343,7 +342,6 @@ const PracticeMode = () => {
                 {/* Question Review */}
                 <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                     <h3 className="font-semibold text-gray-700 mb-4">Question:</h3>
-
                     {/* Image for Data Interpretation questions */}
                     {currentQuestion.image_url && (
                         <div className="mb-4">
@@ -357,7 +355,6 @@ const PracticeMode = () => {
                             />
                         </div>
                     )}
-
                     <p className="text-gray-800 mb-6">{currentQuestion.question}</p>
 
                     {/* Options with Correct Answer Highlighted */}

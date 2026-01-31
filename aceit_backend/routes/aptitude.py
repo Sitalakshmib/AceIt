@@ -230,6 +230,7 @@ async def submit_answers(payload: dict, db: Session = Depends(get_db)):
                         recent_correct = sum(1 for a in recent_attempts if a.is_correct)
                         progress.recent_accuracy = (recent_correct / len(recent_attempts)) * 100
 
+
                     # Recalculate difficulty for next time
                     progress.current_difficulty = calculate_next_difficulty(progress)
                     progress.last_practiced = datetime.datetime.utcnow()

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { analyticsAPI } from '../services/api';
+import GDPracticeWidget from '../components/Dashboard/GDPracticeWidget';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -126,6 +127,20 @@ const Dashboard = () => {
       description: 'Mock tests finished'
     },
     {
+      title: 'Total Practice',
+      value: `${Math.round((progressData.total_time_spent || 0) / 60)}h`,
+      color: 'bg-gradient-to-r from-pink-500 to-rose-500',
+      icon: <Clock className="h-6 w-6" />,
+      description: 'Time spent learning'
+    },
+    {
+      title: 'Accuracy',
+      value: `${progressData?.aptitude?.accuracy || 0}%`,
+      color: 'bg-gradient-to-r from-orange-500 to-red-500',
+      icon: <Award className="h-6 w-6" />,
+      description: 'Mock tests finished'
+    },
+    {
       title: 'Avg Time/Question',
       value: formatDuration(progressData.avg_time_per_question),
       color: 'bg-gradient-to-r from-orange-500 to-red-500',
@@ -178,7 +193,7 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.username || user?.email || 'Learner'}! 👋</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.username || user?.email || 'Learner'}</h1>
           <p className="text-gray-600 mt-2">
             Your personalized learning dashboard
             {progressData.overall_score === 0 && (
@@ -198,20 +213,27 @@ const Dashboard = () => {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-2xl shadow-lg p-6">
+          <div key={index} className="bg-white rounded-2xl shadow-lg p-6 hover:scale-105 transition-transform duration-200 cursor-pointer border border-transparent hover:border-blue-100">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-500 text-sm font-medium">{stat.title}</p>
-                <p className="text-3xl font-bold mt-2">{stat.value}</p>
+                <p className="text-3xl font-bold mt-2 text-slate-800">{stat.value}</p>
                 <p className="text-gray-400 text-sm mt-1">{stat.description}</p>
               </div>
-              <div className={`p-3 rounded-full ${stat.color} text-white`}>
+              <div className={`p-3 rounded-xl ${index === 0 ? 'bg-blue-50 text-blue-600' :
+                index === 1 ? 'bg-green-50 text-green-600' :
+                  index === 2 ? 'bg-purple-50 text-purple-600' :
+                    'bg-orange-50 text-orange-600'
+                }`}>
                 {stat.icon}
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* GD Practice Widget (New Feature) */}
+      <GDPracticeWidget />
 
       {/* Analytics Section */}
       <div className="mb-8">
@@ -394,7 +416,7 @@ const Dashboard = () => {
         )}
       </div>
 
-      {/* Charts Section (Original - Weekly Activity) */}
+      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Weekly Activity Chart */}
         <div className="bg-white rounded-2xl shadow-lg p-6">
@@ -449,162 +471,95 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Recent Activity - All 4 Modules Expanded */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-        <div className="flex items-center mb-6">
-          <Activity className="h-5 w-5 text-orange-500 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-        </div>
-
-        {/* 4-Module Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Aptitude Module */}
-          <div className="border border-gray-100 rounded-xl p-4">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                <Brain className="h-5 w-5 text-blue-600" />
-              </div>
-              <h4 className="font-semibold text-gray-800">Aptitude</h4>
-            </div>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {progressData.recent_activity.find(m => m.module === 'Aptitude')?.items?.map((item, idx) => (
-                <div key={idx} className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-medium text-gray-700 truncate">{item.title}</p>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${item.success ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                      {item.score}%
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">{item.subtitle}</p>
+      {/* Module Performance & Recent Activity */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+              {/* Module Performance */}
+              <div className="bg-slate-800/80 backdrop-blur rounded-2xl shadow-xl p-6 lg:col-span-2 border border-slate-700">
+                <div className="flex items-center mb-6">
+                  <BarChart3 className="h-5 w-5 text-purple-400 mr-2" />
+                  <h3 className="text-lg font-semibold text-white">Module Performance</h3>
                 </div>
-              )) || <p className="text-sm text-gray-400 text-center py-4">No activity yet</p>}
-            </div>
-          </div>
-
-          {/* Coding Module */}
-          <div className="border border-gray-100 rounded-xl p-4">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                <Zap className="h-5 w-5 text-green-600" />
-              </div>
-              <h4 className="font-semibold text-gray-800">Coding</h4>
-            </div>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {progressData.recent_activity.find(m => m.module === 'Coding')?.items?.map((item, idx) => (
-                <div key={idx} className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-medium text-gray-700 truncate">{item.title}</p>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${item.success ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                      {item.score}%
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">{item.subtitle}</p>
-                </div>
-              )) || <p className="text-sm text-gray-400 text-center py-4">No activity yet</p>}
-            </div>
-          </div>
-
-          {/* Resume Module */}
-          <div className="border border-gray-100 rounded-xl p-4">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                <Award className="h-5 w-5 text-purple-600" />
-              </div>
-              <h4 className="font-semibold text-gray-800">Resume</h4>
-            </div>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {progressData.recent_activity.find(m => m.module === 'Resume')?.items?.map((item, idx) => (
-                <div key={idx} className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-medium text-gray-700 truncate">{item.title}</p>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${item.success ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                      {item.score}%
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">{item.subtitle}</p>
-                </div>
-              )) || <p className="text-sm text-gray-400 text-center py-4">No activity yet</p>}
-            </div>
-          </div>
-
-          {/* Interview Module */}
-          <div className="border border-gray-100 rounded-xl p-4">
-            <div className="flex items-center mb-4">
-              <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                <Users className="h-5 w-5 text-orange-600" />
-              </div>
-              <h4 className="font-semibold text-gray-800">Interview</h4>
-            </div>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {progressData.recent_activity.find(m => m.module === 'Interview')?.items?.map((item, idx) => (
-                <div key={idx} className="p-2 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <p className="text-sm font-medium text-gray-700 truncate">{item.title}</p>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${item.success ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
-                      {item.score}%
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">{item.subtitle}</p>
-                </div>
-              )) || <p className="text-sm text-gray-400 text-center py-4">No activity yet</p>}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Recommendations */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-        <div className="flex items-center mb-6">
-          <Star className="h-5 w-5 text-indigo-500 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Personalized Recommendations</h3>
-        </div>
-        <div className="space-y-4">
-          {progressData.recommendations.map((recommendation, index) => (
-            <div key={index} className="flex items-start p-3 rounded-lg bg-indigo-50">
-              <div className="flex-shrink-0 mt-1">
-                <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <span className="text-indigo-600 text-sm font-bold">{index + 1}</span>
+                <div className="space-y-4">
+                  {moduleStats.map((module, index) => (
+                    <div
+                      key={index}
+                      onClick={() => navigate(module.path)}
+                      className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors border border-gray-100"
+                    >
+                      <div className="flex items-center">
+                        <span className="text-2xl mr-4">{module.icon}</span>
+                        <div>
+                          <h4 className="font-medium text-gray-900">{module.title}</h4>
+                          <div className="flex items-center mt-1">
+                            <div className="w-48 bg-gray-200 rounded-full h-2">
+                              <div
+                                className="h-full rounded-full"
+                                style={{
+                                  width: `${module.score}%`,
+                                  backgroundColor: module.color.includes('blue') ? '#3b82f6' :
+                                    module.color.includes('green') ? '#22c55e' : '#a855f7'
+                                }}
+                              ></div>
+                            </div>
+                            <span className="ml-3 text-sm font-medium">{module.score}%</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold">{module.total}</div>
+                        <div className="text-sm text-gray-500">attempts</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <p className="ml-3 text-sm text-gray-700">{recommendation}</p>
-            </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Quick Action Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <button
-          onClick={() => navigate('/aptitude')}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
-        >
-          <Brain className="h-5 w-5 mr-2" />
-          Practice Aptitude
-        </button>
-        <button
-          onClick={() => navigate('/coding')}
-          className="bg-gradient-to-r from-green-600 to-emerald-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
-        >
-          <Target className="h-5 w-5 mr-2" />
-          Solve Problems
-        </button>
-        <button
-          onClick={() => navigate('/interview')}
-          className="bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
-        >
-          <Users className="h-5 w-5 mr-2" />
-          Mock Interview
-        </button>
-        <button
-          onClick={() => navigate('/resume')}
-          className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
-        >
-          <Award className="h-5 w-5 mr-2" />
-          Analyze Resume
-        </button>
-      </div>
-    </div>
-  );
-};
-
-export default Dashboard;
+              {/* Recent Activity */}
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <div className="flex items-center mb-6">
+                  <Calendar className="h-5 w-5 text-orange-500 mr-2" />
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+                </div>
+                <div className="space-y-4">
+                  {progressData.recent_activity.length > 0 ? (
+                    progressData.recent_activity.map((activity, index) => (
+                      <div key={index} className="flex items-start p-3 rounded-lg bg-gray-50">
+                        <div className="flex-shrink-0 mt-1">
+                          {activity.type === 'aptitude_test' && (
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Brain className="h-4 w-4 text-blue-600" />
+                            </div>
+                          )}
+                          {activity.type === 'coding_problem' && (
+                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                              <Target className="h-4 w-4 text-green-600" />
+                            </div>
+                          )}
+                          {activity.type === 'mock_interview' && (
+                            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                              <Users className="h-4 w-4 text-purple-600" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-3">
+                          <p className="font-medium text-gray-900">
+                            {activity.type === 'coding_problem' ? activity.problem :
+                              activity.type === 'aptitude_test' ? 'Aptitude Test' : 'Mock Interview'}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            Score: {activity.score}%
+                            {activity.success !== undefined && (
+                              <span className={`ml-2 px-1 rounded text-xs ${activity.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {activity.success ? '✓' : '✗'}
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">{activity.date}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+              <div className="text-center py-8">
+                <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500">No recent activity</p>
+                <p className="text-sm text-gray-400 mt-1">Start practicing to see your progress</p>
