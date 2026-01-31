@@ -64,10 +64,11 @@ export const aptitudeAPI = {
   getDetailedResults: (data) => api.post('/aptitude/detailed-results', data),
 
   // New adaptive practice endpoints
-  getNextQuestion: (category, topic = null) => {
+  getNextQuestion: (category, topic = null, reset = false) => {
     const userId = getCurrentUserId();
     const params = new URLSearchParams({ user_id: userId, category });
     if (topic) params.append('topic', topic);
+    if (reset) params.append('reset', 'true');
     return api.get(`/aptitude/practice/next-question?${params.toString()}`);
   },
   submitPracticeAnswer: (questionId, userAnswer, timeSpent, shuffledOptions = null) => {
@@ -100,11 +101,12 @@ export const mockTestAPI = {
     const userId = getCurrentUserId();
     return api.post(`/mock-tests/${testId}/start`, { user_id: userId });
   },
-  submitAnswer: (testId, attemptId, questionId, userAnswer, timeSpent) => {
+  submitAnswer: (testId, attemptId, questionId, userAnswer, timeSpent, answerText = null) => {
     return api.post(`/mock-tests/${testId}/submit-answer`, {
       attempt_id: attemptId,
       question_id: questionId,
       user_answer: userAnswer,
+      answer_text: answerText,
       time_spent: timeSpent
     });
   },

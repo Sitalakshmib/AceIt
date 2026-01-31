@@ -25,7 +25,7 @@ class AptitudeQuestion(Base):
     times_correct = Column(Integer, default=0)
     average_time_seconds = Column(Float, default=0.0)
     last_used = Column(DateTime, nullable=True)
-    
+
     # ===== ELITE METADATA =====
     # Conceptual depth
     primary_concepts = Column(ARRAY(String), default=list)  # ["concept1", "concept2"]

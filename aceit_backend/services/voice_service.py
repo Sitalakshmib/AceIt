@@ -41,11 +41,29 @@ class VoiceService:
 
     def synthesize(self, text: str) -> str:
         """
-        Text-to-speech synthesis disabled.
-        Audio files are no longer saved to static/audio directory.
-        Returns empty string.
+        Text-to-speech synthesis using gTTS.
+        Returns base64 encoded audio string (data URI).
+        NO FILES SAVED TO DISK.
         """
-        # Audio saving disabled - no longer creating files in static/audio
-        return ""
+        try:
+            from gtts import gTTS
+            import io
+            import base64
+            
+            # Generate speech to memory buffer
+            tts = gTTS(text=text, lang='en', slow=False)
+            mp3_fp = io.BytesIO()
+            tts.write_to_fp(mp3_fp)
+            
+            # Encode to base64
+            mp3_fp.seek(0)
+            b64_data = base64.b64encode(mp3_fp.read()).decode("utf-8")
+            
+            # Return Data URI
+            return f"data:audio/mp3;base64,{b64_data}"
+            
+        except Exception as e:
+            print(f"[ERROR] TTS synthesis failed: {e}")
+            return ""  # Return empty string on failure
 
 voice_service = VoiceService()

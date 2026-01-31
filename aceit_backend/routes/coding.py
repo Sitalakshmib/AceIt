@@ -152,6 +152,9 @@ async def submit_code(payload: dict):
     }
     progress_data.append(progress_record)
     
+    from database import save_progress
+    save_progress()
+    
     # Generate feedback message
     if "error" in result and result["error"]:
         feedback = f"❌ Error: {result.get('error')}\n{result.get('message', '')}"
