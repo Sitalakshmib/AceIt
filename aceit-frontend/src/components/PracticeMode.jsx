@@ -49,10 +49,11 @@ const PracticeMode = () => {
         }
 
         setPracticeStarted(true);
-        await fetchNextQuestion();
+        // Start fresh with Easy difficulty (reset=true)
+        await fetchNextQuestion(true);
     };
 
-    const fetchNextQuestion = async () => {
+    const fetchNextQuestion = async (reset = false) => {
         try {
             setLoading(true);
             setError('');
@@ -61,7 +62,7 @@ const PracticeMode = () => {
             setFeedback(null);
 
             const topic = selectedTopic === 'all' ? null : selectedTopic;
-            const response = await aptitudeAPI.getNextQuestion(selectedCategory, topic);
+            const response = await aptitudeAPI.getNextQuestion(selectedCategory, topic, reset);
 
             if (!response.data.has_more_questions) {
                 setError(response.data.message || 'No more questions available');

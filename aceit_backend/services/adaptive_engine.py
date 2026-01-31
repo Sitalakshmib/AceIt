@@ -78,68 +78,69 @@ class AdaptiveEngine:
         current_difficulty: str
     ) -> str:
         """
-        Determine next difficulty using Sliding Window (last 10) + Time.
+        Determine next difficulty using Batch Logic (Every 4 questions).
         
         Rules:
-        - Level Up: Accuracy >= 75% (>=8/10) AND fast enough responses.
-        - Level Down: Accuracy < 50% (<5/10).
-        - Stay: Otherwise.
+        - Only check when total attempts % 4 == 0.
+        - Fetch last 4 attempts.
+        - Accuracy >= 75% (3/4 or 4/4) -> Level Up.
+        - Accuracy < 25% (0/4) -> Level Down.
+        - Otherwise -> Stay.
         """
         
-        # 1. Fetch last 10 attempts for this topic/user
+        # 0. Get total attempts to check batch boundary
+        # We can count from QuestionAttempt table to be sure, or rely on caller?
+        # Better to query DB for robustness.
+        total_attempts = db.query(QuestionAttempt).filter(
+            QuestionAttempt.user_id == user_id,
+            QuestionAttempt.topic == topic,
+            QuestionAttempt.context == "practice"
+        ).count()
+        
+        # If not at batch boundary (4, 8, 12...), stay at current difficulty
+        # Note: This function is called AFTER the current attempt is recorded.
+        if total_attempts == 0 or total_attempts % 4 != 0:
+            return current_difficulty
+            
+        # 1. Fetch last 4 attempts for this topic/user
         attempts = db.query(QuestionAttempt)\
             .filter(
                 QuestionAttempt.user_id == user_id,
                 QuestionAttempt.topic == topic,
-                QuestionAttempt.context == "practice" # Analytics mainly for practice
+                QuestionAttempt.context == "practice"
             )\
             .order_by(QuestionAttempt.attempted_at.desc())\
-            .limit(10).all()
+            .limit(4).all()
             
-
-        if not attempts or len(attempts) < 5:
-            # Need at least 5 attempts to make a judgment
+        if not attempts or len(attempts) < 4:
             return current_difficulty
             
         # 2. Calculate metrics
-        total = len(attempts)
         correct_count = sum(1 for a in attempts if a.is_correct)
-        accuracy = (correct_count / total) * 100
+        accuracy = (correct_count / 4) * 100
         
-        # Calculate avg time for CORRECT answers only (to judge mastery)
-        correct_attempts = [a for a in attempts if a.is_correct]
-        avg_time = 0
-        if correct_attempts:
-            avg_time = sum(a.time_spent_seconds for a in correct_attempts) / len(correct_attempts)
-            
-        # 3. Define Thresholds
-        # Time thresholds for fast answers (seconds)
-        TIME_THRESHOLDS = {
-            "easy": 30,
-            "medium": 45,
-            "hard": 60
-        }
-        max_time_allowed = TIME_THRESHOLDS.get(current_difficulty, 45)
+        # 3. Difficulty Logic
+        # Normalize input to ensure matching
+        current_lower = current_difficulty.lower()
         
-        # 4. Difficulty Logic
         try:
-            current_index = AdaptiveEngine.DIFFICULTY_LEVELS.index(current_difficulty)
+            current_index = AdaptiveEngine.DIFFICULTY_LEVELS.index(current_lower)
         except ValueError:
             return "easy"
             
         # LEVEL UP
-        # High accuracy AND fast response time
-        if accuracy >= 75 and avg_time <= max_time_allowed:
+        # Accuracy >= 75%
+        if accuracy >= 75:
             if current_index < len(AdaptiveEngine.DIFFICULTY_LEVELS) - 1:
                 return AdaptiveEngine.DIFFICULTY_LEVELS[current_index + 1]
                 
         # LEVEL DOWN
-        # Low accuracy
-        elif accuracy < 50:
+        # Accuracy < 25%
+        elif accuracy < 25:
             if current_index > 0:
                 return AdaptiveEngine.DIFFICULTY_LEVELS[current_index - 1]
                 
-        return current_difficulty
+        return current_lower
 
     @staticmethod
     def update_progress(
@@ -184,13 +185,15 @@ class AdaptiveEngine:
             progress.streak = 0
             
         # Update difficulty-specific stats
-        if question.difficulty == "easy":
+        q_diff = question.difficulty.lower() if question.difficulty else "medium"
+        
+        if q_diff == "easy":
             progress.easy_total += 1
             if is_correct: progress.easy_correct += 1
-        elif question.difficulty == "medium":
+        elif q_diff == "medium":
             progress.medium_total += 1
             if is_correct: progress.medium_correct += 1
-        elif question.difficulty == "hard":
+        elif q_diff == "hard":
             progress.hard_total += 1
             if is_correct: progress.hard_correct += 1
             

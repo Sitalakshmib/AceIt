@@ -93,7 +93,7 @@ const Analytics = () => {
                                     <div className="w-full bg-gray-200 rounded-full h-2">
                                         <div
                                             className={`h-2 rounded-full ${stats.accuracy >= 80 ? 'bg-green-500' :
-                                                    stats.accuracy >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                                                stats.accuracy >= 60 ? 'bg-yellow-500' : 'bg-red-500'
                                                 }`}
                                             style={{ width: `${stats.accuracy}%` }}
                                         ></div>
@@ -211,7 +211,7 @@ const Analytics = () => {
                                         <div className="flex items-center gap-4">
                                             <span className="text-sm text-gray-600">{test.score}/{test.total}</span>
                                             <span className={`font-bold ${test.accuracy >= 80 ? 'text-green-600' :
-                                                    test.accuracy >= 60 ? 'text-yellow-600' : 'text-red-600'
+                                                test.accuracy >= 60 ? 'text-yellow-600' : 'text-red-600'
                                                 }`}>
                                                 {test.accuracy.toFixed(1)}%
                                             </span>

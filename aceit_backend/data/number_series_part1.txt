@@ -1,0 +1,679 @@
+### **Question 1:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Easy  
+**Question:** 2, 4, 6, 8, 10, ?  
+**Options:**  
+1. 11  
+2. 12  
+3. 13  
+4. 14  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Simple addition series adding 2 each time. 10 + 2 = 12.  
+**Primary Concepts:** arithmetic_progression  
+**Elite Traps:** odd_numbers_distractor  
+
+### **Question 2:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Easy  
+**Question:** 5, 10, 15, 20, 25, ?  
+**Options:**  
+1. 30  
+2. 35  
+3. 40  
+4. 45  
+
+**Correct Answer:** 1  
+**Answer Explanation:** Adding 5 each time. 25 + 5 = 30.  
+**Primary Concepts:** constant_addition  
+**Elite Traps:** multiplication_distractor  
+
+### **Question 3:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Easy  
+**Question:** 3, 6, 9, 12, 15, ?  
+**Options:**  
+1. 17  
+2. 18  
+3. 19  
+4. 20  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Adding 3 each time. 15 + 3 = 18.  
+**Primary Concepts:** basic_ap  
+**Elite Traps:** odd_increment  
+
+### **Question 4:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Easy  
+**Question:** 1, 4, 9, 16, 25, ?  
+**Options:**  
+1. 36  
+2. 49  
+3. 64  
+4. 81  
+
+**Correct Answer:** 1  
+**Answer Explanation:** Squares of natural numbers: 1², 2², 3², 4², 5², next 6² = 36.  
+**Primary Concepts:** perfect_squares  
+**Elite Traps:** cubes_distractor  
+
+### **Question 5:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Easy  
+**Question:** 2, 4, 8, 16, 32, ?  
+**Options:**  
+1. 48  
+2. 56  
+3. 64  
+4. 72  
+
+**Correct Answer:** 3  
+**Answer Explanation:** Multiplying by 2 each time. 32 × 2 = 64.  
+**Primary Concepts:** geometric_progression  
+**Elite Traps:** addition_pattern  
+
+### **Question 6:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Easy  
+**Question:** 11, 22, 33, 44, 55, ?  
+**Options:**  
+1. 60  
+2. 66  
+3. 70  
+4. 77  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Adding 11 each time. 55 + 11 = 66.  
+**Primary Concepts:** constant_addition_large  
+**Elite Traps:** multiplication_by_2  
+
+### **Question 7:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Easy  
+**Question:** 1, 3, 5, 7, 9, ?  
+**Options:**  
+1. 10  
+2. 11  
+3. 12  
+4. 13  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Odd numbers sequence. Next odd after 9 is 11.  
+**Primary Concepts:** odd_numbers  
+**Elite Traps:** even_numbers_distractor  
+
+### **Question 8:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Easy  
+**Question:** 10, 20, 30, 40, 50, ?  
+**Options:**  
+1. 55  
+2. 60  
+3. 65  
+4. 70  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Adding 10 each time. 50 + 10 = 60.  
+**Primary Concepts:** multiples_of_10  
+**Elite Traps:** increasing_increment  
+
+### **Question 9:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Easy  
+**Question:** 1, 2, 4, 7, 11, ?  
+**Options:**  
+1. 15  
+2. 16  
+3. 17  
+4. 18  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Differences increase by 1: +1, +2, +3, +4, next +5. 11 + 5 = 16.  
+**Primary Concepts:** increasing_difference  
+**Elite Traps:** fibonacci_distractor  
+
+### **Question 10:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Easy  
+**Question:** 100, 95, 90, 85, 80, ?  
+**Options:**  
+1. 70  
+2. 75  
+3. 77  
+4. 78  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Subtracting 5 each time. 80 - 5 = 75.  
+**Primary Concepts:** decreasing_ap  
+**Elite Traps:** decreasing_by_10  
+
+### **Question 11:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 2, 6, 12, 20, 30, ?  
+**Options:**  
+1. 40  
+2. 42  
+3. 44  
+4. 48  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Pattern: 1×2=2, 2×3=6, 3×4=12, 4×5=20, 5×6=30, next 6×7=42.  
+**Primary Concepts:** n×(n+1)  
+**Elite Traps:** adding_even_numbers  
+
+### **Question 12:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 1, 8, 27, 64, 125, ?  
+**Options:**  
+1. 216  
+2. 343  
+3. 512  
+4. 729  
+
+**Correct Answer:** 1  
+**Answer Explanation:** Cubes of natural numbers: 1³, 2³, 3³, 4³, 5³, next 6³ = 216.  
+**Primary Concepts:** perfect_cubes  
+**Elite Traps:** squares_distractor  
+
+### **Question 13:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 0, 3, 8, 15, 24, ?  
+**Options:**  
+1. 32  
+2. 35  
+3. 36  
+4. 40  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Pattern: n² - 1. 1²-1=0, 2²-1=3, 3²-1=8, 4²-1=15, 5²-1=24, next 6²-1=35.  
+**Primary Concepts:** n²-1  
+**Elite Traps:** adding_odd_numbers  
+
+### **Question 14:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 1, 3, 6, 10, 15, ?  
+**Options:**  
+1. 20  
+2. 21  
+3. 22  
+4. 25  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Triangular numbers: adding consecutive integers: +2, +3, +4, +5, next +6. 15 + 6 = 21.  
+**Primary Concepts:** triangular_numbers  
+**Elite Traps:** fibonacci_sequence  
+
+### **Question 15:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 2, 5, 10, 17, 26, ?  
+**Options:**  
+1. 35  
+2. 36  
+3. 37  
+4. 38  
+
+**Correct Answer:** 3  
+**Answer Explanation:** Pattern: n² + 1. 1²+1=2, 2²+1=5, 3²+1=10, 4²+1=17, 5²+1=26, next 6²+1=37.  
+**Primary Concepts:** n²+1  
+**Elite Traps:** n²-1_pattern  
+
+### **Question 16:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 1, 1, 2, 3, 5, 8, ?  
+**Options:**  
+1. 11  
+2. 12  
+3. 13  
+4. 14  
+
+**Correct Answer:** 3  
+**Answer Explanation:** Fibonacci series: each term is sum of two preceding terms. 5 + 8 = 13.  
+**Primary Concepts:** fibonacci  
+**Elite Traps:** adding_sequence  
+
+### **Question 17:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 3, 9, 27, 81, 243, ?  
+**Options:**  
+1. 486  
+2. 729  
+3. 972  
+4. 1080  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Multiplying by 3 each time (powers of 3). 243 × 3 = 729.  
+**Primary Concepts:** geometric_progression_3  
+**Elite Traps:** adding_multiples  
+
+### **Question 18:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 4, 9, 16, 25, 36, ?  
+**Options:**  
+1. 49  
+2. 64  
+3. 81  
+4. 100  
+
+**Correct Answer:** 1  
+**Answer Explanation:** Squares starting from 2: 2²=4, 3²=9, 4²=16, 5²=25, 6²=36, next 7²=49.  
+**Primary Concepts:** squares_from_2  
+**Elite Traps:** adding_odd_numbers_pattern  
+
+### **Question 19:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 1, 4, 27, 256, ?  
+**Options:**  
+1. 3125  
+2. 4096  
+3. 46656  
+4. 59049  
+
+**Correct Answer:** 1  
+**Answer Explanation:** Pattern: nⁿ. 1¹=1, 2²=4, 3³=27, 4⁴=256, next 5⁵=3125.  
+**Primary Concepts:** n_to_power_n  
+**Elite Traps:** factorial_distractor  
+
+### **Question 20:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 5, 11, 17, 23, 29, ?  
+**Options:**  
+1. 34  
+2. 35  
+3. 36  
+4. 37  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Adding 6 each time. 29 + 6 = 35.  
+**Primary Concepts:** arithmetic_progression_6  
+**Elite Traps:** prime_numbers_distractor  
+
+### **Question 21:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 2, 3, 5, 7, 11, ?  
+**Options:**  
+1. 13  
+2. 15  
+3. 17  
+4. 19  
+
+**Correct Answer:** 1  
+**Answer Explanation:** Prime numbers sequence. Next prime after 11 is 13.  
+**Primary Concepts:** prime_numbers  
+**Elite Traps:** odd_numbers_distractor  
+
+### **Question 22:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 12, 24, 36, 48, 60, ?  
+**Options:**  
+1. 70  
+2. 72  
+3. 74  
+4. 76  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Multiples of 12. 12×6=72.  
+**Primary Concepts:** multiples  
+**Elite Traps:** adding_12_but_wrong  
+
+### **Question 23:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 1, 2, 6, 24, 120, ?  
+**Options:**  
+1. 240  
+2. 480  
+3. 600  
+4. 720  
+
+**Correct Answer:** 4  
+**Answer Explanation:** Factorials: 1! =1, 2! =2, 3! =6, 4! =24, 5! =120, next 6! =720.  
+**Primary Concepts:** factorial  
+**Elite Traps:** multiplying_by_increasing  
+
+### **Question 24:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 19, 17, 15, 13, 11, ?  
+**Options:**  
+1. 9  
+2. 8  
+3. 7  
+4. 6  
+
+**Correct Answer:** 1  
+**Answer Explanation:** Subtracting 2 each time. 11 - 2 = 9.  
+**Primary Concepts:** decreasing_ap_2  
+**Elite Traps:** prime_numbers_decreasing  
+
+### **Question 25:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Medium  
+**Question:** 1, 4, 8, 13, 19, ?  
+**Options:**  
+1. 24  
+2. 26  
+3. 28  
+4. 30  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Differences: +3, +4, +5, +6, next +7. 19 + 7 = 26.  
+**Primary Concepts:** increasing_difference_by_1  
+**Elite Traps:** fibonacci_like  
+
+### **Question 26:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 2, 3, 6, 18, 108, ?  
+**Options:**  
+1. 864  
+2. 972  
+3. 1296  
+4. 1944  
+
+**Correct Answer:** 4  
+**Answer Explanation:** Pattern: multiply previous two terms. 3×6=18, 6×18=108, next 18×108=1944.  
+**Primary Concepts:** multiplicative_fibonacci  
+**Elite Traps:** multiplying_by_increasing_factor  
+
+### **Question 27:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 1, 2, 3, 5, 7, 11, 13, 17, ?  
+**Options:**  
+1. 19  
+2. 21  
+3. 23  
+4. 25  
+
+**Correct Answer:** 1  
+**Answer Explanation:** Prime numbers in sequence. Next prime after 17 is 19.  
+**Primary Concepts:** prime_series  
+**Elite Traps:** odd_numbers  
+
+### **Question 28:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 0, 6, 24, 60, 120, ?  
+**Options:**  
+1. 180  
+2. 210  
+3. 240  
+4. 360  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Pattern: n³ - n. 1³-1=0, 2³-2=6, 3³-3=24, 4³-4=60, 5³-5=120, next 6³-6=216-6=210.  
+**Primary Concepts:** n³-n  
+**Elite Traps:** factorial_pattern  
+
+### **Question 29:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 1, 2, 4, 8, 16, 32, 64, ?  
+**Options:**  
+1. 96  
+2. 128  
+3. 144  
+4. 256  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Powers of 2: 2⁰=1, 2¹=2, 2²=4, 2³=8, 2⁴=16, 2⁵=32, 2⁶=64, next 2⁷=128.  
+**Primary Concepts:** powers_of_2  
+**Elite Traps:** adding_doubling  
+
+### **Question 30:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 3, 12, 48, 192, 768, ?  
+**Options:**  
+1. 1536  
+2. 2304  
+3. 3072  
+4. 4096  
+
+**Correct Answer:** 3  
+**Answer Explanation:** Multiplying by 4 each time. 768 × 4 = 3072.  
+**Primary Concepts:** geometric_progression_4  
+**Elite Traps:** doubling_pattern  
+
+### **Question 31:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 1, 3, 7, 15, 31, ?  
+**Options:**  
+1. 47  
+2. 53  
+3. 63  
+4. 72  
+
+**Correct Answer:** 3  
+**Answer Explanation:** Pattern: 2ⁿ - 1. 2¹-1=1, 2²-1=3, 2³-1=7, 2⁴-1=15, 2⁵-1=31, next 2⁶-1=63.  
+**Primary Concepts:** 2^n-1  
+**Elite Traps:** adding_powers_of_2  
+
+### **Question 32:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 2, 5, 11, 23, 47, ?  
+**Options:**  
+1. 95  
+2. 96  
+3. 97  
+4. 98  
+
+**Correct Answer:** 1  
+**Answer Explanation:** Pattern: multiply by 2 and add 1. 2×2+1=5, 5×2+1=11, 11×2+1=23, 23×2+1=47, next 47×2+1=95.  
+**Primary Concepts:** 2n+1_pattern  
+**Elite Traps:** prime_plus_2  
+
+### **Question 33:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 1, 1, 2, 4, 7, 11, 16, ?  
+**Options:**  
+1. 20  
+2. 22  
+3. 24  
+4. 26  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Differences: 0, 1, 2, 3, 4, 5, next +6. 16 + 6 = 22.  
+**Primary Concepts:** triangular_like  
+**Elite Traps:** fibonacci_distractor  
+
+### **Question 34:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 0, 2, 6, 12, 20, 30, ?  
+**Options:**  
+1. 40  
+2. 42  
+3. 44  
+4. 48  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Pattern: n×(n-1). 1×0=0, 2×1=2, 3×2=6, 4×3=12, 5×4=20, 6×5=30, next 7×6=42.  
+**Primary Concepts:** n×(n-1)  
+**Elite Traps:** adding_even_numbers  
+
+### **Question 35:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 1, 5, 13, 25, 41, ?  
+**Options:**  
+1. 51  
+2. 61  
+3. 63  
+4. 65  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Pattern: sum of squares plus 1? Actually: differences: 4, 8, 12, 16, next +20. 41 + 20 = 61. Or: n² + (n-1)²: 1²+0²=1, 2²+1²=5, 3²+2²=13, 4²+3²=25, 5²+4²=41, next 6²+5²=36+25=61.  
+**Primary Concepts:** sum_of_consecutive_squares  
+**Elite Traps:** n²+4_pattern  
+
+### **Question 36:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 6, 15, 35, 77, 143, ?  
+**Options:**  
+1. 221  
+2. 247  
+3. 323  
+4. 437  
+
+**Correct Answer:** 1  
+**Answer Explanation:** Pattern: product of consecutive primes: 2×3=6, 3×5=15, 5×7=35, 7×11=77, 11×13=143, next 13×17=221.  
+**Primary Concepts:** product_of_primes  
+**Elite Traps:** n²-1_pattern  
+
+### **Question 37:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 1, 2, 6, 15, 31, 56, ?  
+**Options:**  
+1. 81  
+2. 92  
+3. 94  
+4. 106  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Differences: 1, 4, 9, 16, 25 (squares), next difference 36. 56 + 36 = 92.  
+**Primary Concepts:** differences_are_squares  
+**Elite Traps:** factorial_pattern  
+
+### **Question 38:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 2, 7, 17, 32, 52, ?  
+**Options:**  
+1. 67  
+2. 77  
+3. 87  
+4. 97  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Differences: 5, 10, 15, 20, next +25. 52 + 25 = 77.  
+**Primary Concepts:** increasing_difference_by_5  
+**Elite Traps:** prime_related  
+
+### **Question 39:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 3, 4, 7, 11, 18, 29, ?  
+**Options:**  
+1. 40  
+2. 45  
+3. 47  
+4. 52  
+
+**Correct Answer:** 3  
+**Answer Explanation:** Each term is sum of previous two terms (Lucas-like). 18 + 29 = 47.  
+**Primary Concepts:** additive_series  
+**Elite Traps:** fibonacci_start_3_4  
+
+### **Question 40:**
+**schema**  
+Category: Logical Ability  
+Topic: Number Series  
+Difficulty: Hard  
+**Question:** 1, 3, 8, 18, 35, 61, ?  
+**Options:**  
+1. 88  
+2. 98  
+3. 108  
+4. 118  
+
+**Correct Answer:** 2  
+**Answer Explanation:** Differences: 2, 5, 10, 17, 26. Second differences: 3, 5, 7, 9, next +11. So next difference 26+11=37, then 61+37=98.  
+**Primary Concepts:** second_differences  
+**Elite Traps:** cubic_pattern  

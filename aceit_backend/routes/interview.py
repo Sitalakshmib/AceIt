@@ -3,7 +3,9 @@ from pydantic import BaseModel
 from typing import Optional
 import shutil
 import os
+from datetime import datetime
 from services.sim_voice_interviewer import SimVoiceInterviewer
+from database import progress_data
 
 router = APIRouter()
 
@@ -34,6 +36,19 @@ async def start_interview(req: StartRequest, engine: SimVoiceInterviewer = Depen
     print(f"[INTERVIEW] /interview/start hit by User: {req.user_id}, Type: {req.interview_type}")
     try:
         result = engine.start_interview(req.user_id, req.resume_text, req.jd_text, req.interview_type)
+        
+        # Track interview session for analytics
+        progress_data.append({
+            "user_id": req.user_id,
+            "module": "interview",
+            "interview_type": req.interview_type,
+            "timestamp": datetime.utcnow().isoformat(),
+            "score": 0  # Will be updated when completed
+        })
+        
+        from database import save_progress
+        save_progress()
+        
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -320,6 +320,7 @@ async def get_next_practice_question(
     user_id: str,
     category: str,
     topic: Optional[str] = None,
+    reset: bool = False,
     db: Session = Depends(get_db)
 ):
     """
@@ -329,7 +330,7 @@ async def get_next_practice_question(
     from services.practice_service import PracticeService
     
     try:
-        question = PracticeService.get_next_question(db, user_id, category, topic)
+        question = PracticeService.get_next_question(db, user_id, category, topic, reset)
         
         if not question:
             return {
@@ -381,119 +382,13 @@ async def submit_practice_answer(payload: dict, db: Session = Depends(get_db)):
 @router.post("/elite/generate-question")
 async def generate_elite_question(payload: dict, db: Session = Depends(get_db)):
     """
-    Generate AI-powered elite question based on user profile
-    
-    Request:
-    {
-        "user_id": "user123",
-        "category": "Quantitative",
-        "sub_topic": "Probability",
-        "force_regenerate": false
-    }
-    
-    Response:
-    {
-        "question_id": "generated_uuid",
-        "question": "...",
-        "options": ["A", "B", "C", "D"],
-        "difficulty_level": "Advanced",
-        "primary_concepts": ["conditional_probability", "complement_rule"],
-        "time_to_solve_sec": 120,
-        "metadata": {...}
-    }
+    [DISABLED] Generate AI-powered elite question based on user profile.
+    This feature is currently disabled.
     """
-    from services.elite_question_generator import EliteQuestionGenerator
-    import uuid
-    import json
-    
-    try:
-        user_id = payload.get("user_id")
-        category = payload.get("category")
-        sub_topic = payload.get("sub_topic")
-        force_regenerate = payload.get("force_regenerate", False)
-        
-        if not all([user_id, category, sub_topic]):
-            raise HTTPException(
-                status_code=400,
-                detail="user_id, category, and sub_topic are required"
-            )
-        
-        # Get user's adaptive profile
-        adaptive_profile = AdaptiveEngine.calculate_multidimensional_difficulty(
-            db, user_id, sub_topic, category
-        )
-        
-        # Get performance signals
-        performance_signals = AdaptiveEngine.get_performance_signals(
-            db, user_id, sub_topic
-        )
-        
-        # Generate question
-        generator = EliteQuestionGenerator()
-        question_data = generator.generate_question(
-            category=category,
-            sub_topic=sub_topic,
-            difficulty_level=adaptive_profile["difficulty_level"],
-            user_level=adaptive_profile.get("user_tier"),
-            performance_signals=performance_signals
-        )
-        
-        if not question_data:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to generate question. Please try again."
-            )
-        
-        # Store in database
-        question_id = str(uuid.uuid4())
-        new_question = AptitudeQuestion(
-            id=question_id,
-            question=question_data["question"],
-            options=question_data["options"],
-            correct_answer=question_data["correct_option"],
-            answer_explanation=question_data.get("optimal_solution_strategy", ""),
-            topic=sub_topic,
-            category=category,
-            difficulty=question_data["difficulty_level"],
-            source="ai_generated",
-            # Elite metadata
-            primary_concepts=question_data.get("primary_concepts", []),
-            trap_explanation=question_data.get("trap_explanation"),
-            optimal_solution_strategy=question_data.get("optimal_solution_strategy"),
-            common_mistake=question_data.get("common_mistake"),
-            time_to_solve_sec=question_data.get("time_to_solve_sec", 120),
-            concept_depth=adaptive_profile.get("concept_depth", "single"),
-            cognitive_load=adaptive_profile.get("cognitive_load", "low"),
-            trap_density=adaptive_profile.get("trap_density", "low"),
-            follow_up_logic=json.dumps(question_data.get("follow_up_logic", {}))
-        )
-        
-        db.add(new_question)
-        db.commit()
-        db.refresh(new_question)
-        
-        return {
-            "question_id": question_id,
-            "question": question_data["question"],
-            "options": question_data["options"],
-            "difficulty_level": question_data["difficulty_level"],
-            "primary_concepts": question_data.get("primary_concepts", []),
-            "time_to_solve_sec": question_data.get("time_to_solve_sec", 120),
-            "metadata": {
-                "trap_explanation": question_data.get("trap_explanation"),
-                "optimal_strategy": question_data.get("optimal_solution_strategy"),
-                "common_mistake": question_data.get("common_mistake"),
-                "concept_depth": adaptive_profile.get("concept_depth"),
-                "cognitive_load": adaptive_profile.get("cognitive_load"),
-                "trap_density": adaptive_profile.get("trap_density")
-            }
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"[ERROR] Elite question generation failed: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    raise HTTPException(
+        status_code=501,
+        detail="Elite Question Generator is currently disabled."
+    )
 
 
 @router.get("/elite/adaptive-profile/{user_id}")
@@ -625,125 +520,13 @@ async def get_adaptive_profile(
 @router.post("/elite/practice-session")
 async def start_elite_practice_session(payload: dict, db: Session = Depends(get_db)):
     """
-    Start an adaptive practice session with AI-generated questions
-    
-    Request:
-    {
-        "user_id": "user123",
-        "category": "Quantitative",
-        "sub_topic": "Probability",  # optional
-        "question_count": 10,
-        "target_tier": "auto"  # auto, developing, competent, advanced, elite
-    }
-    
-    Response:
-    {
-        "session_id": "sess_xyz",
-        "questions": [...],
-        "adaptive_config": {...}
-    }
+    [DISABLED] Start an adaptive practice session with AI-generated questions.
+    This feature is currently disabled.
     """
-    from services.elite_question_generator import EliteQuestionGenerator
-    import uuid
-    
-    try:
-        user_id = payload.get("user_id")
-        category = payload.get("category")
-        sub_topic = payload.get("sub_topic")
-        question_count = payload.get("question_count", 10)
-        target_tier = payload.get("target_tier", "auto")
-        
-        if not all([user_id, category]):
-            raise HTTPException(
-                status_code=400,
-                detail="user_id and category are required"
-            )
-        
-        # If no sub_topic specified, pick one based on user profile
-        if not sub_topic:
-            from services.question_taxonomy import get_subtopics
-            subtopics = get_subtopics(category)
-            if not subtopics:
-                raise HTTPException(status_code=400, detail=f"Invalid category: {category}")
-            sub_topic = subtopics[0]  # Default to first subtopic
-        
-        # Get adaptive profile
-        adaptive_profile = AdaptiveEngine.calculate_multidimensional_difficulty(
-            db, user_id, sub_topic, category
-        )
-        
-        # Generate questions
-        generator = EliteQuestionGenerator()
-        questions = generator.generate_batch(
-            category=category,
-            sub_topic=sub_topic,
-            difficulty_level=adaptive_profile["difficulty_level"],
-            count=min(question_count, 10),  # Limit to 10 per session
-            user_level=adaptive_profile.get("user_tier")
-        )
-        
-        if not questions:
-            raise HTTPException(
-                status_code=500,
-                detail="Failed to generate questions. Please try again."
-            )
-        
-        # Store questions in database
-        question_ids = []
-        for q_data in questions:
-            q_id = str(uuid.uuid4())
-            new_question = AptitudeQuestion(
-                id=q_id,
-                question=q_data["question"],
-                options=q_data["options"],
-                correct_answer=q_data["correct_option"],
-                answer_explanation=q_data.get("optimal_solution_strategy", ""),
-                topic=sub_topic,
-                category=category,
-                difficulty=q_data["difficulty_level"],
-                source="ai_generated_session",
-                primary_concepts=q_data.get("primary_concepts", []),
-                trap_explanation=q_data.get("trap_explanation"),
-                optimal_solution_strategy=q_data.get("optimal_solution_strategy"),
-                common_mistake=q_data.get("common_mistake"),
-                time_to_solve_sec=q_data.get("time_to_solve_sec", 120)
-            )
-            db.add(new_question)
-            question_ids.append(q_id)
-        
-        db.commit()
-        
-        # Format response
-        formatted_questions = []
-        for q_data in questions:
-            formatted_questions.append({
-                "question": q_data["question"],
-                "options": q_data["options"],
-                "difficulty_level": q_data["difficulty_level"],
-                "time_to_solve_sec": q_data.get("time_to_solve_sec", 120)
-            })
-        
-        session_id = str(uuid.uuid4())
-        
-        return {
-            "session_id": session_id,
-            "question_count": len(questions),
-            "questions": formatted_questions,
-            "question_ids": question_ids,
-            "adaptive_config": {
-                "starting_difficulty": adaptive_profile["difficulty_level"],
-                "concept_depth": adaptive_profile["concept_depth"],
-                "cognitive_load": adaptive_profile["cognitive_load"],
-                "trap_density": adaptive_profile["trap_density"],
-                "user_tier": adaptive_profile["user_tier"]
-            }
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"[ERROR] Failed to start elite practice session: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+    raise HTTPException(
+        status_code=501,
+        detail="Elite Practice Session is currently disabled."
+    )
 
 
 @router.get("/elite/error-analysis/{user_id}")

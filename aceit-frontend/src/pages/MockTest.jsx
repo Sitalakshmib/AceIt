@@ -18,6 +18,7 @@ const MockTest = () => {
     const [answers, setAnswers] = useState({});
     const [timeLeft, setTimeLeft] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [testStartTime, setTestStartTime] = useState(null);
     const [questionStartTime, setQuestionStartTime] = useState(Date.now());
 
     // Results state
@@ -25,28 +26,40 @@ const MockTest = () => {
 
     const navigate = useNavigate();
 
-    // Timer effect
+    // Timer effect - STRICT Logic
     useEffect(() => {
-        if (view === 'test' && timeLeft > 0) {
-            const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-            return () => clearTimeout(timer);
-        } else if (view === 'test' && timeLeft === 0 && questions.length > 0) {
-            // Auto-submit when time runs out
-            handleCompleteTest();
+        if (view === 'test' && testStartTime) {
+            const interval = setInterval(() => {
+                const elapsedSeconds = Math.floor((Date.now() - testStartTime) / 1000);
+                const remaining = Math.max(0, duration - elapsedSeconds);
+                setTimeLeft(remaining);
+
+                if (remaining <= 0) {
+                    clearInterval(interval);
+                    console.log("Time's Up! Auto-submitting test.");
+                    handleCompleteTest();
+                }
+            }, 1000);
+            return () => clearInterval(interval);
         }
-    }, [timeLeft, view]);
+    }, [view, testStartTime, duration]);
 
     // Categories state
     const [categories, setCategories] = useState({});
+    const [catsLoading, setCatsLoading] = useState(false);
 
     // Fetch categories on mount
     useEffect(() => {
         const fetchCategories = async () => {
             try {
+                setCatsLoading(true);
                 const response = await aptitudeAPI.getCategories();
                 setCategories(response.data.categories || {});
             } catch (err) {
                 console.error('Failed to fetch categories:', err);
+                setError('Failed to load categories. Please refresh the page.');
+            } finally {
+                setCatsLoading(false);
             }
         };
         fetchCategories();
@@ -78,8 +91,14 @@ const MockTest = () => {
             const response = await mockTestAPI.startTest(id);
             setAttemptId(response.data.attempt_id);
             setQuestions(response.data.questions);
-            setDuration(response.data.duration_minutes * 60);
-            setTimeLeft(response.data.duration_minutes * 60);
+            setAnswers({}); // Reset answers for new test
+            setCurrentQuestion(0); // Reset to first question index
+
+            const totalSeconds = response.data.duration_minutes * 60;
+            setDuration(totalSeconds);
+            setTimeLeft(totalSeconds);
+            setTestStartTime(Date.now()); // Mark start time for strict tracking
+
             setView('test');
             setQuestionStartTime(Date.now());
         } catch (err) {
@@ -88,12 +107,12 @@ const MockTest = () => {
         }
     };
 
-    const handleAnswer = async (questionId, optionIndex) => {
+    const handleAnswer = async (questionId, optionIndex, optionText) => {
         const timeSpent = Math.floor((Date.now() - questionStartTime) / 1000);
 
         // Submit answer to backend
         try {
-            await mockTestAPI.submitAnswer(testId, attemptId, questionId, optionIndex, timeSpent);
+            await mockTestAPI.submitAnswer(testId, attemptId, questionId, optionIndex, timeSpent, optionText);
             setAnswers(prev => ({ ...prev, [questionId]: optionIndex }));
         } catch (err) {
             console.error('Failed to submit answer:', err);
@@ -164,8 +183,8 @@ const MockTest = () => {
                                         }`}
                                 >
                                     <h3 className="font-bold text-lg mb-2">Full-Length Test</h3>
-                                    <p className="text-sm text-gray-600">100 questions</p>
-                                    <p className="text-sm text-gray-600">90 minutes</p>
+                                    <p className="text-sm text-gray-600">30 questions</p>
+                                    <p className="text-sm text-gray-600">30 minutes</p>
                                     <p className="text-xs text-gray-500 mt-2">All categories</p>
                                 </div>
 
@@ -186,7 +205,11 @@ const MockTest = () => {
                                 </div>
 
                                 <div
-                                    onClick={() => setTestType('topic_wise')}
+                                    onClick={() => {
+                                        setTestType('topic_wise');
+                                        // Don't reset category if already selected, but reset topic
+                                        setSelectedTopic('');
+                                    }}
                                     className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${testType === 'topic_wise'
                                         ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
                                         : 'border-gray-200 hover:border-blue-300'
@@ -212,8 +235,9 @@ const MockTest = () => {
                                             setSelectedTopic('');
                                         }}
                                         className="w-full p-3 border rounded-lg bg-white"
+                                        disabled={catsLoading}
                                     >
-                                        <option value="">-- Choose Category --</option>
+                                        <option value="">{catsLoading ? 'Loading Categories...' : '-- Choose Category --'}</option>
                                         {Object.keys(categories).map(cat => (
                                             <option key={cat} value={cat}>{cat}</option>
                                         ))}
@@ -227,10 +251,10 @@ const MockTest = () => {
                                             value={selectedTopic}
                                             onChange={(e) => setSelectedTopic(e.target.value)}
                                             className="w-full p-3 border rounded-lg bg-white"
-                                            disabled={!selectedCategory}
+                                            disabled={!selectedCategory || catsLoading}
                                         >
                                             <option value="">-- Choose Topic --</option>
-                                            {selectedCategory && categories[selectedCategory]?.map(topic => (
+                                            {selectedCategory && (categories[selectedCategory] || []).map(topic => (
                                                 <option key={topic} value={topic}>
                                                     {topic.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                                                 </option>
@@ -264,20 +288,80 @@ const MockTest = () => {
         return (
             <div className="p-6 max-w-4xl mx-auto">
                 <div className="bg-white rounded-lg shadow-md p-6">
-                    {/* Header */}
-                    <div className="flex justify-between items-center mb-4">
-                        <div>
-                            <span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-bold uppercase tracking-wide mb-1">
-                                Mock Test - {question.category}
+                    {/* Header with Stats */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        {/* Time Left */}
+                        <div className="flex flex-col items-center justify-center p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Time Left</span>
+                            <span className={`text-xl font-mono font-bold ${timeLeft < 300 ? 'text-red-600 animate-pulse' : 'text-blue-600'}`}>
+                                {formatTime(timeLeft)}
                             </span>
-                            <h2 className="text-xl font-bold text-gray-800">
-                                Question {currentQuestion + 1} <span className="text-gray-400 text-base font-normal">/ {questions.length}</span>
-                            </h2>
                         </div>
-                        <div className={`text-lg font-mono font-bold px-4 py-2 rounded-lg ${timeLeft < 300 ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-gray-100 text-gray-700'
-                            }`}>
-                            ⏱️ {formatTime(timeLeft)}
+
+                        {/* Questions Attempted */}
+                        <div className="flex flex-col items-center justify-center p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Attempted</span>
+                            <span className="text-xl font-bold text-green-600">
+                                {Object.keys(answers).length}
+                            </span>
                         </div>
+
+                        {/* Questions Left */}
+                        <div className="flex flex-col items-center justify-center p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Remaining</span>
+                            <span className="text-xl font-bold text-orange-500">
+                                {questions.length - Object.keys(answers).length}
+                            </span>
+                        </div>
+
+                        {/* Current Question */}
+                        <div className="flex flex-col items-center justify-center p-2 bg-white rounded-lg shadow-sm border border-gray-100">
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Question</span>
+                            <span className="text-xl font-bold text-gray-800">
+                                {currentQuestion + 1} <span className="text-sm text-gray-400 font-normal">/ {questions.length}</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 text-center font-medium">
+                            {error}
+                        </div>
+                    )}
+
+                    {/* Test Title / Context Header */}
+                    <div className="mb-6 pb-2 border-b border-gray-100">
+                        {testType === 'full_length' && (
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-800">Full-Length Mock Test</h2>
+                                <div className="flex gap-2 mt-1">
+                                    <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded font-medium">Mixed Categories</span>
+                                    <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded font-medium">
+                                        Current Section: {question.category}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
+                        {testType === 'section_wise' && (
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-800">Section Test</h2>
+                                <span className="inline-block mt-1 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-bold">
+                                    {question.category}
+                                </span>
+                            </div>
+                        )}
+                        {testType === 'topic_wise' && (
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-800">Topic Test</h2>
+                                <div className="flex gap-2 items-center mt-1">
+                                    <span className="text-gray-500 text-sm">{question.category}</span>
+                                    <span className="text-gray-300">•</span>
+                                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold capitalize">
+                                        {(question.topic || '').replace(/_/g, ' ')}
+                                    </span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Progress Bar */}
@@ -294,6 +378,19 @@ const MockTest = () => {
                     {/* Question */}
                     <div className="text-lg font-medium text-gray-800 mb-8 leading-relaxed">
                         {question.question}
+                        {question.image_url && (
+                            <div className="mt-6 mb-4 flex justify-center">
+                                <img
+                                    src={question.image_url}
+                                    alt="Question Diagram"
+                                    className="max-w-full h-auto max-h-96 rounded-lg border border-gray-200 shadow-sm object-contain"
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        console.error('Failed to load question image:', question.image_url);
+                                    }}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {/* Options */}
@@ -301,7 +398,7 @@ const MockTest = () => {
                         {question.options.map((opt, idx) => (
                             <button
                                 key={idx}
-                                onClick={() => handleAnswer(question.id, idx)}
+                                onClick={() => handleAnswer(question.id, idx, opt)}
                                 className={`text-left p-4 rounded-lg border-2 transition-all ${answers[question.id] === idx
                                     ? 'border-blue-500 bg-blue-50 text-blue-800'
                                     : 'border-gray-200 hover:border-blue-200 hover:bg-gray-50'
@@ -315,20 +412,30 @@ const MockTest = () => {
 
                     {/* Navigation */}
                     <div className="flex justify-between pt-6 border-t">
-                        <button
-                            onClick={handlePrevious}
-                            disabled={currentQuestion === 0}
-                            className="px-6 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50"
-                        >
-                            ← Previous
-                        </button>
+                        {testType !== 'full_length' ? (
+                            <button
+                                onClick={handlePrevious}
+                                disabled={currentQuestion === 0}
+                                className="px-6 py-2 text-gray-600 hover:text-gray-900 disabled:opacity-50"
+                            >
+                                ← Previous
+                            </button>
+                        ) : (
+                            <div />
+                        )}
 
                         {currentQuestion === questions.length - 1 ? (
                             <button
                                 onClick={handleCompleteTest}
-                                className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold shadow-md"
+                                disabled={loading}
+                                className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2"
                             >
-                                Submit Test ✓
+                                {loading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                        Submitting...
+                                    </>
+                                ) : 'Submit Test ✓'}
                             </button>
                         ) : (
                             <button
@@ -340,6 +447,17 @@ const MockTest = () => {
                         )}
                     </div>
                 </div>
+
+                {/* Submission Loading Overlay */}
+                {loading && (
+                    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                        <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm w-full mx-4">
+                            <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-600 border-t-transparent mb-6"></div>
+                            <h3 className="text-xl font-bold text-gray-800 mb-2 text-center">Submitting Your Results</h3>
+                            <p className="text-gray-500 text-center">Please wait while we calculate your personalized performance insights...</p>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -349,34 +467,80 @@ const MockTest = () => {
         return (
             <div className="p-6 max-w-4xl mx-auto">
                 <div className="bg-white rounded-lg shadow-xl p-8">
-                    <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-32 h-32 rounded-full border-8 border-blue-50 bg-white shadow-inner mb-4">
-                            <span className="text-4xl font-black text-gray-800">{results.accuracy.toFixed(0)}%</span>
-                        </div>
-                        <h2 className="text-3xl font-bold text-gray-800">Mock Test Completed!</h2>
-                        <p className="text-gray-500 mt-2">
-                            You scored {results.score} out of {results.total} questions
-                        </p>
-                        <p className="text-sm text-gray-400 mt-1">
-                            Time taken: {formatTime(results.time_taken)}
-                        </p>
+                    <div className="text-center mb-10">
+                        <h2 className="text-3xl font-bold text-gray-800 mb-2">Mock Test Completed!</h2>
+                        <p className="text-gray-500">Here's how you performed</p>
                     </div>
 
-                    {/* Category Performance */}
-                    {results.category_performance && (
+                    {/* Stat Cards Grid */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                        {/* Overall Score */}
+                        <div className="bg-blue-50 p-6 rounded-xl border border-blue-100 flex flex-col items-center">
+                            <span className="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">Score</span>
+                            <span className="text-3xl font-black text-blue-600">{results.score} <span className="text-lg text-gray-400 font-medium">/ {results.total}</span></span>
+                        </div>
+
+                        {/* Accuracy */}
+                        <div className="bg-green-50 p-6 rounded-xl border border-green-100 flex flex-col items-center">
+                            <span className="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">Accuracy</span>
+                            <span className="text-3xl font-black text-green-600">{results.accuracy.toFixed(0)}%</span>
+                        </div>
+
+                        {/* Average Time */}
+                        <div className="bg-orange-50 p-6 rounded-xl border border-orange-100 flex flex-col items-center">
+                            <span className="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">Avg Time</span>
+                            <span className="text-3xl font-black text-orange-600">
+                                {(() => {
+                                    const val = results.average_time_per_question || (results.time_taken / results.total) || 0;
+                                    const minutes = Math.floor(val / 60);
+                                    const seconds = Math.round(val % 60);
+                                    if (minutes > 0) return `${minutes}m ${seconds}s`;
+                                    return `${seconds}s`;
+                                })()}
+                            </span>
+                            <span className="text-xs text-center text-gray-400 mt-1">per question</span>
+                        </div>
+
+                        {/* Performance Rating */}
+                        {(() => {
+                            let rating = 'Poor';
+                            let colorClass = 'bg-red-50 border-red-100 text-red-600';
+
+                            if (results.accuracy >= 90) {
+                                rating = 'Excellent';
+                                colorClass = 'bg-purple-50 border-purple-100 text-purple-600';
+                            } else if (results.accuracy >= 75) {
+                                rating = 'Good';
+                                colorClass = 'bg-green-50 border-green-100 text-green-600';
+                            } else if (results.accuracy >= 50) {
+                                rating = 'Average';
+                                colorClass = 'bg-yellow-50 border-yellow-100 text-yellow-600';
+                            }
+
+                            return (
+                                <div className={`${colorClass} p-6 rounded-xl border flex flex-col items-center`}>
+                                    <span className="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">Performance</span>
+                                    <span className="text-3xl font-black">{rating}</span>
+                                </div>
+                            );
+                        })()}
+                    </div>
+
+                    {/* Topic or Category Breakdown */}
+                    {results.topic_performance && Object.keys(results.topic_performance).length > 0 && (
                         <div className="mb-8">
-                            <h3 className="text-xl font-bold mb-4">Category-wise Performance</h3>
+                            <h3 className="text-xl font-bold mb-4 text-gray-800">Topic-wise Performance</h3>
                             <div className="grid md:grid-cols-2 gap-4">
-                                {Object.entries(results.category_performance).map(([category, stats]) => (
-                                    <div key={category} className="bg-gray-50 p-4 rounded-lg">
-                                        <h4 className="font-semibold text-gray-700 mb-2">{category}</h4>
-                                        <div className="flex justify-between text-sm">
-                                            <span>Accuracy:</span>
-                                            <span className="font-bold">{stats.accuracy.toFixed(1)}%</span>
+                                {Object.entries(results.topic_performance).map(([topic, stats]) => (
+                                    <div key={topic} className="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
+                                        <div>
+                                            <h4 className="font-semibold text-gray-700 capitalize">{topic.replace(/_/g, ' ')}</h4>
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                {stats.correct} / {stats.total} Correct
+                                            </div>
                                         </div>
-                                        <div className="flex justify-between text-sm text-gray-600">
-                                            <span>Correct:</span>
-                                            <span>{stats.correct}/{stats.total}</span>
+                                        <div className="bg-white px-3 py-1 rounded shadow-sm border text-sm font-bold text-gray-700">
+                                            {stats.accuracy.toFixed(0)}%
                                         </div>
                                     </div>
                                 ))}
@@ -384,7 +548,29 @@ const MockTest = () => {
                         </div>
                     )}
 
-                    <div className="flex gap-4 justify-center">
+                    {/* Fallback to Category if Topic not available (e.g. old tests) */}
+                    {(!results.topic_performance || Object.keys(results.topic_performance).length === 0) && results.category_performance && (
+                        <div className="mb-8">
+                            <h3 className="text-xl font-bold mb-4 text-gray-800">Category-wise Performance</h3>
+                            <div className="grid md:grid-cols-2 gap-4">
+                                {Object.entries(results.category_performance).map(([category, stats]) => (
+                                    <div key={category} className="bg-gray-50 p-4 rounded-lg flex justify-between items-center">
+                                        <div>
+                                            <h4 className="font-semibold text-gray-700">{category}</h4>
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                {stats.correct} / {stats.total} Correct
+                                            </div>
+                                        </div>
+                                        <div className="bg-white px-3 py-1 rounded shadow-sm border text-sm font-bold text-gray-700">
+                                            {stats.accuracy.toFixed(0)}%
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex gap-4 justify-center mt-10">
                         <button
                             onClick={() => {
                                 setView('selection');
@@ -392,15 +578,21 @@ const MockTest = () => {
                                 setAttemptId(null);
                                 setQuestions([]);
                                 setAnswers({});
+                                setCurrentQuestion(0);
                                 setResults(null);
+                                setError('');
+                                // Reset selection states
+                                setTestType('full_length');
+                                setSelectedCategory('');
+                                setSelectedTopic('');
                             }}
-                            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold shadow-lg"
+                            className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-lg transition-transform hover:-translate-y-0.5"
                         >
                             Take Another Test
                         </button>
                         <button
                             onClick={() => navigate('/')}
-                            className="px-6 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-lg hover:border-gray-300 font-semibold"
+                            className="px-8 py-3 bg-white border-2 border-gray-200 text-gray-700 rounded-lg hover:border-gray-300 font-bold hover:bg-gray-50 transition-colors"
                         >
                             Back to Dashboard
                         </button>

@@ -97,18 +97,27 @@ async def start_mock_test(test_id: str, payload: dict, db: Session = Depends(get
         test = db.query(MockTest).filter(MockTest.id == test_id).first()
         print(f"[MOCK_TEST] Test found: {test.id if test else 'None'}")
         
-        # Get questions in order
+        # Get questions in batch and maintain order
+        question_ids = test.question_ids
+        questions_map = {q.id: q for q in db.query(AptitudeQuestion).filter(AptitudeQuestion.id.in_(question_ids)).all()}
+        
         questions = []
-        for q_id in test.question_ids:
-            question = db.query(AptitudeQuestion).filter(AptitudeQuestion.id == q_id).first()
+        for q_id in question_ids:
+            question = questions_map.get(q_id)
             if question:
+                # Shuffle options for frontend display
+                import random
+                options = list(question.options)
+                random.shuffle(options)
+                
                 questions.append({
                     "id": question.id,
                     "question": question.question,
-                    "options": question.options,
-                    "topic": question.topic,
-                    "category": question.category,
-                    "difficulty": question.difficulty
+                    "options": options,
+                    "topic": question.topic or "Miscellaneous",
+                    "category": question.category or "General",
+                    "difficulty": question.difficulty,
+                    "image_url": question.image_url
                 })
         
         print(f"[MOCK_TEST] Returning {len(questions)} questions")
@@ -144,13 +153,14 @@ async def submit_mock_answer(test_id: str, payload: dict, db: Session = Depends(
     attempt_id = payload.get("attempt_id")
     question_id = payload.get("question_id")
     user_answer = payload.get("user_answer")
+    answer_text = payload.get("answer_text")  # New field
     time_spent = payload.get("time_spent", 0)
     
-    if not all([attempt_id, question_id is not None, user_answer is not None]):
-        raise HTTPException(status_code=400, detail="attempt_id, question_id, and user_answer required")
+    if not all([attempt_id, question_id is not None, (user_answer is not None or answer_text is not None)]):
+        raise HTTPException(status_code=400, detail="attempt_id, question_id, and answer (index or text) required")
     
     try:
-        MockTestService.submit_answer(db, attempt_id, question_id, user_answer, time_spent)
+        MockTestService.submit_answer(db, attempt_id, question_id, user_answer, time_spent, answer_text)
         return {"status": "recorded"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))

@@ -24,7 +24,8 @@ class PracticeService:
         db: Session,
         user_id: str,
         category: str,
-        topic: Optional[str] = None
+        topic: Optional[str] = None,
+        reset: bool = False
     ) -> Optional[Dict]:
         """
         Get next unattempted question for user in practice mode.
@@ -34,24 +35,68 @@ class PracticeService:
             user_id: User ID
             category: Question category
             topic: Optional specific topic
+            reset: If True, force difficulty to start at 'easy' for this session
             
         Returns:
             Question dict without correct answer, or None if no questions available
         """
         # Get user's progress for adaptive difficulty
-        progress = db.query(UserAptitudeProgress).filter(
-            and_(
-                UserAptitudeProgress.user_id == user_id,
-                UserAptitudeProgress.category == category,
-                UserAptitudeProgress.topic == topic if topic else True
-            )
-        ).first()
+        # Build query for progress
+        query = db.query(UserAptitudeProgress).filter(
+            UserAptitudeProgress.user_id == user_id,
+            UserAptitudeProgress.category == category
+        )
         
-        # Determine difficulty level
-        if progress:
+        if topic:
+            query = query.filter(UserAptitudeProgress.topic == topic)
+            
+        # Get latest progress (if multiple exist due to data issues, take most recent)
+        progress = query.order_by(UserAptitudeProgress.last_practiced.desc()).first()
+        
+        print(f"[DEBUG] get_next_question: User={user_id}, Topic={topic}, Reset={reset}, ProgressExists={progress is not None}")
+
+        # Handle Session Reset logic
+        if reset:
+            print("[DEBUG] RESET flag received. Forcing Easy & Clearing History.")
+            
+            # Clear past attempts for this topic (allows re-practicing questions and resets adaptive window)
+            try:
+                db.query(QuestionAttempt).filter(
+                    QuestionAttempt.user_id == user_id,
+                    QuestionAttempt.topic == topic,
+                    QuestionAttempt.context == "practice"
+                ).delete()
+                db.commit()
+            except Exception as e:
+                db.rollback()
+                print(f"[ERROR] Failed to clear attempts: {e}")
+
+            if progress:
+                # Full Reset for new session
+                progress.current_difficulty = "easy"
+                progress.questions_attempted = 0
+                progress.questions_correct = 0
+                progress.streak = 0
+                progress.easy_total = 0
+                progress.easy_correct = 0
+                progress.medium_total = 0
+                progress.medium_correct = 0
+                progress.hard_total = 0
+                progress.hard_correct = 0
+                progress.total_time_spent_seconds = 0
+                progress.overall_accuracy = 0.0
+                progress.consecutive_correct = 0
+                progress.consecutive_incorrect = 0
+                
+                db.commit()
+                db.refresh(progress)
+            difficulty = "easy"
+        elif progress:
             difficulty = progress.current_difficulty
+            print(f"[DEBUG] Using progress difficulty: {difficulty}")
         else:
             difficulty = "easy"  # Start with easy for new users
+            print("[DEBUG] No progress, defaulting to Easy")
         
         # Get IDs of questions already attempted by this user in this topic
         attempted_query = db.query(QuestionAttempt.question_id).filter(
@@ -88,10 +133,14 @@ class PracticeService:
                     for concept in q.primary_concepts:
                         concept_freq[concept] = concept_freq.get(concept, 0) + 1
         
+        # Prepare difficulty for query (DB uses Title Case: "Easy", "Medium", "Hard")
+        db_difficulty = difficulty.title()
+        print(f"[DEBUG] Querying for Difficulty: {db_difficulty} (Internal: {difficulty})")
+        
         # Query for unattempted questions at current difficulty
         query = db.query(AptitudeQuestion).filter(
             AptitudeQuestion.category == category,
-            AptitudeQuestion.difficulty == difficulty
+            AptitudeQuestion.difficulty == db_difficulty
         )
         
         if topic:
@@ -135,7 +184,7 @@ class PracticeService:
                     
                 query = db.query(AptitudeQuestion).filter(
                     AptitudeQuestion.category == category,
-                    AptitudeQuestion.difficulty == fallback_diff
+                    AptitudeQuestion.difficulty == fallback_diff.title()
                 )
                 
                 if topic:
@@ -149,6 +198,30 @@ class PracticeService:
                     break
         
         if not question:
+            # --- RECYCLE LOGIC (Infinite Practice) ---
+            # If all unique questions are exhausted, recycle existing ones.
+            # 1. Try to find ANY question at the current difficulty (ignoring attempted status)
+            recycle_query = db.query(AptitudeQuestion).filter(
+                AptitudeQuestion.category == category,
+                AptitudeQuestion.difficulty == db_difficulty
+            )
+            if topic:
+                recycle_query = recycle_query.filter(AptitudeQuestion.topic == topic)
+            
+            question = recycle_query.order_by(func.random()).first()
+            
+            # 2. If still no question (e.g., no questions exist at this difficulty at all),
+            # fallback to ANY question in the category/topic
+            if not question:
+                recycle_fallback = db.query(AptitudeQuestion).filter(
+                    AptitudeQuestion.category == category
+                )
+                if topic:
+                    recycle_fallback = recycle_fallback.filter(AptitudeQuestion.topic == topic)
+                question = recycle_fallback.order_by(func.random()).first()
+
+        if not question:
+            # Truly no questions exist in the database for this selection
             return None
         
         # --- RUNTIME SHUFFLE LOGIC ---
