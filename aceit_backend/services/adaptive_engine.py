@@ -78,39 +78,22 @@ class AdaptiveEngine:
         current_difficulty: str
     ) -> str:
         """
-        Determine next difficulty using Batch Logic (Every 4 questions).
+        Determine next difficulty using continuous SLIDING WINDOW (Last 4 at current level).
         
         Rules:
-        - Only check when total attempts % 4 == 0.
-        - Fetch last 4 attempts.
+        - Fetch last 4 attempts at the CURRENT difficulty.
         - Accuracy >= 75% (3/4 or 4/4) -> Level Up.
-        - Accuracy < 25% (0/4) -> Level Down.
+        - Accuracy < 50% (0/4 or 1/4) -> Level Down.
         - Otherwise -> Stay.
         """
         
-        # 0. Get total attempts to check batch boundary
-        # We can count from QuestionAttempt table to be sure, or rely on caller?
-        # Better to query DB for robustness.
-        total_attempts = db.query(QuestionAttempt).filter(
+        # 1. Fetch last 4 attempts for this SPECIFIC difficulty
+        attempts = db.query(QuestionAttempt).filter(
             QuestionAttempt.user_id == user_id,
             QuestionAttempt.topic == topic,
+            func.lower(QuestionAttempt.difficulty_at_attempt) == current_difficulty.lower(),
             QuestionAttempt.context == "practice"
-        ).count()
-        
-        # If not at batch boundary (4, 8, 12...), stay at current difficulty
-        # Note: This function is called AFTER the current attempt is recorded.
-        if total_attempts == 0 or total_attempts % 4 != 0:
-            return current_difficulty
-            
-        # 1. Fetch last 4 attempts for this topic/user
-        attempts = db.query(QuestionAttempt)\
-            .filter(
-                QuestionAttempt.user_id == user_id,
-                QuestionAttempt.topic == topic,
-                QuestionAttempt.context == "practice"
-            )\
-            .order_by(QuestionAttempt.attempted_at.desc())\
-            .limit(4).all()
+        ).order_by(QuestionAttempt.attempted_at.desc()).limit(4).all()
             
         if not attempts or len(attempts) < 4:
             return current_difficulty
@@ -120,7 +103,6 @@ class AdaptiveEngine:
         accuracy = (correct_count / 4) * 100
         
         # 3. Difficulty Logic
-        # Normalize input to ensure matching
         current_lower = current_difficulty.lower()
         
         try:
@@ -128,15 +110,13 @@ class AdaptiveEngine:
         except ValueError:
             return "easy"
             
-        # LEVEL UP
-        # Accuracy >= 75%
+        # LEVEL UP (Accuracy >= 75%)
         if accuracy >= 75:
             if current_index < len(AdaptiveEngine.DIFFICULTY_LEVELS) - 1:
                 return AdaptiveEngine.DIFFICULTY_LEVELS[current_index + 1]
                 
-        # LEVEL DOWN
-        # Accuracy < 25%
-        elif accuracy < 25:
+        # LEVEL DOWN (Accuracy < 50%)
+        elif accuracy < 50:
             if current_index > 0:
                 return AdaptiveEngine.DIFFICULTY_LEVELS[current_index - 1]
                 

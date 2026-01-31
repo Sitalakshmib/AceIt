@@ -49,7 +49,12 @@ const PracticeMode = () => {
         }
 
         setPracticeStarted(true);
+        // Reset UI counters for this new session
+        setFeedback(null);
+        setCurrentQuestion(null);
+
         // Start fresh with Easy difficulty (reset=true)
+        // This tells backend to clear previous attempts history for this topic
         await fetchNextQuestion(true);
     };
 

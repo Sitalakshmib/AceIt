@@ -3,7 +3,7 @@ Mock Test Service
 
 Handles generation, management, and scoring of mock aptitude tests.
 Supports multiple test types:
-- Full-length tests (100 questions, 90 minutes)
+- Full-length tests (30 questions, 30 minutes)
 - Section-wise tests (30 questions, 30 minutes)
 - Topic-wise tests (20 questions, 20 minutes)
 """
@@ -168,7 +168,7 @@ class MockTestService:
             
             questions = db.query(AptitudeQuestion.id)\
                 .filter(AptitudeQuestion.category == category)\
-                .filter(AptitudeQuestion.difficulty == db_diff)\
+                .filter(func.lower(AptitudeQuestion.difficulty) == db_diff.lower())\
                 .order_by(func.random())\
                 .limit(diff_count).all()
             
@@ -226,7 +226,7 @@ class MockTestService:
             questions = db.query(AptitudeQuestion.id)\
                 .filter(AptitudeQuestion.category == category)\
                 .filter(AptitudeQuestion.topic == topic)\
-                .filter(AptitudeQuestion.difficulty == db_diff)\
+                .filter(func.lower(AptitudeQuestion.difficulty) == db_diff.lower())\
                 .order_by(func.random())\
                 .limit(diff_count).all()
             
@@ -446,7 +446,8 @@ class MockTestService:
             if r.is_correct:
                 stats["correct"] += 1
                 
-            diff = q.difficulty.lower() if q.difficulty else "medium"
+            diff_raw = q.difficulty or "medium"
+            diff = diff_raw.lower()
             if diff == "easy":
                 stats["easy_total"] += 1
                 if r.is_correct: stats["easy_correct"] += 1

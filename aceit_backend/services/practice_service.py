@@ -138,9 +138,10 @@ class PracticeService:
         print(f"[DEBUG] Querying for Difficulty: {db_difficulty} (Internal: {difficulty})")
         
         # Query for unattempted questions at current difficulty
+        difficulty_lower = difficulty.lower()
         query = db.query(AptitudeQuestion).filter(
             AptitudeQuestion.category == category,
-            AptitudeQuestion.difficulty == db_difficulty
+            func.lower(AptitudeQuestion.difficulty) == difficulty_lower
         )
         
         if topic:
@@ -184,7 +185,7 @@ class PracticeService:
                     
                 query = db.query(AptitudeQuestion).filter(
                     AptitudeQuestion.category == category,
-                    AptitudeQuestion.difficulty == fallback_diff.title()
+                    func.lower(AptitudeQuestion.difficulty) == fallback_diff.lower()
                 )
                 
                 if topic:
@@ -203,7 +204,7 @@ class PracticeService:
             # 1. Try to find ANY question at the current difficulty (ignoring attempted status)
             recycle_query = db.query(AptitudeQuestion).filter(
                 AptitudeQuestion.category == category,
-                AptitudeQuestion.difficulty == db_difficulty
+                func.lower(AptitudeQuestion.difficulty) == difficulty.lower()
             )
             if topic:
                 recycle_query = recycle_query.filter(AptitudeQuestion.topic == topic)

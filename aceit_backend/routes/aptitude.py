@@ -13,39 +13,7 @@ router = APIRouter()
 
 # --- HELPER FUNCTIONS ---
 
-def calculate_next_difficulty(progress: UserAptitudeProgress) -> str:
-    """
-    Adaptive Algorithm:
-    - If accuracy > 80% at current level -> Level Up
-    - If accuracy < 50% at current level -> Level Down (if not easy)
-    - Otherwise -> Stay
-    """
-    current_diff = progress.current_difficulty
-    
-    if current_diff == "easy":
-        total = progress.easy_total
-        correct = progress.easy_correct
-    elif current_diff == "medium":
-        total = progress.medium_total
-        correct = progress.medium_correct
-    else: # hard
-        total = progress.hard_total
-        correct = progress.hard_correct
-        
-    if total < 3: # Need minimum 3 attempts to judge
-        return current_diff
-        
-    accuracy = correct / total
-    
-    if accuracy >= 0.8: # > 80% Success
-        if current_diff == "easy": return "medium"
-        if current_diff == "medium": return "hard"
-        
-    if accuracy < 0.5: # < 50% Success
-        if current_diff == "hard": return "medium"
-        if current_diff == "medium": return "easy"
-        
-    return current_diff
+# Helper removed - using AdaptiveEngine.calculate_next_difficulty directly
 
 def format_questions(questions, include_explanations=False):
     """Format SQL objects to JSON response with RUNTIME SHUFFLING"""
@@ -133,7 +101,7 @@ async def get_aptitude_questions(
         query = query.filter(AptitudeQuestion.category == category)
         
     # Try to get questions of target difficulty
-    preferred_query = query.filter(AptitudeQuestion.difficulty == target_difficulty)
+    preferred_query = query.filter(func.lower(AptitudeQuestion.difficulty) == target_difficulty.lower())
     questions = preferred_query.limit(count * 2).all() # Get pool
     
     # If not enough, fallback to any difficulty
@@ -202,13 +170,13 @@ async def submit_answers(payload: dict, db: Session = Depends(get_db)):
                         progress.streak = 0
                         
                     # Update difficulty specific counters
-                    if question.difficulty == "easy":
+                    if func.lower(question.difficulty) == "easy":
                         progress.easy_total += 1
                         if is_correct: progress.easy_correct += 1
-                    elif question.difficulty == "medium":
+                    elif func.lower(question.difficulty) == "medium":
                         progress.medium_total += 1
                         if is_correct: progress.medium_correct += 1
-                    elif question.difficulty == "hard":
+                    elif func.lower(question.difficulty) == "hard":
                         progress.hard_total += 1
                         if is_correct: progress.hard_correct += 1
                     
@@ -231,8 +199,10 @@ async def submit_answers(payload: dict, db: Session = Depends(get_db)):
                         progress.recent_accuracy = (recent_correct / len(recent_attempts)) * 100
 
 
-                    # Recalculate difficulty for next time
-                    progress.current_difficulty = calculate_next_difficulty(progress)
+                    # Recalculate difficulty for next time (Using Sliding Window from AdaptiveEngine)
+                    progress.current_difficulty = AdaptiveEngine.calculate_next_difficulty(
+                        db, user_id, question.topic, progress.current_difficulty
+                    )
                     progress.last_practiced = datetime.datetime.utcnow()
                 
         if user_id:
