@@ -472,94 +472,156 @@ const Dashboard = () => {
       </div>
 
       {/* Module Performance & Recent Activity */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-              {/* Module Performance */}
-              <div className="bg-slate-800/80 backdrop-blur rounded-2xl shadow-xl p-6 lg:col-span-2 border border-slate-700">
-                <div className="flex items-center mb-6">
-                  <BarChart3 className="h-5 w-5 text-purple-400 mr-2" />
-                  <h3 className="text-lg font-semibold text-white">Module Performance</h3>
-                </div>
-                <div className="space-y-4">
-                  {moduleStats.map((module, index) => (
-                    <div
-                      key={index}
-                      onClick={() => navigate(module.path)}
-                      className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors border border-gray-100"
-                    >
-                      <div className="flex items-center">
-                        <span className="text-2xl mr-4">{module.icon}</span>
-                        <div>
-                          <h4 className="font-medium text-gray-900">{module.title}</h4>
-                          <div className="flex items-center mt-1">
-                            <div className="w-48 bg-gray-200 rounded-full h-2">
-                              <div
-                                className="h-full rounded-full"
-                                style={{
-                                  width: `${module.score}%`,
-                                  backgroundColor: module.color.includes('blue') ? '#3b82f6' :
-                                    module.color.includes('green') ? '#22c55e' : '#a855f7'
-                                }}
-                              ></div>
-                            </div>
-                            <span className="ml-3 text-sm font-medium">{module.score}%</span>
-                          </div>
-                        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+        {/* Module Performance */}
+        <div className="bg-slate-800/80 backdrop-blur rounded-2xl shadow-xl p-6 lg:col-span-2 border border-slate-700">
+          <div className="flex items-center mb-6">
+            <BarChart3 className="h-5 w-5 text-purple-400 mr-2" />
+            <h3 className="text-lg font-semibold text-white">Module Performance</h3>
+          </div>
+          <div className="space-y-4">
+            {moduleStats.map((module, index) => (
+              <div
+                key={index}
+                onClick={() => navigate(module.path)}
+                className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors border border-gray-100"
+              >
+                <div className="flex items-center">
+                  <span className="text-2xl mr-4">{module.icon}</span>
+                  <div>
+                    <h4 className="font-medium text-gray-900">{module.title}</h4>
+                    <div className="flex items-center mt-1">
+                      <div className="w-48 bg-gray-200 rounded-full h-2">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${module.score}%`,
+                            backgroundColor: module.color.includes('blue') ? '#3b82f6' :
+                              module.color.includes('green') ? '#22c55e' : '#a855f7'
+                          }}
+                        ></div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">{module.total}</div>
-                        <div className="text-sm text-gray-500">attempts</div>
-                      </div>
+                      <span className="ml-3 text-sm font-medium">{module.score}%</span>
                     </div>
-                  ))}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold">{module.total}</div>
+                  <div className="text-sm text-gray-500">attempts</div>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
 
-              {/* Recent Activity */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex items-center mb-6">
-                  <Calendar className="h-5 w-5 text-orange-500 mr-2" />
-                  <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-                </div>
-                <div className="space-y-4">
-                  {progressData.recent_activity.length > 0 ? (
-                    progressData.recent_activity.map((activity, index) => (
-                      <div key={index} className="flex items-start p-3 rounded-lg bg-gray-50">
-                        <div className="flex-shrink-0 mt-1">
-                          {activity.type === 'aptitude_test' && (
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <Brain className="h-4 w-4 text-blue-600" />
-                            </div>
-                          )}
-                          {activity.type === 'coding_problem' && (
-                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                              <Target className="h-4 w-4 text-green-600" />
-                            </div>
-                          )}
-                          {activity.type === 'mock_interview' && (
-                            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                              <Users className="h-4 w-4 text-purple-600" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="ml-3">
-                          <p className="font-medium text-gray-900">
-                            {activity.type === 'coding_problem' ? activity.problem :
-                              activity.type === 'aptitude_test' ? 'Aptitude Test' : 'Mock Interview'}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Score: {activity.score}%
-                            {activity.success !== undefined && (
-                              <span className={`ml-2 px-1 rounded text-xs ${activity.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                {activity.success ? '✓' : '✗'}
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">{activity.date}</p>
-                        </div>
+        {/* Recent Activity */}
+        <div className="bg-white rounded-2xl shadow-lg p-6">
+          <div className="flex items-center mb-6">
+            <Calendar className="h-5 w-5 text-orange-500 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
+          </div>
+          <div className="space-y-4">
+            {progressData.recent_activity.length > 0 ? (
+              progressData.recent_activity.map((activity, index) => (
+                <div key={index} className="flex items-start p-3 rounded-lg bg-gray-50">
+                  <div className="flex-shrink-0 mt-1">
+                    {activity.type === 'aptitude_test' && (
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Brain className="h-4 w-4 text-blue-600" />
                       </div>
-                    ))
-                  ) : (
+                    )}
+                    {activity.type === 'coding_problem' && (
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Target className="h-4 w-4 text-green-600" />
+                      </div>
+                    )}
+                    {activity.type === 'mock_interview' && (
+                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <Users className="h-4 w-4 text-purple-600" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="ml-3">
+                    <p className="font-medium text-gray-900">
+                      {activity.type === 'coding_problem' ? activity.problem :
+                        activity.type === 'aptitude_test' ? 'Aptitude Test' : 'Mock Interview'}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Score: {activity.score}%
+                      {activity.success !== undefined && (
+                        <span className={`ml-2 px-1 rounded text-xs ${activity.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {activity.success ? '✓' : '✗'}
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">{activity.date}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
               <div className="text-center py-8">
                 <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                 <p className="text-gray-500">No recent activity</p>
                 <p className="text-sm text-gray-400 mt-1">Start practicing to see your progress</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Recommendations */}
+      <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <div className="flex items-center mb-6">
+          <Star className="h-5 w-5 text-indigo-500 mr-2" />
+          <h3 className="text-lg font-semibold text-gray-900">Personalized Recommendations</h3>
+        </div>
+        <div className="space-y-4">
+          {progressData.recommendations.map((recommendation, index) => (
+            <div key={index} className="flex items-start p-3 rounded-lg bg-indigo-50">
+              <div className="flex-shrink-0 mt-1">
+                <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <span className="text-indigo-600 text-sm font-bold">{index + 1}</span>
+                </div>
+              </div>
+              <p className="ml-3 text-sm text-gray-700">{recommendation}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Action Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <button
+          onClick={() => navigate('/aptitude')}
+          className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
+        >
+          <Brain className="h-5 w-5 mr-2" />
+          Practice Aptitude
+        </button>
+        <button
+          onClick={() => navigate('/coding')}
+          className="bg-gradient-to-r from-green-600 to-emerald-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
+        >
+          <Target className="h-5 w-5 mr-2" />
+          Solve Problems
+        </button>
+        <button
+          onClick={() => navigate('/interview')}
+          className="bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
+        >
+          <Users className="h-5 w-5 mr-2" />
+          Mock Interview
+        </button>
+        <button
+          onClick={() => navigate('/resume')}
+          className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
+        >
+          <Award className="h-5 w-5 mr-2" />
+          Analyze Resume
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Dashboard;
