@@ -53,18 +53,21 @@ def get_overall_summary(user_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Failed to fetch summary: {str(e)}")
 
 @router.get("/dashboard/{user_id}")
-def get_analytics_dashboard(user_id: str, db: Session = Depends(get_db)):
-    """
-    Get comprehensive analytics dashboard for a user.
-    """
+def get_user_dashboard(user_id: str, db: Session = Depends(get_db)):
+    """Get comprehensive user analytics dashboard"""
     try:
-        data = AnalyticsService.generate_user_analytics(db, user_id)
-        return {"status": "success", "data": data}
+        print(f"[DEBUG] Dashboard request started for user: {user_id}")
+        analytics = AnalyticsService.generate_user_analytics(db, user_id)
+        print(f"[DEBUG] Dashboard generation successful for user: {user_id}")
+        return analytics
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to fetch dashboard: {str(e)}")
+        print(f"[ERROR] Dashboard failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate analytics: {str(e)}")
+
 
 @router.get("/progress/{user_id}")
-def get_analytics_progress(user_id: str, days: int = 30, db: Session = Depends(get_db)):
+def get_progress_history(user_id: str, days: int = 30, db: Session = Depends(get_db)):
+
     """
     Get progress history over time.
     """
@@ -75,10 +78,9 @@ def get_analytics_progress(user_id: str, days: int = 30, db: Session = Depends(g
         raise HTTPException(status_code=500, detail=f"Failed to fetch progress: {str(e)}")
 
 @router.get("/topic/{user_id}/{topic}")
-def get_analytics_topic(user_id: str, topic: str, db: Session = Depends(get_db)):
-    """
-    Get detailed analytics for a specific topic.
-    """
+def get_topic_analytics(user_id: str, topic: str, db: Session = Depends(get_db)):
+    """Get detailed analytics for a specific topic"""
+
     try:
         data = AnalyticsService.get_topic_analytics(db, user_id, topic)
         return {"status": "success", "data": data}
