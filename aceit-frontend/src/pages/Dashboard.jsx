@@ -31,7 +31,12 @@ const Dashboard = () => {
       try {
         setLoading(true);
         const response = await analyticsAPI.getDashboard();
-        setProgressData(response.data);
+        // Handle wrapped response { status: "success", data: ... }
+        if (response.data && response.data.data) {
+          setProgressData(response.data.data);
+        } else {
+          setProgressData(response.data);
+        }
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
         setError('Failed to load dashboard. Showing limited info.');
@@ -86,22 +91,11 @@ const Dashboard = () => {
     day: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
     aptitude: day.aptitude,
     coding: day.coding,
-    resume: day.resume,
-    interview: day.interview
+    score: day.score
   }));
 
   // Prepare skill data for chart
   const skillData = progressData.skill_distribution;
-
-  // Helper to format duration
-  const formatDuration = (seconds) => {
-    if (!seconds) return '0s';
-    if (seconds < 60) return `${Math.round(seconds)}s`;
-
-    const minutes = Math.floor(seconds / 60);
-    const secs = Math.round(seconds % 60);
-    return `${minutes}m ${secs}s`;
-  };
 
   // Stats cards
   const stats = [
@@ -120,46 +114,20 @@ const Dashboard = () => {
       description: 'Consecutive practice days'
     },
     {
-      title: 'Tests Completed',
-      value: `${progressData.tests_completed || 0}`,
-      color: 'bg-gradient-to-r from-purple-500 to-pink-500',
-      icon: <Award className="h-6 w-6" />,
-      description: 'Mock tests finished'
-    },
-    {
       title: 'Total Practice',
-      value: `${Math.round((progressData.total_time_spent || 0) / 60)}h`,
-      color: 'bg-gradient-to-r from-pink-500 to-rose-500',
+      value: `${Math.round(progressData.total_time_spent / 60)}h`,
+      color: 'bg-gradient-to-r from-purple-500 to-pink-500',
       icon: <Clock className="h-6 w-6" />,
       description: 'Time spent learning'
     },
     {
       title: 'Accuracy',
-      value: `${progressData?.aptitude?.accuracy || 0}%`,
+      value: `${progressData.aptitude.accuracy}%`,
       color: 'bg-gradient-to-r from-orange-500 to-red-500',
       icon: <Award className="h-6 w-6" />,
-      description: 'Mock tests finished'
-    },
-    {
-      title: 'Avg Time/Question',
-      value: formatDuration(progressData.avg_time_per_question),
-      color: 'bg-gradient-to-r from-orange-500 to-red-500',
-      icon: <Clock className="h-6 w-6" />,
-      description: 'Average solving speed'
+      description: 'Average success rate'
     },
   ];
-
-  // Toggles and State
-  const [activeTab, setActiveTab] = useState('practice'); // 'practice' or 'mock'
-  const [expandedTopic, setExpandedTopic] = useState(null); // ID of expanded topic
-
-  // Data selection based on tab
-  const getActiveMetrics = () => {
-    if (!progressData) return null;
-    return activeTab === 'mock' ? progressData.mock_metrics : progressData.practice_metrics;
-  };
-
-  const currentMetrics = getActiveMetrics();
 
   const moduleStats = [
     {
@@ -167,7 +135,7 @@ const Dashboard = () => {
       score: progressData.aptitude.average_score,
       total: progressData.aptitude.tests_taken,
       color: 'bg-blue-100 text-blue-600',
-      icon: '',
+      icon: '🧠',
       path: '/aptitude'
     },
     {
@@ -175,7 +143,7 @@ const Dashboard = () => {
       score: progressData.coding.average_success_rate,
       total: progressData.coding.problems_attempted,
       color: 'bg-green-100 text-green-600',
-      icon: '',
+      icon: '💻',
       path: '/coding'
     },
     {
@@ -183,7 +151,7 @@ const Dashboard = () => {
       score: 65,
       total: 3,
       color: 'bg-purple-100 text-purple-600',
-      icon: '',
+      icon: '🎤',
       path: '/interview'
     },
   ];
@@ -235,187 +203,6 @@ const Dashboard = () => {
       {/* GD Practice Widget (New Feature) */}
       <GDPracticeWidget />
 
-      {/* Analytics Section */}
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Performance Analytics</h2>
-
-          {/* Toggle */}
-          <div className="bg-gray-100 p-1 rounded-lg flex text-sm font-medium">
-            <button
-              onClick={() => setActiveTab('practice')}
-              className={`px-4 py-2 rounded-md transition-all ${activeTab === 'practice' ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              Practice Mode
-            </button>
-            <button
-              onClick={() => setActiveTab('mock')}
-              className={`px-4 py-2 rounded-md transition-all ${activeTab === 'mock' ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              Mock Tests
-            </button>
-          </div>
-        </div>
-
-        {currentMetrics && (
-          <>
-            {/* Detailed Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <p className="text-xs text-gray-500 uppercase font-semibold">Questions Attempted</p>
-                <p className="text-2xl font-bold text-gray-800">{currentMetrics.total_questions}</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <p className="text-xs text-gray-500 uppercase font-semibold">Accuracy</p>
-                <p className={`text-2xl font-bold ${currentMetrics.accuracy >= 70 ? 'text-green-600' : 'text-orange-500'}`}>
-                  {currentMetrics.accuracy}%
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 col-span-2">
-                <p className="text-xs text-gray-500 uppercase font-semibold">Performance Summary</p>
-                <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-                  <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${currentMetrics.accuracy}%` }}></div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-              {/* Insights: Strengths & Improvements */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex items-center mb-6">
-                  <Activity className="h-5 w-5 text-purple-500 mr-2" />
-                  <h3 className="text-lg font-semibold text-gray-900">Strengths & Improvements</h3>
-                </div>
-
-                <div className="grid grid-cols-2 gap-6">
-                  {/* Strong Areas */}
-                  <div>
-                    <h4 className="text-sm font-bold text-green-700 mb-3 flex items-center">
-                      <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
-                      Good (&gt;80%)
-                    </h4>
-                    <div className="space-y-2">
-                      {progressData.strengths && progressData.strengths.length > 0 ? (
-                        progressData.strengths.slice(0, 5).map((item, idx) => (
-                          <div key={idx} className="text-sm bg-green-50 p-2 rounded border border-green-100">
-                            <div className="flex justify-between font-medium text-gray-700">
-                              <span>{item.topic.replace(/_/g, ' ')}</span>
-                              <span className="text-green-700">{item.accuracy}%</span>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-gray-400 italic">No strong topics yet. Keep practicing!</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Weak Areas */}
-                  <div>
-                    <h4 className="text-sm font-bold text-red-600 mb-3 flex items-center">
-                      <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
-                      Need Improvement (&lt;60%)
-                    </h4>
-                    <div className="space-y-2">
-                      {progressData.areas_for_improvement && progressData.areas_for_improvement.length > 0 ? (
-                        progressData.areas_for_improvement.slice(0, 5).map((item, idx) => (
-                          <div key={idx} className="text-sm bg-red-50 p-2 rounded border border-red-100">
-                            <div className="flex justify-between font-medium text-gray-700">
-                              <span>{item.topic.replace(/_/g, ' ')}</span>
-                              <span className="text-red-700">{item.accuracy}%</span>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-xs text-gray-400 italic">No weak areas identified. Great job!</p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Granular Breakdown (Toggle Menu) */}
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <div className="flex items-center mb-6">
-                  <PieChartIcon className="h-5 w-5 text-indigo-500 mr-2" />
-                  <h3 className="text-lg font-semibold text-gray-900">Topic Accuracy Breakdown</h3>
-                </div>
-
-                <div className="space-y-2 max-h-72 overflow-y-auto pr-2">
-                  {currentMetrics.category_breakdown && Object.entries(currentMetrics.category_breakdown).map(([cat, cStats]) => (
-                    <div key={cat} className="border rounded-lg overflow-hidden">
-                      <button
-                        onClick={() => setExpandedTopic(expandedTopic === cat ? null : cat)}
-                        className="w-full flex justify-between items-center p-3 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
-                      >
-                        <span className="font-semibold text-gray-700">{cat}</span>
-                        <div className="flex items-center gap-3">
-                          <span className={`text-sm font-bold ${cStats.accuracy >= 70 ? 'text-green-600' : 'text-orange-500'}`}>
-                            {Math.round(cStats.accuracy)}%
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {expandedTopic === cat ? '▲' : '▼'}
-                          </span>
-                        </div>
-                      </button>
-
-                      {/* Sub-Topics Accordion Body */}
-                      {expandedTopic === cat && (
-                        <div className="bg-white p-3 space-y-2 border-t">
-                          {Object.entries(currentMetrics.topic_breakdown || {})
-                            .filter(([top, tStats]) => {
-                              // Ideally we filter by category, but backend returns flat list of topics.
-                              // The backend separate breakdown doesn't easily map topic -> cat without extra data.
-                              // For now, we list ALL topics if we can't filter, OR simpler: Layout just lists all Topics directly.
-                              // Let's modify strategy: 
-                              // List 'Top Categories' above, and here just list Topics?
-                              // Actually, the user asked for "show reach sections each topics accuracy".
-                              // Let's just iterate all topics that match this category?
-                              // Problem: 'topic_breakdown' is just {topic: stats}. It doesn't know the category.
-                              // Solution: For now, I'll list ALL topics in a single scrolling list instead of nested, or just list ones that match common naming if possible?
-                              // Better: Since I don't have category mapping here easily without fetching schemas, I will display a FLAT list of all topics with a search/filter or just list them all.
-                              // BUT, the accordion was by Category.
-
-                              // HACK: I'll accept that I can't filter perfectly without mapping.
-                              // To make it UX friendly, I will change this to just list TOPICS directly if category mapping isn't easy. 
-                              // OR, I can just list Categories and then below list Topics.
-                              return true;
-                            })
-                            // Wait, iterating all topics for every category is bad.
-                            // Let's switch to a flat list of TOPICS categorized by generic buckets or just A-Z.
-                            // Actually, let's keep the Categories as overarching buttons, and since I can't filter topics by category client-side easily (unless I fetch taxonomy),
-                            // I will simplify: Display "Category Performance" list and "Topic Performance" list separately.
-                            .slice(0, 0) // Don't try to map.
-                          }
-
-                          {/* Fallback: Just show simple list of topics for now? 
-                                          Actually, I can leave the Accordion idea and just do a list of Categories, 
-                                          and a separate list of ALL Topics.
-                                      */}
-                          <p className="text-xs text-gray-400 mb-2">Detailed Topic Stats:</p>
-                          {Object.entries(currentMetrics.topic_breakdown || {})
-                            .filter(([t]) => true) // Placeholder filter
-                            // Sort by accuracy?
-                            .sort((a, b) => b[1].accuracy - a[1].accuracy)
-                            .map(([t, s]) => (
-                              <div key={t} className="flex justify-between items-center text-sm py-1 border-b border-gray-50 last:border-0 pl-2">
-                                <span className="text-gray-600 capitalize">{t.replace(/_/g, ' ')}</span>
-                                <span className={`font-mono font-medium ${s.accuracy >= 70 ? 'text-green-600' : s.accuracy < 40 ? 'text-red-500' : 'text-orange-500'}`}>
-                                  {Math.round(s.accuracy)}%
-                                </span>
-                              </div>
-                            ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Weekly Activity Chart */}
@@ -432,10 +219,8 @@ const Dashboard = () => {
                 <YAxis stroke="#666" />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="aptitude" fill="#3B82F6" name="Aptitude" />
-                <Bar dataKey="coding" fill="#10B981" name="Coding" />
-                <Bar dataKey="resume" fill="#8B5CF6" name="Resume" />
-                <Bar dataKey="interview" fill="#F59E0B" name="Interview" />
+                <Bar dataKey="aptitude" fill="#3B82F6" name="Aptitude Qs" />
+                <Bar dataKey="coding" fill="#10B981" name="Coding Problems" />
               </BarChart>
             </ResponsiveContainer>
           </div>

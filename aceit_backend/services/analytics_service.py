@@ -37,10 +37,6 @@ class AnalyticsService:
         accuracy = (total_correct / total_attempted * 100) if total_attempted > 0 else 0
         total_time = sum(p.total_time_spent_seconds or 0 for p in progress_records) // 60
         
-        # Calculate average time per question (in seconds)
-        total_time_seconds = sum(p.total_time_spent_seconds or 0 for p in progress_records)
-        avg_time_per_question = round(total_time_seconds / total_attempted, 1) if total_attempted > 0 else 0
-        
         # Streak (simplified for now)
         streak = max([p.streak or 0 for p in progress_records], default=0)
 
@@ -53,7 +49,7 @@ class AnalyticsService:
             "accuracy": round(accuracy, 1)
         }
 
-        # 5. Skill Distribution (Categories based + Coding as one)
+        # 5. Skill Distribution (Categories based)
         category_scores = {}
         for p in progress_records:
             if p.category not in category_scores:
@@ -69,188 +65,62 @@ class AnalyticsService:
                     "score": round((stats["correct"] / stats["total"]) * 100, 1)
                 })
         
-        # Add Coding as a single module (placeholder - update when coding module has data)
-        # For now, use a placeholder or fetch from coding progress if available
-        coding_score = 0  # This can be updated when coding module has progress tracking
-        if coding_score > 0 or True:  # Always show Coding in distribution
-            skill_distribution.append({
-                "name": "Coding",
-                "score": coding_score
-            })
-        
-        # Import in-memory progress data
-        try:
-            from database import progress_data
-        except ImportError:
-            progress_data = []
-
-        # 6. Recent Activity (Grouped by module with sub-items)
-        # Structure: { "module_name": { "icon": "...", "items": [...] } }
-        recent_activity_by_module = {
-            "Aptitude": {"icon": "brain", "items": []},
-            "Coding": {"icon": "code", "items": []},
-            "Resume": {"icon": "file", "items": []},
-            "Interview": {"icon": "mic", "items": []}
-        }
-        
-        # Mock test completions -> Aptitude
-        for a in mock_attempts[:5]:  # Limit to recent 5
-            if a.completed_at:
-                recent_activity_by_module["Aptitude"]["items"].append({
-                    "type": "mock_test",
-                    "title": "Mock Test",
-                    "subtitle": f"{a.score}/{a.total_questions} correct",
-                    "score": round(a.accuracy_percentage, 1),
-                    "date": a.completed_at.strftime("%Y-%m-%d %H:%M"),
-                    "success": a.accuracy_percentage >= 50
-                })
-        
-        # Practice question attempts -> Aptitude
-        recent_practice = db.query(QuestionAttempt)\
-            .filter(QuestionAttempt.user_id == user_id)\
-            .order_by(QuestionAttempt.attempted_at.desc())\
-            .limit(10).all()
-        
-        # Group practice by topic for cleaner display
-        topic_stats = {}
-        for att in recent_practice:
-            topic = (att.topic or "General").replace("_", " ")
-            if topic not in topic_stats:
-                topic_stats[topic] = {"correct": 0, "total": 0, "last_date": att.attempted_at}
-            topic_stats[topic]["total"] += 1
-            if att.is_correct:
-                topic_stats[topic]["correct"] += 1
-        
-        for topic, stats in topic_stats.items():
-            accuracy = round((stats["correct"] / stats["total"]) * 100) if stats["total"] > 0 else 0
-            recent_activity_by_module["Aptitude"]["items"].append({
-                "type": "practice",
-                "title": topic,
-                "subtitle": f"{stats['correct']}/{stats['total']} correct",
-                "score": accuracy,
-                "date": stats["last_date"].strftime("%Y-%m-%d"),
-                "success": accuracy >= 50
-            })
-        
-        # Coding progress from in-memory progress_data
-        coding_records = [p for p in progress_data if p.get("module") == "coding" and p.get("user_id") == user_id]
-        coding_records = sorted(coding_records, key=lambda x: x.get("timestamp", ""), reverse=True)[:5]
-        for record in coding_records:
-            recent_activity_by_module["Coding"]["items"].append({
-                "type": "submission",
-                "title": record.get("problem_title", "Problem"),
-                "subtitle": f"{record.get('passed_tests', 0)}/{record.get('total_tests', 0)} tests passed",
-                "score": round(record.get("percentage", 0), 1),
-                "date": record.get("timestamp", "")[:10] if record.get("timestamp") else "Unknown",
-                "success": record.get("percentage", 0) >= 50
-            })
-        
-        # Resume progress from in-memory progress_data
-        resume_records = [p for p in progress_data if p.get("module") == "resume" and p.get("user_id") == user_id]
-        resume_records = sorted(resume_records, key=lambda x: x.get("timestamp", ""), reverse=True)[:5]
-        for record in resume_records:
-            recent_activity_by_module["Resume"]["items"].append({
-                "type": "analysis",
-                "title": record.get("job_role", "Resume").replace("_", " ").title(),
-                "subtitle": f"ATS Score: {record.get('ats_score', 0)}%",
-                "score": round(record.get("ats_score", 0), 1),
-                "date": record.get("timestamp", "")[:10] if record.get("timestamp") else "Unknown",
-                "success": record.get("ats_score", 0) >= 50
-            })
-        
-        # Interview progress from in-memory progress_data
-        interview_records = [p for p in progress_data if p.get("module") == "interview" and p.get("user_id") == user_id]
-        interview_records = sorted(interview_records, key=lambda x: x.get("timestamp", ""), reverse=True)[:5]
-        for record in interview_records:
-            recent_activity_by_module["Interview"]["items"].append({
-                "type": "session",
-                "title": record.get("interview_type", "Interview").title(),
-                "subtitle": f"Session completed",
-                "score": round(record.get("score", 0), 1),
-                "date": record.get("timestamp", "")[:10] if record.get("timestamp") else "Unknown",
-                "success": True
-            })
-        
-        # Convert to list format for frontend (include all modules even if empty)
+        # 6. Recent Activity
         recent_activity = []
-        for module_name, module_data in recent_activity_by_module.items():
+        
+        # Add mock tests to activity
+        for a in sorted(mock_attempts, key=lambda x: x.completed_at, reverse=True)[:3]:
             recent_activity.append({
-                "module": module_name,
-                "icon": module_data["icon"],
-                "items": module_data["items"][:5]  # Limit to 5 items per module
+                "type": "aptitude_test",
+                "score": round(a.accuracy_percentage, 1),
+                "date": a.completed_at.strftime("%Y-%m-%d") if a.completed_at else "Today",
+                "duration": f"{a.time_taken_seconds // 60} min"
+            })
+            
+        # Add practice attempts if not enough mock tests
+        if len(recent_activity) < 5:
+            recent_attempts = db.query(QuestionAttempt)\
+                .filter(QuestionAttempt.user_id == user_id)\
+                .order_by(QuestionAttempt.attempted_at.desc())\
+                .limit(5 - len(recent_activity)).all()
+            
+            for att in recent_attempts:
+                recent_activity.append({
+                    "type": "practice_question",
+                    "problem": att.topic or "Aptitude",
+                    "success": att.is_correct,
+                    "date": att.attempted_at.strftime("%Y-%m-%d"),
+                    "score": 100 if att.is_correct else 0
+                })
+
+        # 7. Weekly Activity (Last 7 days)
+        weekly_activity = []
+        today = datetime.datetime.utcnow().date()
+        for i in range(6, -1, -1):
+            date = today - datetime.timedelta(days=i)
+            # Count attempts for this day
+            count = db.query(QuestionAttempt)\
+                .filter(QuestionAttempt.user_id == user_id)\
+                .filter(func.date(QuestionAttempt.attempted_at) == date).count()
+            
+            weekly_activity.append({
+                "date": date.isoformat(),
+                "aptitude": count,
+                "coding": 0, # Placeholder
+                "score": 0 # Placeholder for daily avg
             })
 
-        # --- PRACTICE METRICS (QuestionAttempt) ---
-        practice_attempts = db.query(QuestionAttempt)\
-            .join(AptitudeQuestion, QuestionAttempt.question_id == AptitudeQuestion.id)\
-            .filter(QuestionAttempt.user_id == user_id).all()
-        
-        practice_stats = AnalyticsService.calculate_section_stats(practice_attempts, is_mock=False)
-        
-        # --- MOCK METRICS (MockTestResponse) ---
-        mock_responses = db.query(MockTestResponse)\
-            .join(MockTestAttempt)\
-            .filter(MockTestAttempt.user_id == user_id)\
-            .filter(MockTestAttempt.status == "completed").all()
-            
-        mock_stats = AnalyticsService.calculate_section_stats(mock_responses, is_mock=True)
-        
-        # Determine Strengths and Weaknesses (Combined or Practice preferred? Let's use combined relative accuracy)
-        # Actually user wants to know "which all sections which all topic the user is good and need improvement"
-        # We'll generate this based on the COMBINED performance to give a holistic view
-        
-        combined_topic_stats = {}
-        # Merge practice stats
-        for topic, stats in practice_stats.get("topic_breakdown", {}).items():
-             combined_topic_stats[topic] = stats.copy()
-             
-        # Merge mock stats
-        for topic, stats in mock_stats.get("topic_breakdown", {}).items():
-            if topic not in combined_topic_stats:
-                combined_topic_stats[topic] = stats.copy()
-            else:
-                combined_topic_stats[topic]["correct"] += stats["correct"]
-                combined_topic_stats[topic]["total"] += stats["total"]
-                # Recompute accuracy
-                total = combined_topic_stats[topic]["total"]
-                correct = combined_topic_stats[topic]["correct"]
-                combined_topic_stats[topic]["accuracy"] = (correct / total * 100) if total > 0 else 0
-
-        strengths = []
-        improvements = []
-        
-        for topic, stats in combined_topic_stats.items():
-            acc = stats["accuracy"]
-            item = {
-                "topic": topic,
-                "accuracy": round(acc, 1),
-                "total": stats["total"]
-            }
-            if acc >= 80:
-                strengths.append(item)
-            elif acc < 60:
-                improvements.append(item)
-                
-        # Sort by accuracy
-        strengths.sort(key=lambda x: x["accuracy"], reverse=True)
-        improvements.sort(key=lambda x: x["accuracy"]) # Lowest first
+        # 8. Recommendations
+        weak_topics = [p.topic for p in sorted(progress_records, key=lambda x: x.overall_accuracy)[:3] if p.overall_accuracy < 60]
+        recommendations = [f"Practice more {topic} - accuracy is low." for topic in weak_topics]
+        if not recommendations:
+            recommendations = ["Great job! Keep practicing to maintain your streak.", "Try a Full-Length Mock Test to assess your readiness."]
 
         return {
             "user_id": user_id,
             "overall_score": round(accuracy, 1),
             "daily_streak": streak,
             "total_time_spent": total_time,
-            "tests_completed": len(mock_attempts),
-            "avg_time_per_question": avg_time_per_question,
-            
-            # New Separate Metrics
-            "practice_metrics": practice_stats,
-            "mock_metrics": mock_stats,
-            
-            # Insight Lists
-            "strengths": strengths,
-            "areas_for_improvement": improvements,
-            
             "aptitude": aptitude_data,
             "coding": {
                 "problems_attempted": 0,
@@ -264,77 +134,6 @@ class AnalyticsService:
             "recommendations": recommendations[:5]
         }
     
-    @staticmethod
-    def calculate_section_stats(records, is_mock=False):
-        """
-        Helper to calculate stats for a set of attempts/responses
-        """
-        total_attempts = len(records)
-        correct_attempts = sum(1 for r in records if r.is_correct)
-        accuracy = (correct_attempts / total_attempts * 100) if total_attempts > 0 else 0
-        
-        # Breakdown
-        category_stats = {}
-        topic_stats = {}
-        
-        for r in records:
-            # For QuestionAttempt, category/topic are on the object (we joined in query)
-            # For MockTestResponse, we need to access via 'question' relationship or similar
-            # In the query above for practice_attempts, we joined AptitudeQuestion but result is QuestionAttempt object? 
-            # SQLAlchemy result depends on query. returning .all() on QuestionAttempt returns attempt objects.
-            # but we can access question relationship if defined.
-            # Let's assume r.question is available or fields are present. 
-            
-            # Wait, QuestionAttempt model doesn't have relationship defined in the snippet I saw?
-            # actually models/analytics_sql.py shows ForeignKey but no relationship property.
-            # I must rely on the fields I saw: category, topic are columns in QuestionAttempt!
-            
-            cat = None
-            top = None
-            
-            if is_mock:
-                # r is MockTestResponse. It has 'question' relationship.
-                if r.question:
-                    cat = r.question.category
-                    top = r.question.topic
-            else:
-                # r is QuestionAttempt. It has 'category' and 'topic' columns.
-                cat = r.category
-                top = r.topic
-                
-            if not cat: cat = "Unknown"
-            if not top: top = "Unknown"
-            
-            # Category Update
-            if cat not in category_stats:
-                category_stats[cat] = {"correct": 0, "total": 0}
-            category_stats[cat]["total"] += 1
-            if r.is_correct:
-                category_stats[cat]["correct"] += 1
-                
-            # Topic Update
-            if top not in topic_stats:
-                topic_stats[top] = {"correct": 0, "total": 0}
-            topic_stats[top]["total"] += 1
-            if r.is_correct:
-                topic_stats[top]["correct"] += 1
-
-        # Calculate Accuracies
-        for c in category_stats:
-            t = category_stats[c]["total"]
-            category_stats[c]["accuracy"] = (category_stats[c]["correct"] / t * 100) if t > 0 else 0
-            
-        for t in topic_stats:
-            tot = topic_stats[t]["total"]
-            topic_stats[t]["accuracy"] = (topic_stats[t]["correct"] / tot * 100) if tot > 0 else 0
-            
-        return {
-            "total_questions": total_attempts,
-            "accuracy": round(accuracy, 1),
-            "category_breakdown": category_stats,
-            "topic_breakdown": topic_stats
-        }
-
     @staticmethod
     def generate_recommendations(
         weak_topics: List[str],
@@ -414,12 +213,6 @@ class AnalyticsService:
             .filter(QuestionAttempt.user_id == user_id)\
             .filter(QuestionAttempt.attempted_at >= cutoff_date)\
             .order_by(QuestionAttempt.attempted_at).all()
-            
-        mock_responses = db.query(MockTestResponse)\
-            .join(MockTestAttempt)\
-            .filter(MockTestAttempt.user_id == user_id)\
-            .filter(MockTestResponse.answered_at >= cutoff_date)\
-            .order_by(MockTestResponse.answered_at).all()
         
         # Group by date
         daily_stats = {}
@@ -445,33 +238,6 @@ class AnalyticsService:
                     daily_stats[date]["categories"][cat] = {"attempted": 0, "correct": 0}
                 daily_stats[date]["categories"][cat]["attempted"] += 1
                 if attempt.is_correct:
-                    daily_stats[date]["categories"][cat]["correct"] += 1
-        
-        # Merge mock responses
-        for response in mock_responses:
-            if not response.answered_at:
-                continue
-            date = response.answered_at.date()
-            if date not in daily_stats:
-                daily_stats[date] = {
-                    "attempted": 0,
-                    "correct": 0,
-                    "categories": {}
-                }
-            daily_stats[date]["attempted"] += 1
-            if response.is_correct:
-                daily_stats[date]["correct"] += 1
-            
-            # Get question category
-            question = db.query(AptitudeQuestion).filter(
-                AptitudeQuestion.id == response.question_id
-            ).first()
-            if question:
-                cat = question.category
-                if cat not in daily_stats[date]["categories"]:
-                    daily_stats[date]["categories"][cat] = {"attempted": 0, "correct": 0}
-                daily_stats[date]["categories"][cat]["attempted"] += 1
-                if response.is_correct:
                     daily_stats[date]["categories"][cat]["correct"] += 1
         
         # Format for response
