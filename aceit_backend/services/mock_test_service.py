@@ -337,6 +337,7 @@ class MockTestService:
         
         if existing_response:
             existing_response.user_answer = user_answer
+            existing_response.answer_text = answer_text
             existing_response.is_correct = is_correct
             existing_response.time_spent_seconds = time_spent
             existing_response.answered_at = datetime.datetime.utcnow()
@@ -345,6 +346,7 @@ class MockTestService:
                 attempt_id=attempt_id,
                 question_id=question_id,
                 user_answer=user_answer,
+                answer_text=answer_text,
                 is_correct=is_correct,
                 time_spent_seconds=time_spent,
                 answered_at=datetime.datetime.utcnow()
@@ -555,6 +557,7 @@ class MockTestService:
                 detailed_results.append({
                     "question_id": question.id,
                     "question_text": question.question,
+                    "options": question.options,
                     "your_answer": response.answer_text if response.answer_text else (question.options[response.user_answer] if response.user_answer is not None and response.user_answer < len(question.options) else "Not Answered"),
                     "correct_answer": question.options[question.correct_answer] if question.correct_answer is not None and question.correct_answer < len(question.options) else "Unknown",
                     "is_correct": response.is_correct,

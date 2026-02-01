@@ -250,9 +250,9 @@ class AIAnalyticsService:
             "best_topic": max(topic_data["topic_data"].items(), key=lambda x: x[1]["accuracy"])[0] if topic_data["topic_data"] else "N/A"
         }
         
-        # 3. Call OpenAI
-        from openai import OpenAI
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        # 3. Call AI (Groq via SITA Key, OpenAI SITA Key Backup)
+        from services.llm_client import LLMClient
+        llm = LLMClient(groq_env_key="GROQ_API_KEY_SITA", openai_env_key="OPENAI_API_KEY_SITA")
         
         try:
             prompt = f"""
@@ -266,17 +266,14 @@ class AIAnalyticsService:
             - RECENT TRENDS: {json.dumps(context['daily_trends'])}
 
             INSTRUCTION: Your analysis MUST reference the 'LATEST MOCK TEST' data specifically to show you are tracking real-time progress.
-            Return JSON: "headline" (1 sentence), "analysis" (2 sentences mentioning specific topics), "action_plan" (list of 3 steps).
+            Return ONLY valid JSON (no markdown) with keys: "headline" (1 sentence), "analysis" (2 sentences mentioning specific topics), "action_plan" (list of 3 steps).
             """
             
-            response = client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{"role": "system", "content": "Professional aptitude coach. Return JSON."},
-                          {"role": "user", "content": prompt}],
-                response_format={ "type": "json_object" }
-            )
+            response_text = llm.generate_response(prompt)
             
-            insight_data = json.loads(response.choices[0].message.content)
+            # Clean response
+            clean_text = response_text.replace("```json", "").replace("```", "").strip()
+            insight_data = json.loads(clean_text)
             
             # 4. Save to cache
             if not user_anal:

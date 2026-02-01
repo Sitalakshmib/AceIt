@@ -7,7 +7,7 @@ from services.ai_analytics_service import AIAnalyticsService
 
 class SimAptitudeCoach:
     def __init__(self):
-        self.llm = LLMClient()
+        self.llm = LLMClient(groq_env_key="GROQ_API_KEY_SITA", openai_env_key="OPENAI_API_KEY_SITA")
         self.sessions = {} # In-memory store (similar to SimVoiceInterviewer)
         
     def start_session(self, user_id: str, db):
