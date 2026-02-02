@@ -39,3 +39,5 @@ gTTS
 openai-whisper
 python-dotenv==1.0.1
 groq
+openai
+openai-dotenv==1.0.1
