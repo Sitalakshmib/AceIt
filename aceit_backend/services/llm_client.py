@@ -15,7 +15,7 @@ class LLMClient:
         {"provider": "openai", "id": "gpt-4o"},               # Final Backup: High intelligence
     ]
     
-    def __init__(self):
+    def __init__(self, groq_env_key="GROQ_API_KEY", openai_env_key="OPENAI_API_KEY"):
         # Initialize Google Gemini
         gemini_api_key = os.getenv("GEMINI_API_KEY")
         if gemini_api_key:
@@ -26,21 +26,21 @@ class LLMClient:
             self.gemini_available = False
             
         # Initialize OpenAI
-        openai_api_key = os.getenv("OPENAI_API_KEY")
+        openai_api_key = os.getenv(openai_env_key)
         if openai_api_key:
             self.openai_client = OpenAI(api_key=openai_api_key)
             self.openai_available = True
         else:
-            print("[LLM] WARNING: OPENAI_API_KEY not found")
+            print(f"[LLM] WARNING: {openai_env_key} not found")
             self.openai_available = False
 
         # Initialize Groq
-        groq_api_key = os.getenv("GROQ_API_KEY")
+        groq_api_key = os.getenv(groq_env_key)
         if groq_api_key:
             self.groq_client = Groq(api_key=groq_api_key)
             self.groq_available = True
         else:
-            print("[LLM] WARNING: GROQ_API_KEY not found")
+            print(f"[LLM] WARNING: {groq_env_key} not found (Groq unavailable)")
             self.groq_available = False
             
         self.current_model_index = 0

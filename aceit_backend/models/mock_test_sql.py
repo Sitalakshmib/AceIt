@@ -3,6 +3,8 @@ from sqlalchemy.orm import relationship
 from database_postgres import Base
 import datetime
 import uuid
+from models.user_sql import User
+from models.aptitude_sql import AptitudeQuestion
 
 class MockTest(Base):
     """Represents a generated mock test"""
@@ -34,8 +36,8 @@ class MockTestAttempt(Base):
     accuracy_percentage = Column(Float, default=0.0)
     status = Column(String, default="in_progress")  # "in_progress", "completed", "abandoned"
     
-    user = relationship("User")
-    mock_test = relationship("MockTest")
+    user = relationship(User)
+    mock_test = relationship(MockTest)
 
 class MockTestResponse(Base):
     """Individual question responses in mock tests"""
@@ -45,9 +47,10 @@ class MockTestResponse(Base):
     attempt_id = Column(String, ForeignKey("mock_test_attempts.id"))
     question_id = Column(String, ForeignKey("aptitude_questions.id"))
     user_answer = Column(Integer, nullable=True)
+    answer_text = Column(String, nullable=True)
     is_correct = Column(Boolean, nullable=True)
     time_spent_seconds = Column(Integer, default=0)
     answered_at = Column(DateTime, nullable=True)
     
-    attempt = relationship("MockTestAttempt")
-    question = relationship("AptitudeQuestion")
+    attempt = relationship(MockTestAttempt)
+    question = relationship(AptitudeQuestion)
