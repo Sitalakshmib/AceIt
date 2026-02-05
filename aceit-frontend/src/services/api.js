@@ -52,6 +52,7 @@ export const aptitudeAPI = {
 
 export const codingAPI = {
   getProblems: () => api.get('/coding/problems'),
+  getProblemDetails: (problemId) => api.get(`/coding/problems/${problemId}`),
   submitCode: (problemId, code, language = 'python') => {
     const userId = getCurrentUserId();
     return api.post('/coding/submit', {
