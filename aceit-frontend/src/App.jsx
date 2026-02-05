@@ -20,41 +20,44 @@ function App() {
   return (
     <AuthProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/" element={
-              <ProtectedRoute>
-                <Navbar />
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/aptitude" element={
-              <ProtectedRoute>
-                <Navbar />
-                <Aptitude />
-              </ProtectedRoute>
-            } />
-            <Route path="/resume" element={
-              <ProtectedRoute>
-                <Navbar />
-                <Resume />
-              </ProtectedRoute>
-            } />
-            <Route path="/coding" element={
-              <ProtectedRoute>
-                <Navbar />
-                <Coding />
-              </ProtectedRoute>
-            } />
-            <Route path="/interview" element={
-              <ProtectedRoute>
-                <Navbar />
-                <Interview />
-              </ProtectedRoute>
-            } />
-          </Routes>
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-100 relative">
+          <div className="absolute inset-0 tech-pattern opacity-60 pointer-events-none" />
+          <div className="relative z-10">
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <Dashboard />
+                </ProtectedRoute>
+              } />
+              <Route path="/aptitude" element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <Aptitude />
+                </ProtectedRoute>
+              } />
+              <Route path="/resume" element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <Resume />
+                </ProtectedRoute>
+              } />
+              <Route path="/coding" element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <Coding />
+                </ProtectedRoute>
+              } />
+              <Route path="/interview" element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <Interview />
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </div>
         </div>
       </Router>
     </AuthProvider>

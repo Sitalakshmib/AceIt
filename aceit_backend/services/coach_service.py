@@ -1,0 +1,79 @@
+import os
+import io
+import json
+from typing import List, Dict, Optional
+from openai import OpenAI
+from sqlalchemy.orm import Session
+from services.ai_analytics_service import AIAnalyticsService
+
+class AICoachService:
+    @staticmethod
+    def get_chat_response(db: Session, user_id: str, message: str, history: List[Dict]) -> str:
+        """
+        Get a conversational response from the AI coach based on user's progress.
+        """
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        # Get summarized context to make the coach "real-time" and personal
+        summary = AIAnalyticsService.get_overall_summary(db, user_id)
+        topic_info = AIAnalyticsService.get_mock_topic_performance(db, user_id)
+        
+        system_prompt = f"""
+        You are an encouraging and highly skilled Aptitude Career Coach. 
+        A student is asking you for guidance. Here is their current status:
+        - Accuracy: {summary['exam_confidence']}%
+        - Pace: {summary['pace_ratio']}x
+        - Strengths: {', '.join(topic_info['strengths']) if topic_info['strengths'] else 'Unknown'}
+        - Weaknesses: {', '.join(topic_info['weaknesses']) if topic_info['weaknesses'] else 'Unknown'}
+        
+        Instructions:
+        1. Be supportive but realistic.
+        2. Reference their specific stats if relevant to their question.
+        3. Provide actionable tips for aptitude tests (Quantitative, Logical, Verbal).
+        4. Keep responses concise (under 3 sentences unless they ask for a detailed explanation).
+        """
+        
+        messages = [{"role": "system", "content": system_prompt}]
+        for h in history:
+            messages.append(h)
+        messages.append({"role": "user", "content": message})
+        
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=messages
+        )
+        
+        return response.choices[0].message.content
+
+    @staticmethod
+    def transcript_audio(audio_file_content: bytes) -> str:
+        """
+        Convert speech to text using OpenAI Whisper.
+        """
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        # Audio file must be buffered
+        buffer = io.BytesIO(audio_file_content)
+        buffer.name = "audio.webm" # Common for browser recordings
+        
+        transcript = client.audio.transcriptions.create(
+            model="whisper-1",
+            file=buffer
+        )
+        
+        return transcript.text
+
+    @staticmethod
+    def text_to_speech(text: str) -> bytes:
+        """
+        Convert text to speech using OpenAI TTS.
+        """
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        
+        response = client.audio.speech.create(
+            model="tts-1",
+            voice="alloy",
+            input=text
+        )
+        
+        return response.content

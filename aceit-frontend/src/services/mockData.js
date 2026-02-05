@@ -9,7 +9,7 @@ export const generateMockProgressData = (userId) => {
   for (let i = 6; i >= 0; i--) {
     const date = new Date(today);
     date.setDate(date.getDate() - i);
-    
+
     dailyActivity.push({
       date: date.toISOString().split('T')[0],
       aptitude: Math.floor(Math.random() * 20) + 5,
@@ -67,10 +67,10 @@ export const generateMockProgressData = (userId) => {
     weekly_activity: dailyActivity,
     skill_distribution: skillData,
     achievements: [
-      { id: 1, name: 'First Steps', description: 'Complete 10 questions', unlocked: true, icon: '🏆' },
-      { id: 2, name: 'Code Warrior', description: 'Solve 5 coding problems', unlocked: true, icon: '⚔️' },
-      { id: 3, name: 'Aptitude Ace', description: 'Score 80+ in aptitude test', unlocked: false, icon: '🎯' },
-      { id: 4, name: '7-Day Streak', description: 'Practice for 7 consecutive days', unlocked: true, icon: '🔥' }
+      { id: 1, name: 'First Steps', description: 'Complete 10 questions', unlocked: true, icon: '' },
+      { id: 2, name: 'Code Warrior', description: 'Solve 5 coding problems', unlocked: true, icon: '' },
+      { id: 3, name: 'Aptitude Ace', description: 'Score 80+ in aptitude test', unlocked: false, icon: '' },
+      { id: 4, name: '7-Day Streak', description: 'Practice for 7 consecutive days', unlocked: true, icon: '' }
     ],
     upcoming_goals: [
       { id: 1, goal: 'Complete 20 aptitude questions', progress: 15, total: 20 },

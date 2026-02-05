@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # Start backend in background
-echo "🚀 Starting Backend on port 8001..."
-cd aceit-backend
-/usr/local/bin/python3 main.py &
+echo "🚀 Starting Backend on port 8000..."
+cd aceit_backend
+.venv/bin/python main.py &
 BACKEND_PID=$!
 
 # Start frontend in background  
@@ -13,9 +13,9 @@ npm run dev &
 FRONTEND_PID=$!
 
 echo "✅ Both servers started!"
-echo "🔗 Backend: http://localhost:8001"
+echo "🔗 Backend: http://localhost:8000"
 echo "🔗 Frontend: http://localhost:5173"
-echo "📝 Backend Docs: http://localhost:8001/docs"
+echo "📝 Backend Docs: http://localhost:8000/docs"
 echo ""
 echo "Press Ctrl+C to stop both servers"
 

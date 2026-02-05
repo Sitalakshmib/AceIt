@@ -1,0 +1,485 @@
+## **Easy Difficulty (1–30)**
+
+**Question 1:**  
+In a row of 40 students, Rohan is 15th from the left end. What is his position from the right end?  
+Options:  
+26th  
+25th  
+24th  
+27th  
+Correct Answer: 1  
+Answer Explanation: Total = 40, Left position = 15, Right position = (40 - 15 + 1) = 26.  
+Primary Concepts: basic_ranking_from_ends  
+Elite Traps: none
+
+**Question 2:**  
+In a queue, Priya is 8th from the front and 12th from the back. How many people are in the queue?  
+Options:  
+18  
+19  
+20  
+21  
+Correct Answer: 2  
+Answer Explanation: Total = (Position from front + Position from back) – 1 = 8 + 12 – 1 = 19.  
+Primary Concepts: total_from_two_ends  
+Elite Traps: miscounting_total
+
+**Question 3:**  
+In a row of 25 children, Tina is 10th from the right end. What is her position from the left end?  
+Options:  
+16th  
+15th  
+14th  
+17th  
+Correct Answer: 1  
+Answer Explanation: Total = 25, Right position = 10, Left position = 25 – 10 + 1 = 16.  
+Primary Concepts: basic_ranking_from_ends  
+Elite Traps: forgetting_to_add_1
+
+**Question 4:**  
+In a race of 50 runners, Arjun finished 7th from the top. What is his rank from the last?  
+Options:  
+44th  
+43rd  
+45th  
+42nd  
+Correct Answer: 1  
+Answer Explanation: Total = 50, Rank from top = 7, Rank from bottom = 50 – 7 + 1 = 44.  
+Primary Concepts: basic_ranking_from_ends  
+Elite Traps: off_by_one_error
+
+**Question 5:**  
+Sohan ranks 18th in a class of 49 students. What is his rank from the bottom?  
+Options:  
+32nd  
+31st  
+30th  
+33rd  
+Correct Answer: 1  
+Answer Explanation: 49 – 18 + 1 = 32.  
+Primary Concepts: basic_ranking_from_ends  
+Elite Traps: miscounting_total
+
+**Question 6:**  
+In a queue, 8 people are ahead of Raj, and 4 people are behind him. How many people are in the queue?  
+Options:  
+12  
+13  
+14  
+11  
+Correct Answer: 2  
+Answer Explanation: Total = Ahead + Behind + Raj himself = 8 + 4 + 1 = 13.  
+Primary Concepts: total_from_ahead_behind  
+Elite Traps: forgetting_self
+
+**Question 7:**  
+In a row of girls, Anjali is 12th from left and 19th from right. How many girls are there?  
+Options:  
+30  
+29  
+31  
+32  
+Correct Answer: 1  
+Answer Explanation: Total = 12 + 19 – 1 = 30.  
+Primary Concepts: total_from_two_ends  
+Elite Traps: off_by_one_error
+
+**Question 8:**  
+Karan ranks 9th from top and 36th from bottom. How many total students?  
+Options:  
+43  
+44  
+45  
+46  
+Correct Answer: 2  
+Answer Explanation: Total = 9 + 36 – 1 = 44.  
+Primary Concepts: total_from_two_ends  
+Elite Traps: forgetting_minus_one
+
+**Question 9:**  
+In a line of trees, one tree is 14th from either end. How many trees are there?  
+Options:  
+27  
+26  
+28  
+29  
+Correct Answer: 1  
+Answer Explanation: If same position from both ends, total = 2 × Position – 1 = 2 × 14 – 1 = 27.  
+Primary Concepts: symmetrical_ranking  
+Elite Traps: miscalculation
+
+**Question 10:**  
+Rajesh is 20th from left and 21st from right. How many persons in row?  
+Options:  
+40  
+39  
+41  
+42  
+Correct Answer: 1  
+Answer Explanation: Total = 20 + 21 – 1 = 40.  
+Primary Concepts: total_from_two_ends  
+Elite Traps: simple_off_by_one
+
+**Question 11:**  
+In a row of 30 persons, position of A from right is same as position of B from left. If A is 11th from right, what is B’s position from left?  
+Options:  
+11th  
+20th  
+21st  
+19th  
+Correct Answer: 1  
+Answer Explanation: B’s position from left = same as A’s from right = 11th.  
+Primary Concepts: symmetry_in_ranking  
+Elite Traps: unnecessary_addition
+
+**Question 12:**  
+If you are 10th from front and 15th from back in a queue, total people?  
+Options:  
+24  
+25  
+23  
+26  
+Correct Answer: 1  
+Answer Explanation: Total = 10 + 15 – 1 = 24.  
+Primary Concepts: total_from_two_ends  
+Elite Traps: off_by_one_error
+
+**Question 13:**  
+In a class of 60, Ravi’s rank from top is 17. What is his rank from bottom?  
+Options:  
+44th  
+45th  
+43rd  
+46th  
+Correct Answer: 1  
+Answer Explanation: 60 – 17 + 1 = 44.  
+Primary Concepts: basic_ranking_from_ends  
+Elite Traps: forgetting_add_one
+
+**Question 14:**  
+In a line of 20 people, Ram is 5th from left. How many are to his right?  
+Options:  
+15  
+16  
+14  
+13  
+Correct Answer: 1  
+Answer Explanation: Total 20, left position 5, so to right = 20 – 5 = 15.  
+Primary Concepts: persons_to_one_side  
+Elite Traps: off_by_one  
+
+**Question 15:**  
+In a row, Akash is 10th from left. If there are 25 persons, how many to his right?  
+Options:  
+14  
+15  
+16  
+13  
+Correct Answer: 2  
+Answer Explanation: 25 – 10 = 15.  
+Primary Concepts: persons_to_one_side  
+Elite Traps: forgetting_excluding_him
+
+**Question 16:**  
+In a list of 45 people, Seema’s rank from top is 30. What is her rank from bottom?  
+Options:  
+16th  
+15th  
+17th  
+18th  
+Correct Answer: 1  
+Answer Explanation: 45 – 30 + 1 = 16.  
+Primary Concepts: basic_ranking_from_ends  
+Elite Traps: forgetting_add_one
+
+**Question 17:**  
+A class has 50 students. Rohan ranks 35th from top. How many below him?  
+Options:  
+15  
+14  
+16  
+13  
+Correct Answer: 1  
+Answer Explanation: Below him = 50 – 35 = 15.  
+Primary Concepts: persons_below  
+Elite Traps: off_by_one
+
+**Question 18:**  
+In a row of 30, position from left = position from right for which person?  
+Options:  
+15th  
+16th  
+15th or 16th  
+14th or 17th  
+Correct Answer: 3  
+Answer Explanation: For odd total, middle person has same position from both ends: 30 is even, so two middle positions: 15th and 16th from left.  
+Primary Concepts: symmetric_positions  
+Elite Traps: even_total_middle
+
+**Question 19:**  
+In a row of 21, middle person’s position from left is?  
+Options:  
+10th  
+11th  
+12th  
+10th or 11th  
+Correct Answer: 2  
+Answer Explanation: Odd total = 21, middle = (21+1)/2 = 11th from left.  
+Primary Concepts: middle_position  
+Elite Traps: even_total_middle
+
+**Question 20:**  
+From left, position 5; from right, position 6. How many total?  
+Options:  
+10  
+11  
+12  
+9  
+Correct Answer: 1  
+Answer Explanation: Total = 5 + 6 – 1 = 10.  
+Primary Concepts: total_from_two_ends  
+Elite Traps: off_by_one
+
+**Question 21:**  
+In a race, 55 runners. Tom finishes 33rd. How many behind him?  
+Options:  
+22  
+21  
+23  
+20  
+Correct Answer: 1  
+Answer Explanation: Behind = 55 – 33 = 22.  
+Primary Concepts: persons_below  
+Elite Traps: none
+
+**Question 22:**  
+In a line, 17 people ahead of John, 12 behind him. Total?  
+Options:  
+29  
+30  
+28  
+31  
+Correct Answer: 2  
+Answer Explanation: Total = 17 + 12 + 1 = 30.  
+Primary Concepts: ahead_behind_total  
+Elite Traps: forgetting_self
+
+**Question 23:**  
+Position from top = 23, position from bottom = 28. Total?  
+Options:  
+50  
+49  
+51  
+52  
+Correct Answer: 1  
+Answer Explanation: Total = 23 + 28 – 1 = 50.  
+Primary Concepts: total_from_two_ends  
+Elite Traps: simple_off_by_one
+
+**Question 24:**  
+In a row of 40, how many between 15th from left and 20th from left?  
+Options:  
+4  
+5  
+6  
+3  
+Correct Answer: 1  
+Answer Explanation: Between mth and nth from same side = |m – n| – 1 = |20 – 15| – 1 = 4.  
+Primary Concepts: between_two_positions_same_end  
+Elite Traps: miscounting
+
+**Question 25:**  
+From left: A is 10th, B is 15th. How many between them?  
+Options:  
+4  
+5  
+6  
+3  
+Correct Answer: 1  
+Answer Explanation: 15 – 10 – 1 = 4.  
+Primary Concepts: between_two_positions_same_end  
+Elite Traps: not_subtracting_one
+
+**Question 26:**  
+Total students = 48. Rank from top = 12. How many below?  
+Options:  
+36  
+35  
+37  
+34  
+Correct Answer: 1  
+Answer Explanation: Below = 48 – 12 = 36.  
+Primary Concepts: persons_below  
+Elite Traps: off_by_one
+
+**Question 27:**  
+Queue: 9 ahead, 6 behind. Total?  
+Options:  
+15  
+16  
+17  
+14  
+Correct Answer: 2  
+Answer Explanation: 9 + 6 + 1 = 16.  
+Primary Concepts: ahead_behind_total  
+Elite Traps: forgetting_self
+
+**Question 28:**  
+Row of 27: position from left = 14, from right =?  
+Options:  
+13  
+14  
+15  
+16  
+Correct Answer: 2  
+Answer Explanation: 27 – 14 + 1 = 14. Symmetric.  
+Primary Concepts: symmetrical_ranking  
+Elite Traps: miscalculation
+
+**Question 29:**  
+Rank from top = rank from bottom. Total = 39. What is rank?  
+Options:  
+20  
+19  
+20 or 19  
+21  
+Correct Answer: 1  
+Answer Explanation: For odd total 39, middle = (39+1)/2 = 20.  
+Primary Concepts: symmetric_positions  
+Elite Traps: even_total_middle
+
+**Question 30:**  
+In list of 100, first is top, last is bottom. If from top = 45, from bottom =?  
+Options:  
+56  
+55  
+54  
+57  
+Correct Answer: 1  
+Answer Explanation: 100 – 45 + 1 = 56.  
+Primary Concepts: basic_ranking_from_ends  
+Elite Traps: forgetting_add_one
+
+## **Medium Difficulty (31–60)**
+
+**Question 31:**  
+In a row, A is 13th from left, B is 7th from right. After swapping, A is 20th from left. Total=26. What is B’s new position from right?  
+Options:  
+13  
+14  
+15  
+16  
+Correct Answer: 2  
+Answer Explanation: Total T=26 (derived), B’s original from left = T–7+1=20, after swap B is at A’s original left=13, so from right=26–13+1=14.  
+Primary Concepts: swap_positions  
+Elite Traps: miscalculating_total
+
+**Question 32:**  
+Five girls are sitting in a row. Riya is next to Smita but not next to Priya. Priya is next to Meena who is at left end. Tina is at right end. Who is in middle?  
+Options:  
+Riya  
+Smita  
+Priya  
+Meena  
+Correct Answer: 1  
+Answer Explanation: Meena left end, Tina right end. Priya next to Meena so Priya 2nd left. Riya next to Smita, not next to Priya, so possible arrangement: Meena, Priya, Riya, Smita, Tina. Middle = Riya.  
+Primary Concepts: linear_arrangement_basic  
+Elite Traps: adjacency_conditions
+
+**Question 33:**  
+In a class, rank of Ajay from top = 15, from bottom = 20. 5 new students join at bottom. What is Ajay’s new rank from top?  
+Options:  
+15  
+20  
+16  
+25  
+Correct Answer: 1  
+Answer Explanation: Adding at bottom doesn’t change Ajay’s rank from top.  
+Primary Concepts: rank_unchanged_if_add_below  
+Elite Traps: unnecessary_recalculation
+
+**Question 34:**  
+In a queue, position from front = 12, position from back = 18. 4 people leave from front. New position from front = ?  
+Options:  
+8  
+9  
+10  
+11  
+Correct Answer: 1  
+Answer Explanation: Original total = 12+18–1=29. 4 leave front → new front position = 12–4=8.  
+Primary Concepts: leave_from_front_effect  
+Elite Traps: not_reducing_position
+
+**Question 35:**  
+In a row, K is 12th from left, M is 8th from right. If they interchange, K is 17th from left. How many between K and M originally?  
+Options:  
+4  
+5  
+6  
+7  
+Correct Answer: 1  
+Answer Explanation: Original K left=12, M right=8 → M left = T–8+1 = T–7. After swap K’s left=T–7=17 → T=24. M’s left=24–7=17. Originally K left 12, M left 17 → between=4 persons.  
+Primary Concepts: swap_find_between  
+Elite Traps: miscounting_between
+
+**Question 36:**  
+Six friends A,B,C,D,E,F are in height order tallest first (1) to shortest (6). A taller than B. C shorter than D but taller than F. E shortest. D not tallest. Who is tallest?  
+Options:  
+A  
+B  
+C  
+D  
+Correct Answer: 1  
+Answer Explanation: Conditions: A>B, D>C>F (so D>C>F), E=6, D≠1. So tallest is A or maybe? Let’s list: E=6, D≠1, D>C>F, so possible D=2,C=3,F=4 or D=3,C=4,F=5 etc. But A>B so A could be 1,B=2 or etc. If D=2,C=3,F=4, then A=1,B=5 or B=… possible. But tallest is A.  
+Primary Concepts: ordering_puzzles  
+Elite Traps: multiple_constraints
+
+**Question 37:**  
+In a row of boys, Arun is 7th from left, Suresh is 12th from right. If 4 boys sit between them, how many total?  
+Options:  
+23  
+22  
+21  
+24  
+Correct Answer: 1  
+Answer Explanation: Two cases:  
+Case 1: Arun left of Suresh: Arun left=7, Suresh left=7+4+1=12, so Suresh right = T–12+1=12 given → T=23.  
+Case 2: Suresh left of Arun: possible but yields different T not matching options. So T=23.  
+Primary Concepts: between_given_find_total  
+Elite Traps: two_cases
+
+**Question 38:**  
+In a row, A is 18th from left, B is 15th from right. If there are 7 between them, total=?  
+Options:  
+40  
+39  
+41  
+38  
+Correct Answer: 1  
+Answer Explanation: Case 1: A left of B: B’s left = 18+7+1=26, B’s right=15 so total=26+15–1=40. Case 2: B left of A: B’s left = 18–7–1=10, B’s right=15, total=10+15–1=24 (not option). So total=40.  
+Primary Concepts: between_given_find_total  
+Elite Traps: two_cases
+
+**Question 39:**  
+Rank of Deepak in class = 24 from top, 37 from bottom. 3 students leave class from top. New rank from top?  
+Options:  
+21  
+24  
+27  
+20  
+Correct Answer: 1  
+Answer Explanation: Original total=24+37–1=60. 3 leave from top, so those above Deepak reduce by 3 → new rank from top = 24–3=21.  
+Primary Concepts: leave_from_top_effect  
+Elite Traps: forgetting_rank_change
+
+**Question 40:**  
+In a queue, 5 people between X and Y. X is 32nd from front, Y is 26th from back. Total=50. Are X and Y in correct order?  
+Options:  
+Yes, X ahead of Y  
+No, Y ahead of X  
+Can’t say  
+Data inconsistent  
+Correct Answer: 4  
+Answer Explanation: If X ahead of Y: X left=32, Y left=32+5+1=38, Y right=26 → total=38+26–1=63 not 50. If Y ahead of X: Y left=32–5–1=26, Y right=26 → total=26+26–1=51 not 50. So inconsistent.  
+Primary Concepts: data_inconsistency_check  
+Elite Traps: forcing_case

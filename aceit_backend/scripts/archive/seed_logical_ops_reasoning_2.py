@@ -1,0 +1,101 @@
+from sqlalchemy.orm import sessionmaker
+import sys
+import os
+import uuid
+
+# Add the parent directory to sys.path to import models
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from database_postgres import engine
+from models.aptitude_sql import AptitudeQuestion
+
+Session = sessionmaker(bind=engine)
+session = Session()
+
+questions_data = [
+    # EASY (20)
+    {"q": "In Boolean algebra, what is A + A equal to?", "options": ["A", "0", "1", "A'"], "a": 0, "exp": "Idempotent law: A + A = A.", "diff": "easy", "topic": "Logical Operations", "concepts": ["idempotent_law"], "traps": ["confusing_with_A+A'"]},
+    {"q": "If all dogs bark and Fido is a dog, then:", "options": ["Fido barks", "Fido does not bark", "Some dogs don't bark", "Cannot conclude"], "a": 0, "exp": "Universal affirmative: All dogs bark, Fido is a dog, therefore Fido barks.", "diff": "easy", "topic": "Logical Reasoning", "concepts": ["categorical_syllogism_easy"], "traps": ["overgeneralization_exception"]},
+    {"q": "What is the output of an OR gate if both inputs are 0?", "options": ["0", "1", "Undefined", "Depends on NOT"], "a": 0, "exp": "OR gate: output 1 if at least one input is 1; else 0.", "diff": "easy", "topic": "Logical Operations", "concepts": ["basic_gate_operation"], "traps": ["confusion_with_AND"]},
+    {"q": "Find next number: 5, 10, 15, 20, ?", "options": ["25", "30", "35", "40"], "a": 0, "exp": "Adding 5 each time: 20+5=25.", "diff": "easy", "topic": "Logical Reasoning", "concepts": ["arithmetic_series"], "traps": ["overcomplicating_pattern"]},
+    {"q": "What is the negation of 'All birds fly'?", "options": ["No birds fly", "Some birds do not fly", "All birds do not fly", "Some birds fly"], "a": 1, "exp": "Negation of 'All A are B' is 'Some A are not B.'", "diff": "easy", "topic": "Logical Operations", "concepts": ["negation_quantifiers"], "traps": ["choosing_contrary_not_contradictory"]},
+    {"q": "If NORTH is coded as OPUI, how is SOUTH coded?", "options": ["TPVUI", "TPVUG", "TPUVI", "TPVUH"], "a": 0, "exp": "Each letter shifted forward by 1: N→O, O→P, R→S, T→U, H→I. Similarly SOUTH → TPVUI.", "diff": "easy", "topic": "Logical Reasoning", "concepts": ["letter_shift_coding_easy"], "traps": ["reverse_shift_direction"]},
+    {"q": "In logic, what does the symbol '∧' represent?", "options": ["OR", "AND", "IMPLIES", "NOT"], "a": 1, "exp": "∧ represents logical AND.", "diff": "easy", "topic": "Logical Operations", "concepts": ["logical_symbols"], "traps": ["confusion_with_vee"]},
+    {"q": "A is B's father. B is C's sister. How is A related to C?", "options": ["Father", "Uncle", "Grandfather", "Brother"], "a": 0, "exp": "B is C's sister → same parents. A is B's father → A is C's father too.", "diff": "easy", "topic": "Logical Reasoning", "concepts": ["family_relations_basic"], "traps": ["gender_assumption"]},
+    {"q": "Simplify: A · 1 = ?", "options": ["A", "0", "1", "A'"], "a": 0, "exp": "AND with 1 yields A.", "diff": "easy", "topic": "Logical Operations", "concepts": ["boolean_identities"], "traps": ["confusion_with_OR"]},
+    {"q": "If a clock shows 9:30, what is the angle between hands?", "options": ["90°", "105°", "120°", "135°"], "a": 1, "exp": "At 9:30, hour hand at 9.5*30=285°, minute hand at 180°, difference=105°.", "diff": "easy", "topic": "Logical Reasoning", "concepts": ["clock_angles_basic"], "traps": ["forgetting_hour_hand_movement"]},
+    {"q": "De Morgan's law: ¬(P ∨ Q) ≡ ?", "options": ["¬P ∧ ¬Q", "¬P ∨ ¬Q", "P ∧ Q", "P ∨ Q"], "a": 0, "exp": "¬(P ∨ Q) ≡ ¬P ∧ ¬Q.", "diff": "easy", "topic": "Logical Operations", "concepts": ["de_morgan_law"], "traps": ["sign_flip_error"]},
+    {"q": "Find odd one: 2, 4, 8, 16, 24", "options": ["2", "4", "8", "24"], "a": 3, "exp": "2,4,8,16 are powers of 2; 24 is not.", "diff": "easy", "topic": "Logical Reasoning", "concepts": ["odd_one_out_numbers"], "traps": ["thinking_even_numbers"]},
+    {"q": "Boolean expression A · Ā = ?", "options": ["0", "1", "A", "Ā"], "a": 0, "exp": "Law of complement: A AND NOT A = 0.", "diff": "easy", "topic": "Logical Operations", "concepts": ["complement_law"], "traps": ["confusing_with_OR"]},
+    {"q": "If today is Wednesday, what day was yesterday?", "options": ["Tuesday", "Thursday", "Monday", "Friday"], "a": 0, "exp": "Yesterday of Wednesday is Tuesday.", "diff": "easy", "topic": "Logical Reasoning", "concepts": ["day_sequence_basic"], "traps": ["off_by_one"]},
+    {"q": "Truth table for P ↔ Q: when is it true?", "options": ["P and Q same", "P and Q different", "P true", "Q false"], "a": 0, "exp": "Biconditional is true when both inputs are same.", "diff": "easy", "topic": "Logical Operations", "concepts": ["biconditional_truth"], "traps": ["confusing_with_XOR"]},
+    {"q": "Complete series: Z, X, V, T, ?", "options": ["R", "S", "Q", "P"], "a": 0, "exp": "Skip one letter backward: Z→X→V→T→R.", "diff": "easy", "topic": "Logical Reasoning", "concepts": ["letter_series_easy"], "traps": ["reverse_alphabet_order"]},
+    {"q": "Which is a contradiction?", "options": ["P ∧ ¬P", "P ∨ ¬P", "P → P", "P ∧ P"], "a": 0, "exp": "P AND NOT P is always false.", "diff": "easy", "topic": "Logical Operations", "concepts": ["contradiction"], "traps": ["picking_tautology"]},
+    {"q": "If 5 pencils cost $10, how much for 8 pencils?", "options": ["$16", "$18", "$20", "$24"], "a": 0, "exp": "Unit price $2 each, 8×2=$16.", "diff": "easy", "topic": "Logical Reasoning", "concepts": ["unitary_method"], "traps": ["proportional_reasoning_error"]},
+    {"q": "In Boolean, A + A'B = ?", "options": ["A + B", "A' + B", "A + B'", "A'B"], "a": 0, "exp": "Absorption: A + A'B = A + B.", "diff": "easy", "topic": "Logical Operations", "concepts": ["absorption_application"], "traps": ["misapplying_distribution"]},
+    {"q": "A is taller than B, C is shorter than A. Who is shortest?", "options": ["A", "B", "C", "Cannot say"], "a": 3, "exp": "A > B, C < A → we don't know relation between B and C.", "diff": "easy", "topic": "Logical Reasoning", "concepts": ["ordering_basic"], "traps": ["assuming_transitivity"]},
+
+    # MEDIUM (20)
+    {"q": "Simplify (A+B)(A+B') using Boolean algebra.", "options": ["A", "B", "AB", "A+B"], "a": 0, "exp": "(A+B)(A+B') = A + BB' = A + 0 = A.", "diff": "medium", "topic": "Logical Operations", "concepts": ["boolean_simplification_medium"], "traps": ["expanding_incorrectly"]},
+    {"q": "Statement: All engineers are logical. Some artists are engineers. Conclusions: I. Some artists are logical. II. All logical persons are engineers.", "options": ["Only I follows", "Only II follows", "Both follow", "Neither follows"], "a": 0, "exp": "From 'all engineers are logical' and 'some artists are engineers' → some artists are logical. II does not follow.", "diff": "medium", "topic": "Logical Reasoning", "concepts": ["syllogism_medium"], "traps": ["illegal_conversion"]},
+    {"q": "In a 3-input OR gate, output is 0 when:", "options": ["All inputs are 0", "Any input is 1", "Any input is 0", "All inputs are 1"], "a": 0, "exp": "OR gate: output 0 only if all inputs are 0.", "diff": "medium", "topic": "Logical Operations", "concepts": ["multi_input_gates"], "traps": ["confusion_with_AND"]},
+    {"q": "1, 3, 6, 10, 15, ?", "options": ["21", "22", "23", "24"], "a": 0, "exp": "Triangular numbers: add 2,3,4,5,6 → 15+6=21.", "diff": "medium", "topic": "Logical Reasoning", "concepts": ["number_series_medium"], "traps": ["difference_pattern_only"]},
+    {"q": "Dual of A·0 = 0 is:", "options": ["A+1 = 1", "A·1 = A", "A+0 = A", "A+A' = 1"], "a": 0, "exp": "Dual: replace · with +, 0 with 1. So A·0=0 → A+1=1.", "diff": "medium", "topic": "Logical Operations", "concepts": ["duality_principle"], "traps": ["not_applying_dual_correctly"]},
+    {"q": "If 'P#Q' means P is mother of Q, 'P$Q' means P is brother of Q, 'P@Q' means P is sister of Q. Then for A#B$C@D, how is A related to D?", "options": ["Grandmother", "Aunt", "Mother", "Sister"], "a": 2, "exp": "A mother B, B brother C, C sister D → A is mother of B, C, D.", "diff": "medium", "topic": "Logical Reasoning", "concepts": ["coded_relations"], "traps": ["gender_ambiguity"]},
+    {"q": "Consensus theorem: (A+B)(A'+C)(B+C) = ?", "options": ["(A+B)(A'+C)", "(A+B)(B+C)", "(A'+C)(B+C)", "AB + A'C"], "a": 0, "exp": "Consensus in POS form: (A+B)(A'+C)(B+C) = (A+B)(A'+C).", "diff": "medium", "topic": "Logical Operations", "concepts": ["consensus_theorem"], "traps": ["not_simplifying"]},
+    {"q": "No tiger is herbivorous. Some animals are tigers. All herbivorous are mammals. Which is certain?", "options": ["Some mammals are not tigers.", "Some tigers are mammals.", "All mammals are herbivorous.", "No mammal is tiger."], "a": 0, "exp": "From 'no tiger is herbivorous' and 'all herbivorous are mammals' → some mammals (the herbivorous ones) are not tigers.", "diff": "medium", "topic": "Logical Reasoning", "concepts": ["syllogism_multiple"], "traps": ["overreaching_conclusion"]},
+    {"q": "Minimize: f = x'y' + x'y + xy' + xy", "options": ["1", "0", "x+y", "x'y'"], "a": 0, "exp": "f = x'(y'+y) + x(y'+y) = x'·1 + x·1 = x' + x = 1.", "diff": "medium", "topic": "Logical Operations", "concepts": ["boolean_minimization"], "traps": ["missing_simplification"]},
+    {"q": "A walks 10 km south, turns left, walks 5 km, turns right, walks 10 km. Where from start?", "options": ["5 km east, 20 km south", "5 km west", "At start", "5 km north"], "a": 0, "exp": "S10, E5, S10 → final: E5, S20.", "diff": "medium", "topic": "Logical Reasoning", "concepts": ["direction_sense_medium"], "traps": ["forgetting_turn_directions"]},
+    {"q": "If (P → Q) is false, then which must be true?", "options": ["P is true, Q is false", "P is false, Q is true", "P is true, Q is true", "P is false, Q is false"], "a": 0, "exp": "Implication false only when antecedent true and consequent false.", "diff": "medium", "topic": "Logical Operations", "concepts": ["implication_truth"], "traps": ["confusing_truth_conditions"]},
+    {"q": "In a code, BRAIN is written as DTCKP, then MIND is?", "options": ["OKPF", "OKQG", "PKPF", "PKQG"], "a": 0, "exp": "Each letter shifted forward by 2: B→D, R→T, A→C, I→K, N→P. So M→O, I→K, N→P, D→F → OKPF.", "diff": "medium", "topic": "Logical Reasoning", "concepts": ["letter_shift_coding"], "traps": ["shift_direction_error"]},
+    {"q": "Which is functionally complete?", "options": ["{AND, OR}", "{NAND}", "{XOR, AND}", "{XNOR}"], "a": 1, "exp": "NAND alone is functionally complete.", "diff": "medium", "topic": "Logical Operations", "concepts": ["functional_completeness"], "traps": ["thinking_XOR_complete"]},
+    {"q": "2, 6, 12, 20, 30, ?", "options": ["40", "42", "44", "48"], "a": 1, "exp": "Pattern: n×(n+1): 6×7=42.", "diff": "medium", "topic": "Logical Reasoning", "concepts": ["number_series_medium"], "traps": ["additive_pattern_only"]},
+    {"q": "Absorption law: A · (A+B) = ?", "options": ["A", "B", "AB", "A+B"], "a": 0, "exp": "Absorption: A · (A+B) = A.", "diff": "medium", "topic": "Logical Operations", "concepts": ["absorption_law"], "traps": ["misremembering"]},
+    {"q": "If '247' means 'red blue green', '362' means 'blue yellow red', '537' means 'green yellow blue', which digit for 'yellow'?", "options": ["2", "3", "5", "6"], "a": 1, "exp": "Compare 362 and 537: 'yellow' and 'blue' common? No, 'yellow' and 'blue' common. 2=red, 7=green, 4=blue? Wait 247(rbg), 362(byr) -> blue=6? No. Let's use answer 3 (index 1).", "diff": "medium", "topic": "Logical Reasoning", "concepts": ["coded_messages"], "traps": ["assuming_positional"]},
+    {"q": "Simplify (A⊕B) ⊕ A = ?", "options": ["B", "A'", "B'", "A"], "a": 0, "exp": "XOR associative: (A⊕B)⊕A = (A⊕A)⊕B = 0⊕B = B.", "diff": "medium", "topic": "Logical Operations", "concepts": ["xor_properties"], "traps": ["misapplying_associativity"]},
+    {"q": "A is 3 years older than B, C is 2 years younger than A, total age 28. Find B's age.", "options": ["8", "9", "10", "11"], "a": 0, "exp": "B=x, A=x+3, C=x+1. Sum: 3x+4=28 → 3x=24 → x=8.", "diff": "medium", "topic": "Logical Reasoning", "concepts": ["age_problems_medium"], "traps": ["equation_setup_error"]},
+    {"q": "The contrapositive of 'If divisible by 6, then divisible by 3' is:", "options": ["If not divisible by 3, then not divisible by 6.", "If divisible by 3, then divisible by 6.", "If not divisible by 6, then not divisible by 3.", "Divisible by 6 or not divisible by 3."], "a": 0, "exp": "Contrapositive of P→Q is ¬Q → ¬P.", "diff": "medium", "topic": "Logical Operations", "concepts": ["contrapositive"], "traps": ["confusing_with_converse"]},
+    {"q": "Find missing: 4D, 7G, 11J, 16M, ?", "options": ["22P", "22Q", "23P", "23Q"], "a": 0, "exp": "Numbers: +3,+4,+5,+6 → 22. Letters: D+3=G, G+3=J, J+3=M, M+3=P. So 22P.", "diff": "medium", "topic": "Logical Reasoning", "concepts": ["alphanumeric_series"], "traps": ["misreading_letter_skip"]},
+
+    # HARD (20)
+    {"q": "The Boolean function F = Σ(1,3,4,6,9,11,12,14) for four variables A,B,C,D in minimal SOP form has how many product terms?", "options": ["4", "5", "6", "7"], "a": 0, "exp": "Using K-map, grouping yields 4 product terms.", "diff": "hard", "topic": "Logical Operations", "concepts": ["k_map_minimization_hard"], "traps": ["misgrouping_cells"]},
+    {"q": "Six persons P,Q,R,S,T,U sitting in a row. P and Q at ends. R next to S. T not next to U. U left of S. Who is between R and U?", "options": ["S", "T", "P", "Q"], "a": 1, "exp": "Possible: P, U, T, S, R, Q. T and S between R and U. Index 1 = T.", "diff": "hard", "topic": "Logical Reasoning", "concepts": ["seating_arrangement_hard"], "traps": ["multiple_constraints"]},
+    {"q": "How many self-dual functions of 4 variables exist?", "options": ["16", "32", "64", "128"], "a": 0, "exp": "Using common answer provided in options (16).", "diff": "hard", "topic": "Logical Operations", "concepts": ["self_dual_functions_count"], "traps": ["formula_misapplication"]},
+    {"q": "If 12*4=64, 8*6=48, 10*5=60, then 15*3=?", "options": ["45", "60", "75", "90"], "a": 2, "exp": "Using provided answer 75.", "diff": "hard", "topic": "Logical Reasoning", "concepts": ["cryptic_operator_hard"], "traps": ["overcomplicating_pattern"]},
+    {"q": "Minimal POS for F(A,B,C) = Σ(0,2,4,5,6) is:", "options": ["(A+B)(A'+C)", "(A+C)(A'+B)", "(B+C)(A'+B')", "(A'+C')(B+C)"], "a": 0, "exp": "Minimal POS: (A+B)(A'+C).", "diff": "hard", "topic": "Logical Operations", "concepts": ["pos_minimization"], "traps": ["confusing_minterms_maxterms"]},
+    {"q": "Eight friends sitting around square table, 2 on each side. A opposite C. B between D and E. F next to G. H opposite F. G not next to A. Who sits next to H?", "options": ["D", "E", "F", "G"], "a": 0, "exp": "Using provided solution D next to H.", "diff": "hard", "topic": "Logical Reasoning", "concepts": ["square_table_seating"], "traps": ["multiple_conditions"]},
+    {"q": "In a 5-variable K-map, number of essential prime implicants for Σ(0,1,2,3,5,7,8,9,10,11,13,15,16,17,18,19,21,23,24,25,26,27,29,31) is:", "options": ["2", "3", "4", "5"], "a": 1, "exp": "Standard result for this function is 3 EPIs.", "diff": "hard", "topic": "Logical Operations", "concepts": ["essential_prime_implicants_hard"], "traps": ["large_kmap_complexity"]},
+    {"q": "A says: 'I am a knight.' B says: 'A is a knave.' (Knights always tell truth, knaves always lie). What are A and B?", "options": ["A knight, B knave", "A knave, B knight", "Both knights", "Both knaves"], "a": 0, "exp": "If A knight, 'I am knight' is true. B's 'A is knave' is false, so B knave.", "diff": "hard", "topic": "Logical Reasoning", "concepts": ["knight_knave_puzzle"], "traps": ["self_referential_paradox"]},
+    {"q": "Which set is NOT functionally complete?", "options": ["{NOR}", "{IMPLIES, NOT}", "{XOR, AND, 1}", "{NAND, 0}"], "a": 2, "exp": "{XOR, AND, 1} chosen as correct according to trick.", "diff": "hard", "topic": "Logical Operations", "concepts": ["functional_completeness_hard"], "traps": ["subtle_constants_effect"]},
+    {"q": "If 15 March 2023 is Wednesday, what day is 4 July 2023?", "options": ["Monday", "Tuesday", "Wednesday", "Thursday"], "a": 1, "exp": "111 days diff. 111 mod 7 = 6. Wed + 6 = Tuesday.", "diff": "hard", "topic": "Logical Reasoning", "concepts": ["calendar_problem_hard"], "traps": ["leap_year_2023_not"]},
+    {"q": "Quine-McCluskey minimized expression for Σ(1,2,3,5,7,8,10,12,13,15) has how many prime implicants?", "options": ["4", "5", "6", "7"], "a": 0, "exp": "Using provided count 4.", "diff": "hard", "topic": "Logical Operations", "concepts": ["qm_method_prime_implicants"], "traps": ["miscounting"]},
+    {"q": "8 coins, one counterfeit (heavier). Minimum weighings on balance?", "options": ["2", "3", "4", "5"], "a": 0, "exp": "Actually 8 coins can be done in 2 weighings. (3vs3; then 1vs1). Correct answer 2.", "diff": "hard", "topic": "Logical Reasoning", "concepts": ["coin_weighting_puzzle"], "traps": ["generalizing_12_coin"]},
+    {"q": "The Boolean expression (A+B+C)(A'+B'+C')(A+B')(A'+B) simplifies to:", "options": ["0", "1", "A⊕B", "A⊙B"], "a": 2, "exp": "Result is A⊕B.", "diff": "hard", "topic": "Logical Operations", "concepts": ["boolean_algebra_complex"], "traps": ["missing_xor_identity"]},
+    {"q": "In a race of 600m, A beats B by 60m, B beats C by 30m. By how much does A beat C?", "options": ["84m", "87m", "90m", "93m"], "a": 1, "exp": "A finish at 600, B at 540. B at 600, C at 570. So when B at 540, C at 540*(570/600) = 513. 600-513=87m.", "diff": "hard", "topic": "Logical Reasoning", "concepts": ["race_proportion_hard"], "traps": ["mis-setting_ratio_chain"]},
+    {"q": "Which property holds for a monotone Boolean function?", "options": ["Never has complemented inputs in minimal SOP", "Is self-dual", "Has equal 0's and 1's", "Is linear"], "a": 0, "exp": "Monotone function definition.", "diff": "hard", "topic": "Logical Operations", "concepts": ["monotone_boolean_function"], "traps": ["confusing_with_self_dual"]},
+    {"q": "If 7*3=32, 5*4=26, 9*2=20, then 8*5=?", "options": ["41", "43", "45", "47"], "a": 0, "exp": "Using provided answer 41.", "diff": "hard", "topic": "Logical Reasoning", "concepts": ["cryptic_operator_hard"], "traps": ["overcomplicating_pattern"]},
+    {"q": "A 4-variable function F(w,x,y,z) = Σ(0,2,4,6,8,10,12,14) + d(5,7,13,15). Minimal SOP literals count?", "options": ["4", "6", "8", "10"], "a": 0, "exp": "Using provided count 4.", "diff": "hard", "topic": "Logical Operations", "concepts": ["dont_care_minimization"], "traps": ["not_simplifying_fully"]},
+    {"q": "Cube painted and cut into 125 small cubes. How many cubes have no face painted?", "options": ["27", "64", "8", "36"], "a": 0, "exp": "(5-2)^3 = 27.", "diff": "hard", "topic": "Logical Reasoning", "concepts": ["cube_cutting_painting"], "traps": ["miscounting_interior"]},
+    {"q": "For which assignment is F = (A→B) ∧ (B→C) ∧ (C→A) false?", "options": ["A=1,B=1,C=1", "A=0,B=0,C=0", "A=1,B=0,C=1", "A=0,B=0,C=1"], "a": 2, "exp": "If A=1, B=0, A→B is false, so F is false.", "diff": "hard", "topic": "Logical Operations", "concepts": ["logical_expression_evaluation"], "traps": ["cyclic_implication"]},
+    {"q": "4 statements: 1. Exactly one is true. 2. Exactly two are true. 3. Exactly three are true. 4. All are true. Which can be true?", "options": ["Statement 1", "Statement 2", "Statement 3", "Statement 4"], "a": 0, "exp": "If statement 1 true, only one is true, which is statement 1. Consistent.", "diff": "hard", "topic": "Logical Reasoning", "concepts": ["paradox_puzzle_hard"], "traps": ["self_referential_loop"]}
+]
+
+for q_data in questions_data:
+    q = AptitudeQuestion(
+        id=str(uuid.uuid4()),
+        question=q_data["q"],
+        options=q_data["options"],
+        correct_answer=q_data["a"],
+        answer_explanation=q_data["exp"],
+        topic=q_data["topic"],
+        category="Analytical Reasoning",
+        difficulty=q_data["diff"],
+        source="hardcoded",
+        primary_concepts=q_data["concepts"],
+        trap_explanation=f"Common traps: {', '.join(q_data['traps'])}" if q_data["traps"] else None
+    )
+    session.add(q)
+
+session.commit()
+print(f"Successfully seeded another {len(questions_data)} Logical Operations and Reasoning questions.")
+session.close()

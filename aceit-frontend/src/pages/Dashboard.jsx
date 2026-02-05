@@ -1,40 +1,52 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { generateMockProgressData, getEmptyProgressData } from '../services/mockData';
-import { 
+import {
   BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
-import { 
+import {
   TrendingUp, Target, Clock, Award, Brain, Users,
   Calendar, Zap, Star, AlertCircle, Trophy,
   BarChart3, PieChart as PieChartIcon, Activity
 } from 'lucide-react';
+
+import { analyticsAPI } from '../services/api';
+import GDPracticeWidget from '../components/Dashboard/GDPracticeWidget';
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [progressData, setProgressData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Simulate API call delay
-    const timer = setTimeout(() => {
-      if (user?.id) {
-        // For demo: Use mock data for existing users, empty for new
-        const hasActivity = Math.random() > 0.3; // 70% chance user has activity
-        const data = hasActivity 
-          ? generateMockProgressData(user.id)
-          : getEmptyProgressData(user.id);
-        setProgressData(data);
-      } else {
-        setProgressData(null);
+    const fetchDashboard = async () => {
+      if (!user?.id) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
-    }, 500);
 
-    return () => clearTimeout(timer);
+      try {
+        setLoading(true);
+        const response = await analyticsAPI.getDashboard();
+        // Handle wrapped response { status: "success", data: ... }
+        if (response.data && response.data.data) {
+          setProgressData(response.data.data);
+        } else {
+          setProgressData(response.data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err);
+        setError('Failed to load dashboard. Showing limited info.');
+        // Fallback or empty state handled by progressData being null
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboard();
   }, [user]);
 
   if (loading) {
@@ -87,30 +99,30 @@ const Dashboard = () => {
 
   // Stats cards
   const stats = [
-    { 
-      title: 'Overall Score', 
-      value: `${progressData.overall_score}%`, 
+    {
+      title: 'Overall Score',
+      value: `${progressData.overall_score}%`,
       color: 'bg-gradient-to-r from-blue-500 to-cyan-500',
       icon: <TrendingUp className="h-6 w-6" />,
       description: 'Your overall performance'
     },
-    { 
-      title: 'Daily Streak', 
-      value: `${progressData.daily_streak} days`, 
+    {
+      title: 'Daily Streak',
+      value: `${progressData.daily_streak} days`,
       color: 'bg-gradient-to-r from-green-500 to-emerald-500',
       icon: <Zap className="h-6 w-6" />,
       description: 'Consecutive practice days'
     },
-    { 
-      title: 'Total Practice', 
-      value: `${Math.round(progressData.total_time_spent / 60)}h`, 
+    {
+      title: 'Total Practice',
+      value: `${Math.round(progressData.total_time_spent / 60)}h`,
       color: 'bg-gradient-to-r from-purple-500 to-pink-500',
       icon: <Clock className="h-6 w-6" />,
       description: 'Time spent learning'
     },
-    { 
-      title: 'Accuracy', 
-      value: `${progressData.aptitude.accuracy}%`, 
+    {
+      title: 'Accuracy',
+      value: `${progressData.aptitude.accuracy}%`,
       color: 'bg-gradient-to-r from-orange-500 to-red-500',
       icon: <Award className="h-6 w-6" />,
       description: 'Average success rate'
@@ -118,24 +130,24 @@ const Dashboard = () => {
   ];
 
   const moduleStats = [
-    { 
-      title: 'Aptitude', 
+    {
+      title: 'Aptitude',
       score: progressData.aptitude.average_score,
       total: progressData.aptitude.tests_taken,
       color: 'bg-blue-100 text-blue-600',
       icon: '🧠',
       path: '/aptitude'
     },
-    { 
-      title: 'Coding', 
+    {
+      title: 'Coding',
       score: progressData.coding.average_success_rate,
       total: progressData.coding.problems_attempted,
       color: 'bg-green-100 text-green-600',
       icon: '💻',
       path: '/coding'
     },
-    { 
-      title: 'Interviews', 
+    {
+      title: 'Interviews',
       score: 65,
       total: 3,
       color: 'bg-purple-100 text-purple-600',
@@ -149,7 +161,7 @@ const Dashboard = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.username || user?.email || 'Learner'}! 👋</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.username || user?.email || 'Learner'}</h1>
           <p className="text-gray-600 mt-2">
             Your personalized learning dashboard
             {progressData.overall_score === 0 && (
@@ -169,20 +181,27 @@ const Dashboard = () => {
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-2xl shadow-lg p-6">
+          <div key={index} className="bg-white rounded-2xl shadow-lg p-6 hover:scale-105 transition-transform duration-200 cursor-pointer border border-transparent hover:border-blue-100">
             <div className="flex justify-between items-start">
               <div>
                 <p className="text-gray-500 text-sm font-medium">{stat.title}</p>
-                <p className="text-3xl font-bold mt-2">{stat.value}</p>
+                <p className="text-3xl font-bold mt-2 text-slate-800">{stat.value}</p>
                 <p className="text-gray-400 text-sm mt-1">{stat.description}</p>
               </div>
-              <div className={`p-3 rounded-full ${stat.color} text-white`}>
+              <div className={`p-3 rounded-xl ${index === 0 ? 'bg-blue-50 text-blue-600' :
+                index === 1 ? 'bg-green-50 text-green-600' :
+                  index === 2 ? 'bg-purple-50 text-purple-600' :
+                    'bg-orange-50 text-orange-600'
+                }`}>
                 {stat.icon}
               </div>
             </div>
           </div>
         ))}
       </div>
+
+      {/* GD Practice Widget (New Feature) */}
+      <GDPracticeWidget />
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -240,14 +259,14 @@ const Dashboard = () => {
       {/* Module Performance & Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         {/* Module Performance */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 lg:col-span-2">
+        <div className="bg-slate-800/80 backdrop-blur rounded-2xl shadow-xl p-6 lg:col-span-2 border border-slate-700">
           <div className="flex items-center mb-6">
-            <BarChart3 className="h-5 w-5 text-purple-500 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Module Performance</h3>
+            <BarChart3 className="h-5 w-5 text-purple-400 mr-2" />
+            <h3 className="text-lg font-semibold text-white">Module Performance</h3>
           </div>
           <div className="space-y-4">
             {moduleStats.map((module, index) => (
-              <div 
+              <div
                 key={index}
                 onClick={() => navigate(module.path)}
                 className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors border border-gray-100"
@@ -258,11 +277,12 @@ const Dashboard = () => {
                     <h4 className="font-medium text-gray-900">{module.title}</h4>
                     <div className="flex items-center mt-1">
                       <div className="w-48 bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className="h-full rounded-full"
-                          style={{ 
+                          style={{
                             width: `${module.score}%`,
-                            backgroundColor: module.color.split(' ')[1].replace('text-', 'bg-')
+                            backgroundColor: module.color.includes('blue') ? '#3b82f6' :
+                              module.color.includes('green') ? '#22c55e' : '#a855f7'
                           }}
                         ></div>
                       </div>
@@ -308,8 +328,8 @@ const Dashboard = () => {
                   </div>
                   <div className="ml-3">
                     <p className="font-medium text-gray-900">
-                      {activity.type === 'coding_problem' ? activity.problem : 
-                       activity.type === 'aptitude_test' ? 'Aptitude Test' : 'Mock Interview'}
+                      {activity.type === 'coding_problem' ? activity.problem :
+                        activity.type === 'aptitude_test' ? 'Aptitude Test' : 'Mock Interview'}
                     </p>
                     <p className="text-sm text-gray-500">
                       Score: {activity.score}%

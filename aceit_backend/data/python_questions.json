@@ -1,0 +1,46 @@
+[
+  {"question_text":"What are the built-in data types in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"data types","difficulty":"easy"},
+  {"question_text":"What is the difference between list and tuple?","domain":"programming","language":"python","topic":"core_python","subtopic":"data types","difficulty":"easy"},
+  {"question_text":"What is mutability in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"data types","difficulty":"easy"},
+  {"question_text":"What is a dictionary in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"data types","difficulty":"easy"},
+  {"question_text":"What is the use of set data type?","domain":"programming","language":"python","topic":"core_python","subtopic":"data types","difficulty":"easy"},
+  {"question_text":"Difference between list and set.","domain":"programming","language":"python","topic":"core_python","subtopic":"data types","difficulty":"easy"},
+  {"question_text":"What is type casting in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"data types","difficulty":"easy"},
+  {"question_text":"What is None type?","domain":"programming","language":"python","topic":"core_python","subtopic":"data types","difficulty":"easy"},
+
+  {"question_text":"What is a function in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"functions","difficulty":"easy"},
+  {"question_text":"What are default arguments?","domain":"programming","language":"python","topic":"core_python","subtopic":"functions","difficulty":"easy"},
+  {"question_text":"What are keyword arguments?","domain":"programming","language":"python","topic":"core_python","subtopic":"functions","difficulty":"easy"},
+  {"question_text":"What is *args and **kwargs?","domain":"programming","language":"python","topic":"core_python","subtopic":"functions","difficulty":"easy"},
+  {"question_text":"What is a lambda function?","domain":"programming","language":"python","topic":"core_python","subtopic":"functions","difficulty":"easy"},
+  {"question_text":"What is recursion in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"functions","difficulty":"easy"},
+  {"question_text":"Difference between return and print.","domain":"programming","language":"python","topic":"core_python","subtopic":"functions","difficulty":"easy"},
+
+  {"question_text":"What is a decorator in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"decorators","difficulty":"medium"},
+  {"question_text":"Why are decorators used?","domain":"programming","language":"python","topic":"core_python","subtopic":"decorators","difficulty":"medium"},
+  {"question_text":"Explain function wrapping in decorators.","domain":"programming","language":"python","topic":"core_python","subtopic":"decorators","difficulty":"medium"},
+  {"question_text":"What is functools.wraps used for?","domain":"programming","language":"python","topic":"core_python","subtopic":"decorators","difficulty":"medium"},
+  {"question_text":"Can decorators take arguments?","domain":"programming","language":"python","topic":"core_python","subtopic":"decorators","difficulty":"medium"},
+
+  {"question_text":"What is a generator in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"generators","difficulty":"easy"},
+  {"question_text":"Difference between generator and iterator.","domain":"programming","language":"python","topic":"core_python","subtopic":"generators","difficulty":"medium"},
+  {"question_text":"What is yield keyword?","domain":"programming","language":"python","topic":"core_python","subtopic":"generators","difficulty":"easy"},
+  {"question_text":"How does generator improve memory usage?","domain":"programming","language":"python","topic":"core_python","subtopic":"generators","difficulty":"medium"},
+  {"question_text":"What is generator expression?","domain":"programming","language":"python","topic":"core_python","subtopic":"generators","difficulty":"medium"},
+
+  {"question_text":"How does memory management work in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"memory","difficulty":"medium"},
+  {"question_text":"What is reference counting?","domain":"programming","language":"python","topic":"core_python","subtopic":"memory","difficulty":"medium"},
+  {"question_text":"What is garbage collection in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"memory","difficulty":"medium"},
+  {"question_text":"What are memory leaks in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"memory","difficulty":"hard"},
+  {"question_text":"What is the role of __del__ method?","domain":"programming","language":"python","topic":"core_python","subtopic":"memory","difficulty":"hard"},
+
+  {"question_text":"What is exception handling in Python?","domain":"programming","language":"python","topic":"core_python","subtopic":"exceptions","difficulty":"easy"},
+  {"question_text":"Difference between error and exception.","domain":"programming","language":"python","topic":"core_python","subtopic":"exceptions","difficulty":"easy"},
+  {"question_text":"What is try-except block?","domain":"programming","language":"python","topic":"core_python","subtopic":"exceptions","difficulty":"easy"},
+  {"question_text":"What is finally block used for?","domain":"programming","language":"python","topic":"core_python","subtopic":"exceptions","difficulty":"easy"},
+  {"question_text":"What is custom exception?","domain":"programming","language":"python","topic":"core_python","subtopic":"exceptions","difficulty":"medium"},
+  {"question_text":"Difference between raise and assert.","domain":"programming","language":"python","topic":"core_python","subtopic":"exceptions","difficulty":"medium"},
+  {"question_text":"How does exception propagation work?","domain":"programming","language":"python","topic":"core_python","subtopic":"exceptions","difficulty":"hard"},
+  {"question_text":"What is chained exception?","domain":"programming","language":"python","topic":"core_python","subtopic":"exceptions","difficulty":"hard"},
+  {"question_text":"How to handle multiple exceptions efficiently?","domain":"programming","language":"python","topic":"core_python","subtopic":"exceptions","difficulty":"hard"}
+]
