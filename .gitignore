@@ -1,40 +1,23 @@
-# =====================
-# Python
-# =====================
+# Python compiled files
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-*.sqlite3
-*.db
+*.py[cod]
+*$py.class
 
-# Virtual environment
-venv/
-**/.env
+# Environment variables
 .env
+.env.*
 
+# Binaries and large builds
+ffmpeg-8.0.1-essentials_build/
 
-# =====================
-# Node / React
-# =====================
+# Node dependencies
 node_modules/
-dist/
-build/
 
-# =====================
 # OS files
-# =====================
 .DS_Store
 Thumbs.db
 
-# =====================
-# Logs
-# =====================
-*.log
-
-# =====================
-# IDE
-# =====================
-.vscode/
-.idea/
-aceit_backend/.venv/
+# Backend specific
+aceit-backend/.env
+aceit-backend/__pycache__/
+aceit_backend/__pycache__/

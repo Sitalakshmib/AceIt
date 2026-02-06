@@ -178,13 +178,21 @@ export const analyticsAPI = {
 
 export const codingAPI = {
   getProblems: () => api.get('/coding/problems'),
-  submitCode: (problemId, code, language = 'python') => {
+  getProblemDetails: (problemId) => api.get(`/coding/problems/${problemId}`),
+  submitCode: (problemId, code, language = 'python', action = 'run') => {
     const userId = getCurrentUserId();
     return api.post('/coding/submit', {
       problemId,
       code,
       language,
-      user_id: userId
+      user_id: userId,
+      action  // 'run' or 'submit'
+    });
+  },
+  getSolvedProblems: () => {
+    const userId = getCurrentUserId();
+    return api.get('/coding/user-progress', {
+      params: { user_id: userId }
     });
   },
 };

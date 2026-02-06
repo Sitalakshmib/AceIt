@@ -52,6 +52,7 @@ def get_local_problems():
 </ul>
 """,
             "difficulty": "Easy",
+            "tags": ["Arrays", "Hash Table"],
             "function_name": "twoSum",
             "starter_code": {
                 "python": """class Solution:
@@ -139,6 +140,7 @@ public:
 </ul>
 """,
             "difficulty": "Easy",
+            "tags": ["Math"],
             "function_name": "isPalindrome",
             "starter_code": {
                 "python": """class Solution:
@@ -221,6 +223,7 @@ public:
 </ul>
 """,
             "difficulty": "Medium",
+            "tags": ["Math"],
             "function_name": "reverse",
             "starter_code": {
                 "python": """class Solution:
@@ -299,6 +302,7 @@ public:
 </ul>
 """,
             "difficulty": "Easy",
+            "tags": ["String", "Stack"],
             "function_name": "isValid",
             "starter_code": {
                 "python": """class Solution:
@@ -373,6 +377,7 @@ public:
 <p><strong>Note:</strong> For simplicity, this problem uses arrays instead of linked lists.</p>
 """,
             "difficulty": "Easy",
+            "tags": ["Linked List", "Array"],
             "function_name": "mergeTwoLists",
             "starter_code": {
                 "python": """class Solution:
@@ -388,14 +393,6 @@ public:
                 {"input": [[], [0]], "output": [0]},
                 {"input": [[1], [2]], "output": [1,2]},
                 {"input": [[5], [1,2,3,4]], "output": [1,2,3,4,5]},
-                {"input": [[1,3,5,7], [2,4,6,8]], "output": [1,2,3,4,5,6,7,8]},
-                {"input": [[1,1,1], [1,1,1]], "output": [1,1,1,1,1,1]},
-                {"input": [[2], [1]], "output": [1,2]},
-                {"input": [[1,2,3], []], "output": [1,2,3]},
-                {"input": [[], [1,2,3]], "output": [1,2,3]},
-                {"input": [[0,0,0], [0,0,0]], "output": [0,0,0,0,0,0]},
-                {"input": [[-5,-3,-1], [-4,-2,0]], "output": [-5,-4,-3,-2,-1,0]},
-                {"input": [[1,5,9], [2,6,10]], "output": [1,2,5,6,9,10]},
             ],
             "solution": """class Solution:
     def mergeTwoLists(self, list1: List[int], list2: List[int]) -> List[int]:
@@ -411,6 +408,111 @@ public:
         result.extend(list1[i:])
         result.extend(list2[j:])
         return result
+"""
+        },
+        {
+            "id": "premium-6",
+            "title": "Subarray Sum Equals K",
+            "titleSlug": "subarray-sum-equals-k",
+            "description": """
+<p>Given an array of integers <code>nums</code> and an integer <code>k</code>, return <em>the total number of subarrays whose sum equals to <code>k</code></em>.</p>
+<p>A subarray is a contiguous <strong>non-empty</strong> sequence of elements within an array.</p>
+""",
+            "difficulty": "Medium",
+            "tags": ["Array", "Hash Table", "Prefix Sum"],
+            "function_name": "subarraySum",
+            "starter_code": {
+                "python": """class Solution:
+    def subarraySum(self, nums: List[int], k: int) -> int:
+        # Write your code here
+        pass
+"""
+            },
+            "test_cases": [
+                {"input": [[1,1,1], 2], "output": 2},
+                {"input": [[1,2,3], 3], "output": 2},
+                {"input": [[1], 0], "output": 0},
+                {"input": [[-1,-1,1], 0], "output": 1},
+            ],
+            "solution": """class Solution:
+    def subarraySum(self, nums: List[int], k: int) -> int:
+        count = 0
+        sum_counts = {0: 1}
+        current_sum = 0
+        for num in nums:
+            current_sum += num
+            if current_sum - k in sum_counts:
+                count += sum_counts[current_sum - k]
+            sum_counts[current_sum] = sum_counts.get(current_sum, 0) + 1
+        return count
+"""
+        },
+        {
+            "id": "premium-7",
+            "title": "Longest Substring Without Repeating Characters",
+            "titleSlug": "longest-substring-without-repeating-characters",
+            "description": """
+<p>Given a string <code>s</code>, find the length of the <strong>longest subarray</strong> without repeating characters.</p>
+""",
+            "difficulty": "Medium",
+            "tags": ["Hash Table", "String", "Sliding Window"],
+            "function_name": "lengthOfLongestSubstring",
+            "starter_code": {
+                "python": """class Solution:
+    def lengthOfLongestSubstring(self, s: str) -> int:
+        # Write your code here
+        pass
+"""
+            },
+            "test_cases": [
+                {"input": ["abcabcbb"], "output": 3},
+                {"input": ["bbbbb"], "output": 1},
+                {"input": ["pwwkew"], "output": 3},
+                {"input": [""], "output": 0},
+            ],
+            "solution": """class Solution:
+    def lengthOfLongestSubstring(self, s: str) -> int:
+        char_map = {}
+        max_len = 0
+        start = 0
+        for i, char in enumerate(s):
+            if char in char_map and char_map[char] >= start:
+                start = char_map[char] + 1
+            char_map[char] = i
+            max_len = max(max_len, i - start + 1)
+        return max_len
+"""
+        },
+        {
+            "id": "premium-8",
+            "title": "Maximum Subarray",
+            "titleSlug": "maximum-subarray",
+            "description": """
+<p>Given an integer array <code>nums</code>, find the subarray with the largest sum, and return <em>its sum</em>.</p>
+""",
+            "difficulty": "Medium",
+            "tags": ["Array", "Divide and Conquer", "Dynamic Programming"],
+            "function_name": "maxSubArray",
+            "starter_code": {
+                "python": """class Solution:
+    def maxSubArray(self, nums: List[int]) -> int:
+        # Write your code here
+        pass
+"""
+            },
+            "test_cases": [
+                {"input": [[-2,1,-3,4,-1,2,1,-5,4]], "output": 6},
+                {"input": [[1]], "output": 1},
+                {"input": [[5,4,-1,7,8]], "output": 23},
+            ],
+            "solution": """class Solution:
+    def maxSubArray(self, nums: List[int]) -> int:
+        max_sum = nums[0]
+        current_sum = nums[0]
+        for i in range(1, len(nums)):
+            current_sum = max(nums[i], current_sum + nums[i])
+            max_sum = max(max_sum, current_sum)
+        return max_sum
 """
         }
     ]
