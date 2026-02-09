@@ -152,6 +152,10 @@ export const analyticsAPI = {
     const userId = getCurrentUserId();
     return api.get(`/analytics/overall-summary?user_id=${userId}&_t=${Date.now()}`);
   },
+  getUnifiedAnalytics: () => {
+    const userId = getCurrentUserId();
+    return api.get(`/analytics/unified/${userId}`);
+  },
   startCoach: () => {
     const userId = getCurrentUserId();
     const formData = new FormData();

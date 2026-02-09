@@ -211,7 +211,7 @@ const Dashboard = () => {
             <Activity className="h-5 w-5 text-blue-500 mr-2" />
             <h3 className="text-lg font-semibold text-gray-900">Weekly Activity</h3>
           </div>
-          <div className="h-72">
+          <div className="h-72 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeklyData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -232,7 +232,7 @@ const Dashboard = () => {
             <PieChartIcon className="h-5 w-5 text-green-500 mr-2" />
             <h3 className="text-lg font-semibold text-gray-900">Skill Distribution</h3>
           </div>
-          <div className="h-72">
+          <div className="h-72 w-full min-w-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -375,7 +375,14 @@ const Dashboard = () => {
       </div>
 
       {/* Quick Action Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <button
+          onClick={() => navigate('/analytics/unified')}
+          className="bg-gradient-to-r from-cyan-600 to-teal-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
+        >
+          <BarChart3 className="h-5 w-5 mr-2" />
+          Unified Analytics
+        </button>
         <button
           onClick={() => navigate('/aptitude')}
           className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"

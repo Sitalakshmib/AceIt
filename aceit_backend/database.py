@@ -36,64 +36,14 @@ progress_data = []
 # User proficiency data - tracks performance per topic and difficulty
 user_proficiency_data = {}
 
-from massive_database import massive_db
+# File to store progress data
+PROGRESS_FILE = "progress.json"
 
-def load_massive_database():
-    """Load questions from massive database"""
-    global questions_data
-    
-    print("🚀 LOADING MASSIVE QUESTION DATABASE...")
-    
-    # Get all questions from massive database
-    coding_problems = massive_db.datasets["coding"]
-    aptitude_questions = massive_db.datasets["aptitude"] 
-    interview_questions = massive_db.datasets["interview"]
-    
-    # Format coding problems for frontend
-    formatted_coding = []
-    for problem in coding_problems:
-        formatted_problem = {
-            "id": problem.get("id"),
-            "title": problem.get("title"),
-            "description": problem.get("description", ""),
-            "difficulty": problem.get("difficulty", "Medium").capitalize(),
-            "topics": problem.get("topics", []),
-            "test_cases": problem.get("test_cases", []),
-            "starter_code": {
-                "javascript": problem.get("starter_code", "// Write your solution here")
-            },
-            "source": problem.get("source", "")
-        }
-        formatted_coding.append(formatted_problem)
-    
-    # Format aptitude questions for frontend
-    formatted_aptitude = []
-    for question in aptitude_questions:
-        formatted_question = {
-            "id": question.get("id"),
-            "question": question.get("question"),
-            "options": question.get("options", []),
-            "correct_answer": question.get("correct_answer"),
-            "type": question.get("topic", "general"),
-            "explanation": question.get("explanation", ""),
-            "topic": question.get("topic", "general"),
-            "difficulty": question.get("difficulty", "easy"),
-            "source": question.get("source", "")
-        }
-        formatted_aptitude.append(formatted_question)
-    
-    # Combine all questions
-    questions_data.clear()
-    questions_data.extend(formatted_coding)
-    questions_data.extend(formatted_aptitude)
-    questions_data.extend(interview_questions)
-    
-    print("🎉 MASSIVE DATABASE LOADED SUCCESSFULLY!")
-    print(f"📊 BREAKDOWN:")
-    print(f"   - Coding Problems: {len(formatted_coding)}")
-    print(f"   - Aptitude Questions: {len(formatted_aptitude)}")
-    print(f"   - Interview Questions: {len(interview_questions)}")
-    print(f"   - TOTAL: {len(questions_data)} questions")
+def save_progress():
+    """Save progress data to file"""
+    with open(PROGRESS_FILE, 'w') as f:
+        json.dump(progress_data, f, indent=2)
+
 
 # Database functions
 def get_aptitude_questions():
@@ -177,9 +127,6 @@ def get_next_difficulty(user_id, topic):
             return "easy"  # Stay at easy
     
     return "easy"  # Default to easy
-
-# Load massive database
-load_massive_database()
 
 # Export collections
 users_collection = users_data

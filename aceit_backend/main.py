@@ -3,9 +3,7 @@ load_dotenv()
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routes import auth, aptitude, coding, progress, communication, interview, resume, stt, tutor
-
-from routes import auth, aptitude, coding, progress, communication, interview, resume, stt, mock_tests, analytics, video_presence, gd_practice
+from routes import auth, aptitude, coding, progress, communication, interview, resume, stt, mock_tests, analytics, gd_practice, tutor, video_presence
 import os
 
 print("[INFO] GEMINI_API_KEY loaded:", bool(os.getenv("GEMINI_API_KEY")))
@@ -46,6 +44,10 @@ app.include_router(interview.router, prefix="/interview", tags=["Mock Interviews
 app.include_router(resume.router, prefix="/resume", tags=["Resume Analysis"])
 app.include_router(stt.router, prefix="/stt", tags=["Speech To Text"])
 app.include_router(tutor.router, prefix="/tutor", tags=["AI Tutor"])
+app.include_router(mock_tests.router, prefix="/mock-tests", tags=["Mock Tests"])
+app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+app.include_router(gd_practice.router, prefix="/gd-practice", tags=["GD Practice"])
+app.include_router(video_presence.router, prefix="/video-presence", tags=["Video Presence"])
 
 @app.get("/")
 async def root():

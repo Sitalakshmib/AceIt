@@ -9,6 +9,7 @@ import Coding from './pages/Coding';
 import Interview from './pages/Interview';
 import Navbar from './components/Layout/Navbar';
 import Resume from './pages/Resume';
+import UnifiedAnalytics from './pages/UnifiedAnalytics';
 
 
 const ProtectedRoute = ({ children }) => {
@@ -54,6 +55,12 @@ function App() {
                 <ProtectedRoute>
                   <Navbar />
                   <Interview />
+                </ProtectedRoute>
+              } />
+              <Route path="/analytics/unified" element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <UnifiedAnalytics />
                 </ProtectedRoute>
               } />
             </Routes>

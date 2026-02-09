@@ -65,6 +65,21 @@ def get_user_dashboard(user_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Failed to generate analytics: {str(e)}")
 
 
+@router.get("/unified/{user_id}")
+def get_unified_analytics(user_id: str, db: Session = Depends(get_db)):
+    """Get unified analytics across all modules (Aptitude, Coding, Interviews)"""
+    try:
+        print(f"[DEBUG] Unified analytics request started for user: {user_id}")
+        from services.unified_analytics_service import UnifiedAnalyticsService
+        analytics = UnifiedAnalyticsService.get_unified_analytics(db, user_id)
+        print(f"[DEBUG] Unified analytics generation successful for user: {user_id}")
+        return {"status": "success", "data": analytics}
+    except Exception as e:
+        print(f"[ERROR] Unified analytics failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate unified analytics: {str(e)}")
+
+
+
 @router.get("/progress/{user_id}")
 def get_progress_history(user_id: str, days: int = 30, db: Session = Depends(get_db)):
 

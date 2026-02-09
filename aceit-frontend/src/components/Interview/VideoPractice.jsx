@@ -38,10 +38,9 @@ const VideoPractice = ({ onBack }) => {
     // Analysis State
     const isPracticingRef = useRef(false);
     const [liveFeedback, setLiveFeedback] = useState({
-        eyeContact: 'Waiting...',
-        headStability: 'Waiting...',
-        voice: 'Listening...',
-        tension: 'Neutral',
+        eyeContact: '---',
+        headStability: '---',
+        tension: '---',
         confidence: 0,
         status: 'Ready'
     });
@@ -439,7 +438,7 @@ const VideoPractice = ({ onBack }) => {
         // Fallback for no detection
         if (!result.faceLandmarks || result.faceLandmarks.length === 0) {
             if (performance.now() - lastFeedbackTimeRef.current > 1000) {
-                updateFeedbackUI(0, false, false, false, false); // Reset
+                updateFeedbackUI(0, false, false, false); // Reset (removed tense parameter)
             }
             return;
         }
@@ -473,75 +472,52 @@ const VideoPractice = ({ onBack }) => {
         const isStable = movement < 0.10;
         const isNodding = verticalMovement > 0.05 && movement < 0.15; // Controlled vertical movement
 
-        // 3. Facial Expression Nuance (Professional Composure)
+        // 3. Facial Expression - Simplified to Smile Detection Only
         const getScore = (name) => blendshapes.find(b => b.categoryName === name)?.score || 0;
 
-        // Tension Indicators (More Sensitive & Granular)
-        // 1. Brow Tension (worry/focus)
-        const browTension = getScore('browDownLeft') + getScore('browDownRight') + getScore('browInnerUp');
-        // 2. Mouth Tension (pursing/tightness)
-        const mouthTension = getScore('mouthPressLeft') + getScore('mouthPressRight') + getScore('mouthShrugUpper');
-        // 3. Eye Tension (squinting/stress)
-        const eyeTension = getScore('eyeSquintLeft') + getScore('eyeSquintRight');
-
-        // Composite Tension Score (Weighted)
-        // Thresholds are typically low for these micro-expressions
-        const currentTensionRaw = (browTension * 0.4) + (mouthTension * 0.4) + (eyeTension * 0.2);
-
-        // Normalize: > 0.3 is "Detectably Tense", > 0.6 is "High Tension"
-        // We want a 0-1 score for stat tracking
-        const normalizedTension = Math.min(currentTensionRaw / 0.8, 1.0);
-        const isTense = normalizedTension > 0.2; // Lower threshold to catch micro-tensions
-
-        // Positive Indicators (Warmth) - Not directly "Confidence" but "Engagement"
+        // Simple, reliable smile detection
         const smile = getScore('mouthSmileLeft') + getScore('mouthSmileRight');
-        const isSmiling = smile > 0.4;
+        const isSmiling = smile > 0.3;  // Lowered threshold for better detection
 
         // Update Answer Stats
         if (mode === 'answering') {
             answerStatsRef.current.frames++;
             if (isLookingAtCam) answerStatsRef.current.goodEyeContactFrames++;
             if (isStable || isNodding) answerStatsRef.current.stableHeadFrames++;
-
-            // Accumulate tension level
-            if (isTense) answerStatsRef.current.tenseFrames++; // Count frames where ANY tension is visible
+            // Note: No longer tracking tension frames
         }
 
-        // Live Professional Presence Calculation (Weighted Algorithm)
-        // Formula: 50% Eye Contact + 30% Head Stability + 20% Facial Composure
+        // Live Professional Presence Calculation (Simplified)
+        // Formula: 60% Eye Contact + 40% Head Stability (Only reliable metrics)
 
         const eyeScore = isLookingAtCam ? 100 : 0;
         const headScore = (isStable || isNodding) ? 100 : 50; // Moving isn't always bad
-        const composureScore = Math.max(0, 100 - (normalizedTension * 100)); // Lower tension = higher composure
 
-        // Interactive "Bump" for smiling (Warmth) - small bonus, not driver
+        // Small bonus for warmth/engagement
         const warmthBonus = isSmiling ? 5 : 0;
 
-        let livePresence = (eyeScore * 0.5) + (headScore * 0.3) + (composureScore * 0.2) + warmthBonus;
+        let livePresence = (eyeScore * 0.6) + (headScore * 0.4) + warmthBonus;
 
-        // Damping/Smoothing could be added here, but raw update is fine for live meter (it has CSS transition)
-        livePresence = Math.min(Math.max(livePresence, 10), 100); // 10-100 Range
+        // Clamp to 10-100 range
+        livePresence = Math.min(Math.max(livePresence, 10), 100);
 
         // Update UI
         if (performance.now() - lastFeedbackTimeRef.current > 150) { // Faster updates (150ms)
-            updateFeedbackUI(livePresence, isLookingAtCam, isStable, isTense, isSmiling);
+            updateFeedbackUI(livePresence, isLookingAtCam, isStable, isSmiling);
             lastFeedbackTimeRef.current = performance.now();
         }
     };
 
-    const updateFeedbackUI = (conf, eye, stable, tense, smiling) => {
-        // ... audio check logic (omitted) ...
-
-        let faceStatus = 'Composed';
-        if (tense) faceStatus = 'Tension Detected';
-        else if (smiling) faceStatus = 'Warm & Engaging'; // Override composed if smiling
+    const updateFeedbackUI = (conf, eye, stable, smiling) => {
+        // Simplified facial status - only smile detection
+        let faceStatus = 'Neutral';
+        if (smiling) faceStatus = 'Warm & Engaging';
 
         setLiveFeedback({
             confidence: Math.round(conf),
             eyeContact: eye ? 'Focused' : 'Distracted',
             headStability: stable ? 'Steady' : 'Moving',
-            tension: faceStatus, // Dynamic label
-            voice: 'Active',
+            tension: faceStatus,
             status: mode === 'answering' ? 'Analyzing...' : 'Ready'
         });
     };
@@ -761,8 +737,8 @@ const VideoPractice = ({ onBack }) => {
                             <h3 className="text-3xl font-bold mb-4">Start Session?</h3>
                             <ul className="text-left space-y-2 mb-8 text-gray-300">
                                 <li><b>Eye Contact</b> Analysis</li>
-                                <li><b>Facial Tension</b> & Expression Analysis</li>
-                                <li><b>Voice Confidence</b> & Hesitation Analysis</li>
+                                <li><b>Head Movement</b> & Stability Analysis</li>
+                                <li><b>Facial Expression</b> & Tension Analysis</li>
                             </ul>
                             <button
                                 onClick={startSession}
@@ -841,22 +817,34 @@ const VideoPractice = ({ onBack }) => {
                     {/* Live Signals */}
                     <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div className="text-xs font-bold text-gray-400 mb-1">EYES</div>
-                            <div className="font-semibold text-gray-700">{liveFeedback.eyeContact}</div>
+                            <div className="text-xs font-bold text-gray-400 mb-1">EYE CONTACT</div>
+                            <div className={`font-semibold ${liveFeedback.eyeContact === 'Focused' ? 'text-green-600' :
+                                liveFeedback.eyeContact === 'Distracted' ? 'text-orange-500' :
+                                    'text-gray-500'
+                                }`}>
+                                {liveFeedback.eyeContact}
+                            </div>
                         </div>
                         <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div className="text-xs font-bold text-gray-400 mb-1">HEAD</div>
-                            <div className="font-semibold text-gray-700">{liveFeedback.headStability}</div>
+                            <div className="text-xs font-bold text-gray-400 mb-1">HEAD MOVEMENT</div>
+                            <div className={`font-semibold ${liveFeedback.headStability === 'Steady' ? 'text-green-600' :
+                                liveFeedback.headStability === 'Moving' ? 'text-blue-500' :
+                                    'text-gray-500'
+                                }`}>
+                                {liveFeedback.headStability}
+                            </div>
                         </div>
                         <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div className="text-gray-400 text-xs uppercase font-bold text-center">Face</div>
-                            <div className={`mt-1 font-bold text-center ${liveFeedback.tension.includes('✅') ? 'text-green-600' : 'text-orange-500'}`}>
+                            <div className="text-xs font-bold text-gray-400 mb-1">FACIAL EXPRESSION</div>
+                            <div className={`font-semibold text-sm ${liveFeedback.tension.includes('Warm') ? 'text-green-600' :
+                                    'text-gray-500'
+                                }`}>
                                 {liveFeedback.tension}
                             </div>
                         </div>
                         <div className="bg-white p-3 rounded-lg border border-gray-100">
-                            <div className="text-gray-400 text-xs uppercase font-bold text-center">Status</div>
-                            <div className="mt-1 font-bold text-center text-blue-600">{liveFeedback.status}</div>
+                            <div className="text-xs font-bold text-gray-400 mb-1">STATUS</div>
+                            <div className="font-semibold text-blue-600">{liveFeedback.status}</div>
                         </div>
                     </div>
 
