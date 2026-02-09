@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from routes import auth, aptitude, coding, progress, communication, interview, resume, stt, mock_tests, analytics, video_presence, gd_practice
+from routes import auth, aptitude, coding, progress, communication, stt, mock_tests, analytics, video_presence, gd_practice, interview, resume
 import os
 
 print("[INFO] GEMINI_API_KEY loaded:", bool(os.getenv("GEMINI_API_KEY")))

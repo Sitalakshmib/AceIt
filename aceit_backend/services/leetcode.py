@@ -9,12 +9,12 @@ def get_leetcode_problems(limit=20):
     Fetch a list of coding problems
     """
     try:
-        # Check 'daily' or 'problems' endpoint
-        response = requests.get(f"{LEETCODE_API_URL}/problemset-question-list?limit={limit}")
+        # Using /problems endpoint which includes topicTags
+        response = requests.get(f"{LEETCODE_API_URL}/problems?limit={limit}")
         if response.status_code == 200:
             data = response.json()
-            questions = data.get('questions', [])
-            return questions
+            # The structure for /problems is 'problemsetQuestionList'
+            return data.get('problemsetQuestionList', [])
         return []
     except Exception as e:
         logger.error(f"Error fetching LeetCode problems: {e}")

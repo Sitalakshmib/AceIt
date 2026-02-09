@@ -3,9 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 import shutil
 import os
-from datetime import datetime
 from services.sim_voice_interviewer import SimVoiceInterviewer
-from database import progress_data
 
 router = APIRouter()
 

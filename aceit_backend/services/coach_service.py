@@ -1,6 +1,7 @@
 import os
 import io
 import json
+import requests
 from typing import List, Dict, Optional
 from openai import OpenAI
 from sqlalchemy.orm import Session
@@ -11,9 +12,8 @@ class AICoachService:
     def get_chat_response(db: Session, user_id: str, message: str, history: List[Dict]) -> str:
         """
         Get a conversational response from the AI coach based on user's progress.
+        Uses GROQ as primary, OpenAI as fallback.
         """
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        
         # Get summarized context to make the coach "real-time" and personal
         summary = AIAnalyticsService.get_overall_summary(db, user_id)
         topic_info = AIAnalyticsService.get_mock_topic_performance(db, user_id)
@@ -38,19 +38,51 @@ class AICoachService:
             messages.append(h)
         messages.append({"role": "user", "content": message})
         
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=messages
-        )
+        # Try GROQ first
+        try:
+            groq_key = os.getenv("GROQ_API_KEY_SITA")
+            if groq_key:
+                response = requests.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {groq_key}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "llama-3.3-70b-versatile",
+                        "messages": messages,
+                        "temperature": 0.7
+                    },
+                    timeout=30
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    return result["choices"][0]["message"]["content"]
+                else:
+                    print(f"[COACH] GROQ failed with status {response.status_code}, falling back to OpenAI")
+        except Exception as e:
+            print(f"[COACH] GROQ error: {e}, falling back to OpenAI")
         
-        return response.choices[0].message.content
+        # Fallback to OpenAI
+        try:
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY_SITA"))
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            print(f"[COACH] OpenAI fallback also failed: {e}")
+            return "I'm having trouble connecting right now. Please try again in a moment."
 
     @staticmethod
     def transcript_audio(audio_file_content: bytes) -> str:
         """
         Convert speech to text using OpenAI Whisper.
+        Note: GROQ doesn't support Whisper, so using OpenAI directly.
         """
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY_SITA"))
         
         # Audio file must be buffered
         buffer = io.BytesIO(audio_file_content)
@@ -67,8 +99,9 @@ class AICoachService:
     def text_to_speech(text: str) -> bytes:
         """
         Convert text to speech using OpenAI TTS.
+        Note: GROQ doesn't support TTS, so using OpenAI directly.
         """
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY_SITA"))
         
         response = client.audio.speech.create(
             model="tts-1",
