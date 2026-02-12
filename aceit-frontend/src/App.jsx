@@ -6,10 +6,11 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Aptitude from './pages/Aptitude';
 import Coding from './pages/Coding';
-import Interview from './pages/Interview';
 import Navbar from './components/Layout/Navbar';
 import Resume from './pages/Resume';
 import UnifiedAnalytics from './pages/UnifiedAnalytics';
+import Interview from './pages/Interview';
+import GroupDiscussion from './pages/GroupDiscussion';
 
 
 const ProtectedRoute = ({ children }) => {
@@ -39,16 +40,22 @@ function App() {
                   <Aptitude />
                 </ProtectedRoute>
               } />
-              <Route path="/resume" element={
-                <ProtectedRoute>
-                  <Navbar />
-                  <Resume />
-                </ProtectedRoute>
-              } />
               <Route path="/coding" element={
                 <ProtectedRoute>
                   <Navbar />
                   <Coding />
+                </ProtectedRoute>
+              } />
+              <Route path="/group-discussion" element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <GroupDiscussion />
+                </ProtectedRoute>
+              } />
+              <Route path="/resume" element={
+                <ProtectedRoute>
+                  <Navbar />
+                  <Resume />
                 </ProtectedRoute>
               } />
               <Route path="/interview" element={

@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 
 import { analyticsAPI } from '../services/api';
-import GDPracticeWidget from '../components/Dashboard/GDPracticeWidget';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -213,7 +212,7 @@ const Dashboard = () => {
         </div>
 
         {/* GD Practice Widget (New Feature) */}
-        <GDPracticeWidget />
+        {/* <GDPracticeWidget /> */}
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">

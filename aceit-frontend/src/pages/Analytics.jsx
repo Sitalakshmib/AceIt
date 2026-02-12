@@ -188,15 +188,7 @@ const Analytics = () => {
                             </div>
                         ) : aiAdvice ? (
                             <div className="space-y-6">
-                                <div className="bg-white/60 backdrop-blur-md p-5 rounded-2xl border border-white/50">
-                                    <h4 className="font-bold text-lg mb-2 flex items-center tracking-tight text-gray-900">
-                                        <ArrowUpRight className="h-5 w-5 mr-2 text-pink-500" />
-                                        {aiAdvice.headline}
-                                    </h4>
-                                    <p className="text-gray-600 text-sm leading-relaxed">
-                                        {aiAdvice.analysis}
-                                    </p>
-                                </div>
+
 
                                 <div>
                                     <h5 className="text-xs font-bold uppercase tracking-widest text-pink-500 mb-3 ml-1">Today's Focus Plan</h5>
@@ -270,24 +262,26 @@ const Analytics = () => {
             </div>
 
             {/* 4. Empty State Fallback */}
-            {dailyData.length === 0 && (
-                <div className="bg-gray-50 border border-dashed border-gray-300 rounded-3xl p-12 text-center">
-                    <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                        <Target className="h-10 w-10 text-gray-300" />
+            {
+                dailyData.length === 0 && (
+                    <div className="bg-gray-50 border border-dashed border-gray-300 rounded-3xl p-12 text-center">
+                        <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                            <Target className="h-10 w-10 text-gray-300" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">No Mock Analytics Yet</h3>
+                        <p className="text-gray-500 max-w-sm mx-auto mb-8">
+                            Take your first full-length or topic test to see daily progress and AI insights.
+                        </p>
+                        <button
+                            className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                            onClick={() => window.location.reload()}
+                        >
+                            Refresh Dashboard
+                        </button>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">No Mock Analytics Yet</h3>
-                    <p className="text-gray-500 max-w-sm mx-auto mb-8">
-                        Take your first full-length or topic test to see daily progress and AI insights.
-                    </p>
-                    <button
-                        className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
-                        onClick={() => window.location.reload()}
-                    >
-                        Refresh Dashboard
-                    </button>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

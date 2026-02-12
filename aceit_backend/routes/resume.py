@@ -582,15 +582,12 @@ async def analyze_resume(
     # Save progress
     progress_data.append({
         "user_id": user_id,
-        "module": "resume",
-        "ats_score": analysis["ats_analysis"]["ats_score"],
+        "module": "resume_analysis",
         "score": analysis["overall_score"],
-        "timestamp": datetime.utcnow().isoformat(),
-        "job_role": job_role
+        "timestamp": datetime.utcnow(),
+        "job_role": job_role,
+        "analysis": analysis
     })
-    
-    from database import save_progress
-    save_progress()
     
     return analysis
 

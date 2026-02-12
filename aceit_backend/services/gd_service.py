@@ -22,7 +22,7 @@ class GDService:
         Returns (client, provider_name) or raises error.
         Priority: Groq -> OpenAI
         """
-        groq_key = os.getenv("GROQ_API_KEY")
+        groq_key = os.getenv("GROQ_API_GD")
         openai_key = os.getenv("OPENAI_API_KEY")
 
         if groq_key and Groq:
@@ -39,7 +39,7 @@ class GDService:
         
         if not client:
             debug_info = []
-            if not groq_key: debug_info.append("Missing GROQ_API_KEY")
+            if not groq_key: debug_info.append("Missing GROQ_API_GD")
             if not openai_key: debug_info.append("Missing OPENAI_API_KEY")
             if not Groq: debug_info.append("Groq lib not imported")
             if not OpenAI: debug_info.append("OpenAI lib not imported")

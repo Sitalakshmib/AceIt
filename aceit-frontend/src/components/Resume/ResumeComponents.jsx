@@ -194,27 +194,27 @@ export const InsightCard = ({ type = 'info', icon, title, children }) => {
     const styles = {
         success: {
             bg: 'bg-green-50',
-            border: 'border-green-100',
+            border: 'border-green-200',
             title: 'text-green-800',
-            icon: ''
+            icon: '✅'
         },
         warning: {
             bg: 'bg-orange-50',
-            border: 'border-orange-100',
+            border: 'border-orange-200',
             title: 'text-orange-800',
-            icon: ''
+            icon: '⚠️'
         },
         info: {
             bg: 'bg-blue-50',
-            border: 'border-blue-100',
+            border: 'border-blue-200',
             title: 'text-blue-800',
-            icon: ''
+            icon: '💡'
         },
         error: {
             bg: 'bg-red-50',
-            border: 'border-red-100',
+            border: 'border-red-200',
             title: 'text-red-800',
-            icon: ''
+            icon: '❌'
         }
     };
 
@@ -316,7 +316,7 @@ export const StrengthWeaknessCard = ({ type = 'strength', items, title }) => {
             gradient: 'from-emerald-500 to-green-600',
             bgGradient: 'from-emerald-50 to-green-50',
             border: 'border-emerald-200',
-            icon: '',
+            icon: '✓',
             iconBg: 'bg-gradient-to-br from-emerald-500 to-green-600',
             textColor: 'text-emerald-900',
             itemBg: 'bg-white',
@@ -390,7 +390,8 @@ export const AIInsightPanel = ({ children, title = "AI-Powered Insights" }) => {
                 {/* Header with AI Badge */}
                 <div className="flex items-center justify-between mb-6 pb-4 border-b-2 border-purple-200">
                     <div className="flex items-center">
-                        <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white text-2xl shadow-lg mr-4 group-hover:scale-110 transition-transform">
+                        <div className="w-14 h-14 bg-gradient-to-br from-purple-600 to-blue-600 rounded-xl flex items-center justify-center text-white text-2xl shadow-lg mr-4">
+                            🤖
                         </div>
                         <div>
                             <h3 className="text-2xl font-bold text-purple-900">{title}</h3>

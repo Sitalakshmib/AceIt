@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { LayoutDashboard, BrainCircuit, Code2, Video, FileText, LogOut, Menu, X, User, Settings, ChevronRight, Bell, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, BrainCircuit, Code2, Video, FileText, LogOut, Menu, X, User, Settings, ChevronRight, Bell, HelpCircle, Users } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -15,6 +15,7 @@ const Navbar = () => {
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/aptitude', label: 'Aptitude', icon: BrainCircuit },
     { path: '/coding', label: 'Coding', icon: Code2 },
+    { path: '/group-discussion', label: 'Group Discussion', icon: Users },
     { path: '/interview', label: 'Mock Interview', icon: Video },
     { path: '/resume', label: 'Resume Analyzer', icon: FileText },
   ];

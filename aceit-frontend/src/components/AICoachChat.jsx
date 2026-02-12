@@ -222,7 +222,7 @@ const AICoachChat = ({ summary, compact = false }) => {
                     />
 
                     {/* Floating Badge - Always visible */}
-                    <div className="absolute top-1/2 right-full -translate-y-1/2 mr-4 bg-white text-gray-800 text-xs font-bold px-4 py-2 rounded-xl shadow-lg border border-blue-100 flex flex-col items-center gap-0.5 animate-bounce w-max">
+                    <div className="absolute top-1/2 right-full -translate-y-1/2 mr-4 bg-white text-gray-800 text-xs font-bold px-4 py-2 rounded-xl shadow-lg border border-blue-100 flex flex-col items-center gap-0.5 w-max">
                         <span className="text-[10px] text-blue-500 uppercase tracking-wider">Hi! I'm your AI Coach</span>
                         <span className="whitespace-nowrap">Ask doubts & Learn with me!</span>
 

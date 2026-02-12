@@ -170,5 +170,29 @@
     "score": 41.6,
     "timestamp": "2026-02-07T10:01:31.724807",
     "job_role": "software_developer"
+  },
+  {
+    "user_id": "user123",
+    "module": "resume",
+    "ats_score": 61,
+    "score": 66.6,
+    "timestamp": "2026-02-01T06:44:17.249827",
+    "job_role": "machine_learning_engineer"
+  },
+  {
+    "user_id": "user123",
+    "module": "resume",
+    "ats_score": 61,
+    "score": 47.27,
+    "timestamp": "2026-02-01T07:55:36.918230",
+    "job_role": "software_developer"
+  },
+  {
+    "user_id": "user123",
+    "module": "resume",
+    "ats_score": 61,
+    "score": 66.6,
+    "timestamp": "2026-02-01T07:55:44.316688",
+    "job_role": "machine_learning_engineer"
   }
 ]
