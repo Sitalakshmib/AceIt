@@ -58,7 +58,7 @@ Use this as a reference when adding new problems.
 """,
     
     # ============ TAGS (Array of strings) ============
-    "tags": ["Arrays", "Hash Table"],
+    "tags": ["Array", "Hash Table"],
     
     # ============ TEST CASES (15 recommended) ============
     "test_cases": [

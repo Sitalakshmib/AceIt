@@ -52,7 +52,7 @@ def get_local_problems():
 </ul>
 """,
             "difficulty": "Easy",
-            "tags": ["Arrays", "Hash Table"],
+            "tags": ["Array", "Hash Table"],
             "function_name": "twoSum",
             "starter_code": {
                 "python": """class Solution:

@@ -291,7 +291,7 @@ const identifyWeakAreas = (realData, module) => {
 
 const identifyStrongAreas = (realData, module) => {
   // Mock implementation
-  return module === 'aptitude' ? ['Percentages', 'Ratios'] : ['Arrays', 'Strings'];
+  return module === 'aptitude' ? ['Percentages', 'Ratios'] : ['Array', 'Strings'];
 };
 
 const analyzeLanguages = (activities) => {

@@ -1,50 +1,28 @@
 [
   {
-    "user_id": "user123",
-    "module": "resume",
-    "ats_score": 61,
-    "score": 70.45,
-    "timestamp": "2026-01-31T15:20:30.368250",
-    "job_role": "data_scientist"
+    "id": "8444788d-e5eb-4d45-b448-f2e7a7a3f33d",
+    "module": "coding",
+    "problem_id": "premium-24",
+    "problem_title": "Flood Fill",
+    "passed_tests": 0,
+    "total_tests": 3,
+    "percentage": 0.0,
+    "timestamp": "2026-02-13T08:31:57.114812",
+    "code_submitted": "def floodFill(image, sr, sc, newColor):\n    # Write your code here\n    pass\n",
+    "user_id": "18d7832f-778a-46b8-96a4-7034d382b6b7",
+    "action": "run"
   },
   {
-    "user_id": "user123",
-    "module": "resume",
-    "ats_score": 61,
-    "score": 70.45,
-    "timestamp": "2026-01-31T15:21:47.628378",
-    "job_role": "data_scientist"
-  },
-  {
-    "user_id": "user123",
-    "module": "resume",
-    "ats_score": 61,
-    "score": 47.27,
-    "timestamp": "2026-01-31T17:19:47.264627",
-    "job_role": "software_developer"
-  },
-  {
-    "user_id": "user123",
-    "module": "resume",
-    "ats_score": 61,
-    "score": 66.6,
-    "timestamp": "2026-01-31T17:20:33.752930",
-    "job_role": "machine_learning_engineer"
-  },
-  {
-    "user_id": "user123",
-    "module": "resume",
-    "ats_score": 61,
-    "score": 47.27,
-    "timestamp": "2026-02-01T06:43:56.872357",
-    "job_role": "software_developer"
-  },
-  {
-    "user_id": "user123",
-    "module": "resume",
-    "ats_score": 61,
-    "score": 66.6,
-    "timestamp": "2026-02-01T06:44:17.249827",
-    "job_role": "machine_learning_engineer"
+    "id": "32dfa599-89ad-4fc9-a7cb-626020a1825d",
+    "module": "coding",
+    "problem_id": "premium-24",
+    "problem_title": "Flood Fill",
+    "passed_tests": 0,
+    "total_tests": 3,
+    "percentage": 0.0,
+    "timestamp": "2026-02-13T08:36:52.238808",
+    "code_submitted": "def floodFill(image, sr, sc, newColor):\n    # Write your code here\n    pass\n",
+    "user_id": "18d7832f-778a-46b8-96a4-7034d382b6b7",
+    "action": "run"
   }
 ]

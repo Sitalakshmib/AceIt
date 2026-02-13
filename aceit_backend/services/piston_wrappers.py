@@ -655,6 +655,8 @@ result{i} <- {call}
 expected{i} <- {expected_r}
 if (!is.null(result{i}) && is.matrix(result{i}) && is.matrix(expected{i}) && isTRUE(all.equal(result{i}, expected{i}))) {{
   passed <- passed + 1
+}} else {{
+  cat(sprintf("Test %d failed\\n", {i+1}), file=stderr())
 }}""")
             else:
                 # For vector outputs, use all() for element-wise comparison
@@ -664,6 +666,8 @@ result{i} <- {call}
 expected{i} <- {expected_r}
 if (!is.null(result{i}) && !any(is.na(result{i})) && length(result{i}) == length(expected{i}) && all(result{i} == expected{i})) {{
   passed <- passed + 1
+}} else {{
+  cat(sprintf("Test %d failed - Input: {json.dumps(inp)}, Expected: %s, Got: %s\\n", {i+1}, paste(expected{i}, collapse=","), paste(if(!is.null(result{i})) result{i} else "NULL", collapse=",")), file=stderr())
 }}""")
         else:
             # For scalar outputs
@@ -673,6 +677,8 @@ result{i} <- {call}
 expected{i} <- {expected_r}
 if (!is.null(result{i}) && !is.na(result{i}) && result{i} == expected{i}) {{
   passed <- passed + 1
+}} else {{
+  cat(sprintf("Test %d failed - Input: {json.dumps(inp)}, Expected: %s, Got: %s\\n", {i+1}, expected{i}, if(!is.null(result{i})) result{i} else "NULL"), file=stderr())
 }}""")
     
     return f"""

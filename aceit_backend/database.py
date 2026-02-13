@@ -29,6 +29,12 @@ def save_users():
             serializable_data.append(user_copy)
         json.dump(serializable_data, f, indent=2)
 
+PROGRESS_FILE = "progress.json"
+
+def save_progress():
+    with open(PROGRESS_FILE, 'w') as f:
+        json.dump(progress_data, f, indent=2)
+
 # Initialize users_data from file
 users_data = load_users()
 questions_data = []
@@ -36,7 +42,7 @@ progress_data = []
 # User proficiency data - tracks performance per topic and difficulty
 user_proficiency_data = {}
 
-from massive_database import massive_db
+from services.full_problem_data import FULL_PROBLEM_DATA
 
 def load_massive_database():
     """Load questions from massive database"""
@@ -45,9 +51,9 @@ def load_massive_database():
     print("🚀 LOADING MASSIVE QUESTION DATABASE...")
     
     # Get all questions from massive database
-    coding_problems = massive_db.datasets["coding"]
-    aptitude_questions = massive_db.datasets["aptitude"] 
-    interview_questions = massive_db.datasets["interview"]
+    coding_problems = FULL_PROBLEM_DATA
+    aptitude_questions = [] # massive_db.datasets["aptitude"] 
+    interview_questions = [] # massive_db.datasets["interview"]
     
     # Format coding problems for frontend
     formatted_coding = []

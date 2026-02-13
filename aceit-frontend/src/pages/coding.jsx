@@ -1,7 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { codingAPI } from '../services/api';
 import AITutor from '../components/AITutor';
+import CodingSelection from '../components/CodingSelection';
+import TestResultsDisplay from '../components/TestResultsDisplay';
+import ProgressDashboard from '../components/ProgressDashboard';
 import Editor from '@monaco-editor/react';
+import {
+  Play, Send, RotateCcw, CheckCircle, AlertCircle,
+  Code2, BarChart2, Coffee, Zap, Wrench,
+  Bot, X, ChevronRight, Terminal, Filter, Bookmark, BookmarkCheck, Search,
+  ArrowLeft, CheckCircle2, XCircle, Lightbulb, Info
+} from 'lucide-react';
 
 const Coding = () => {
   const [code, setCode] = useState(`// Write your solution here
@@ -12,7 +21,6 @@ function solveProblem(input) {
   const [output, setOutput] = useState('');
   const [problems, setProblems] = useState([]);
   const [selectedProblemId, setSelectedProblemId] = useState(null);
-  const [selectedTag, setSelectedTag] = useState('All');
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState('python');
@@ -21,16 +29,25 @@ function solveProblem(input) {
   const [error, setError] = useState('');
   const [testResults, setTestResults] = useState(null);
   const [solvedProblems, setSolvedProblems] = useState([]);
-
-
   const [isTutorOpen, setIsTutorOpen] = useState(false);
+  const [bookmarkedProblems, setBookmarkedProblems] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showBookmarkedOnly, setShowBookmarkedOnly] = useState(false);
+
+  // Selection flow state
+  const [showSelectionFlow, setShowSelectionFlow] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState(null);
+  const [showProgress, setShowProgress] = useState(false);
+  const [filteredProblemsContext, setFilteredProblemsContext] = useState(null);
+  const [selectedTag, setSelectedTag] = useState('All');
 
   const languages = [
-    { id: 'python', name: 'Python', extension: 'py', icon: '🐍' },
-    { id: 'r', name: 'R', extension: 'r', icon: '📊' },
-    { id: 'java', name: 'Java', extension: 'java', icon: '☕' },
-    { id: 'cpp', name: 'C++', extension: 'cpp', icon: '⚡' },
-    { id: 'c', name: 'C', extension: 'c', icon: '🔧' },
+    { id: 'python', name: 'Python', extension: 'py', icon: <Code2 className="w-4 h-4" /> },
+    { id: 'r', name: 'R', extension: 'r', icon: <BarChart2 className="w-4 h-4" /> },
+    { id: 'java', name: 'Java', extension: 'java', icon: <Coffee className="w-4 h-4" /> },
+    { id: 'cpp', name: 'C++', extension: 'cpp', icon: <Zap className="w-4 h-4" /> },
+    { id: 'c', name: 'C', extension: 'c', icon: <Wrench className="w-4 h-4" /> },
   ];
 
   // Map language IDs to Monaco Editor language modes
@@ -49,6 +66,7 @@ function solveProblem(input) {
   useEffect(() => {
     fetchProblems();
     fetchSolvedProblems();
+    fetchBookmarks();
   }, []);
 
   const fetchProblems = async () => {
@@ -81,6 +99,57 @@ function solveProblem(input) {
       console.error('Failed to fetch solved problems:', err);
     }
   };
+
+  const fetchBookmarks = async () => {
+    try {
+      const response = await codingAPI.getBookmarks();
+      const bookmarkIds = response.data.bookmarks.map(b => b.problem_id);
+      setBookmarkedProblems(bookmarkIds);
+    } catch (err) {
+      console.error('Failed to fetch bookmarks:', err);
+    }
+  };
+
+  const toggleBookmark = async (problemId) => {
+    try {
+      if (bookmarkedProblems.includes(problemId)) {
+        await codingAPI.removeBookmark(problemId);
+        setBookmarkedProblems(prev => prev.filter(id => id !== problemId));
+      } else {
+        await codingAPI.addBookmark(problemId);
+        setBookmarkedProblems(prev => [...prev, problemId]);
+      }
+    } catch (err) {
+      console.error('Failed to toggle bookmark:', err);
+    }
+  };
+
+  // Handle starting coding from selection page
+  const handleStartCoding = (selectionData) => {
+    setShowSelectionFlow(false);
+
+    // Check if a specific problem was selected (from search dropdown or bookmark)
+    if (selectionData.id) {
+      // Store filtered problems context for sidebar
+      setFilteredProblemsContext(selectionData.filteredProblems || null);
+      // Use the specific problem that was selected
+      setSelectedProblemId(selectionData.id);
+      const problemData = problems.find(p => p.id === selectionData.id);
+      if (problemData) {
+        setCode(problemData.starterCode?.[selectedLanguage] || '# Write your solution here');
+      }
+    } else if (selectionData.filteredProblems && selectionData.filteredProblems.length > 0) {
+      // No specific problem selected, use first from filtered list (category/difficulty selection)
+      setFilteredProblemsContext(selectionData.filteredProblems);
+      setSelectedProblemId(selectionData.filteredProblems[0].id);
+      setCode(selectionData.filteredProblems[0].starterCode?.[selectedLanguage] || '# Write your solution here');
+    }
+
+    // Store category/difficulty for filter display
+    if (selectionData.category) setSelectedCategory(selectionData.category);
+    if (selectionData.difficulty) setSelectedDifficulty(selectionData.difficulty);
+  };
+
 
   const runCode = async () => {
     if (problems.length === 0) return;
@@ -251,20 +320,87 @@ function solveProblem(input) {
   }
 
   // Get all unique tags from problems
-  const allTags = ['All', ...new Set(problems.flatMap(p => p.tags || []))];
+  const allTags = ['All', 'Bookmarked', ...new Set(problems.flatMap(p => p.tags || []))];
 
-  // Filter problems by selected tag
-  const filteredProblems = selectedTag === 'All'
-    ? problems
-    : problems.filter(p => p.tags && p.tags.includes(selectedTag));
+
+  // Handler to go back to selection
+  const handleChangeFilters = () => {
+    setShowSelectionFlow(true);
+  };
+
+  // Filter problems - start with context from selection, then apply sidebar filters
+  let filteredProblems = filteredProblemsContext && filteredProblemsContext.length > 0
+    ? filteredProblemsContext
+    : problems;
+
+  // Apply search filter on top of context
+  if (searchQuery) {
+    const query = searchQuery.toLowerCase();
+    filteredProblems = filteredProblems.filter(p =>
+      p.title.toLowerCase().includes(query) ||
+      p.id.toLowerCase().includes(query) ||
+      (p.tags && p.tags.some(tag => tag.toLowerCase().includes(query)))
+    );
+  }
+
+  // Apply bookmark filter
+  if (showBookmarkedOnly) {
+    filteredProblems = filteredProblems.filter(p => bookmarkedProblems.includes(p.id));
+  }
+
+
 
   const problem = problems.find(p => p.id === selectedProblemId) || problems[0];
 
+  // Get current user ID for progress dashboard
+  const userId = localStorage.getItem('userId');
+
+  // Show progress dashboard if enabled
+  if (showProgress) {
+    return <ProgressDashboard userId={userId} onClose={() => setShowProgress(false)} />;
+  }
+
+  // Show selection flow if enabled
+  if (showSelectionFlow) {
+    return <CodingSelection problems={problems} onStartCoding={handleStartCoding} bookmarkedProblems={bookmarkedProblems} />;
+  }
+
   return (
     <div className="p-6 min-h-screen flex flex-col bg-gray-50">
-      <h1 className="text-2xl font-bold mb-4 text-gray-800">Coding Practice</h1>
-
-
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <Code2 className="w-8 h-8 text-blue-600" />
+          Coding Practice
+        </h1>
+        <div className="flex items-center gap-3">
+          {/* Active Filters Display */}
+          {(selectedCategory || selectedDifficulty) && (
+            <div className="flex items-center gap-2">
+              {selectedCategory && (
+                <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
+                  {selectedCategory}
+                </span>
+              )}
+              {selectedDifficulty && (
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${selectedDifficulty === 'Easy' ? 'bg-green-100 text-green-700' :
+                  selectedDifficulty === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                  {selectedDifficulty}
+                </span>
+              )}
+            </div>
+          )}
+          {/* Back Button */}
+          <button
+            onClick={handleChangeFilters}
+            className="bg-white border-2 border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 hover:border-blue-600 hover:text-blue-600 font-medium flex items-center gap-2 transition-all shadow-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Selection
+          </button>
+        </div>
+      </div>
 
       <div className="flex flex-1 gap-4 items-start">
         {/* Problem List Sidebar */}
@@ -273,10 +409,49 @@ function solveProblem(input) {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-gray-800">Problems</h2>
               <div className="flex items-center gap-3">
-                <div className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                  ✓ {solvedProblems.length} Solved
+                <div className="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> {solvedProblems.length} Solved
                 </div>
                 <div className="text-xs text-gray-500">{filteredProblems.length} available</div>
+              </div>
+            </div>
+
+            {/* Search Input */}
+            <div className="mb-4">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search problems..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-3 py-2 pl-9 pr-24 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                />
+                <Search className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-12 top-2 p-1 hover:bg-gray-100 rounded"
+                    title="Clear search"
+                  >
+                    <X className="w-4 h-4 text-gray-500" />
+                  </button>
+                )}
+                {/* Bookmark Filter Icon */}
+                <button
+                  onClick={() => setShowBookmarkedOnly(!showBookmarkedOnly)}
+                  className={`absolute right-2 top-2 p-1 rounded transition-colors ${showBookmarkedOnly
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'hover:bg-gray-100 text-gray-500'
+                    }`}
+                  title={showBookmarkedOnly ? 'Show all problems' : 'Show bookmarked only'}
+                >
+                  <Bookmark className={`w-4 h-4 ${showBookmarkedOnly ? 'fill-blue-600' : ''}`} />
+                  {bookmarkedProblems.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                      {bookmarkedProblems.length}
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
 
@@ -285,13 +460,21 @@ function solveProblem(input) {
               {allTags.map(tag => (
                 <button
                   key={tag}
-                  onClick={() => setSelectedTag(tag)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap ${selectedTag === tag
+                  onClick={() => {
+                    setSelectedTag(tag);
+                    // Reset filtered context when "All" is selected to show all problems
+                    if (tag === 'All') {
+                      setFilteredProblemsContext(null);
+                    }
+                  }}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-all whitespace-nowrap flex items-center gap-1 ${selectedTag === tag
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                 >
+                  {tag === 'Bookmarked' && <Bookmark className="w-3 h-3" />}
                   {tag}
+                  {tag === 'Bookmarked' && bookmarkedProblems.length > 0 && ` (${bookmarkedProblems.length})`}
                 </button>
               ))}
             </div>
@@ -300,42 +483,67 @@ function solveProblem(input) {
               {filteredProblems.map((prob) => (
                 <div
                   key={prob.id}
-                  onClick={() => changeProblem(prob.id)}
                   className={`p-3 rounded-lg cursor-pointer transition-all border-2 relative ${selectedProblemId === prob.id
                     ? 'bg-blue-50 border-blue-500'
                     : 'bg-white hover:bg-gray-50 border-gray-100 shadow-sm'
                     }`}
                 >
-                  {/* Solved indicator */}
-                  {solvedProblems.includes(prob.id) && (
-                    <div className="absolute top-2 right-2">
-                      <span className="text-green-600 text-lg" title="Solved">✓</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-start mb-1 pr-6">
-                    <h3 className="font-medium text-gray-800 text-sm line-clamp-1">{prob.title}</h3>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${prob.difficulty === 'Easy' ? 'bg-green-100 text-green-700' :
-                      prob.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
-                        'bg-red-100 text-red-700'
-                      }`}>
-                      {prob.difficulty}
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {prob.tags && prob.tags.slice(0, 2).map((tag, idx) => (
-                      <span key={idx} className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
-                        {tag}
-                      </span>
-                    ))}
-                    {prob.tags && prob.tags.length > 2 && (
-                      <span className="text-[10px] text-gray-400">+{prob.tags.length - 2}</span>
+                  {/* Bookmark and solved indicators */}
+                  <div className="absolute top-2 right-2 flex gap-1.5">
+                    {/* Bookmark button */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleBookmark(prob.id);
+                      }}
+                      className="p-0.5 rounded hover:bg-blue-100 transition-colors"
+                      title={bookmarkedProblems.includes(prob.id) ? "Remove bookmark" : "Add bookmark"}
+                    >
+                      {bookmarkedProblems.includes(prob.id) ? (
+                        <BookmarkCheck className="w-4 h-4 text-blue-600 fill-blue-600" />
+                      ) : (
+                        <Bookmark className="w-4 h-4 text-gray-400 hover:text-blue-600" />
+                      )}
+                    </button>
+
+                    {/* Solved indicator */}
+                    {solvedProblems.includes(prob.id) && (
+                      <CheckCircle className="w-4 h-4 text-green-600" />
                     )}
+                  </div>
+
+                  <div
+                    onClick={() => changeProblem(prob.id)}
+                    className="pr-12"
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <h3 className="font-medium text-gray-800 text-sm line-clamp-1">{prob.title}</h3>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${prob.difficulty === 'Easy' ? 'bg-green-100 text-green-700' :
+                        prob.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                        {prob.difficulty}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {prob.tags && prob.tags.slice(0, 2).map((tag, idx) => (
+                        <span key={idx} className="text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                          {tag}
+                        </span>
+                      ))}
+                      {prob.tags && prob.tags.length > 2 && (
+                        <span className="text-[10px] text-gray-400">+{prob.tags.length - 2}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
               {filteredProblems.length === 0 && (
-                <div className="text-center py-10 text-gray-500 italic">
-                  No problems found for this topic.
+                <div className="text-center py-10 text-gray-500 italic flex flex-col items-center gap-2">
+                  <AlertCircle className="w-8 h-8 text-gray-300" />
+                  {searchQuery
+                    ? `No problems found matching "${searchQuery}"`
+                    : 'No problems found for this topic.'}
                 </div>
               )}
             </div>
@@ -363,9 +571,7 @@ function solveProblem(input) {
                         }`}>
                         {problem.difficulty}
                       </span>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-full font-medium">
-                        {problem.source || 'Premium'}
-                      </span>
+
                     </div>
                   </div>
 
@@ -415,7 +621,8 @@ function solveProblem(input) {
             <div className="bg-gray-900 rounded-lg shadow-md mb-4 flex flex-col h-[600px] shrink-0">
               <div className="flex justify-between items-center p-3 bg-gray-800 rounded-t-lg">
                 <div className="flex items-center space-x-4">
-                  <span className="text-white font-mono text-sm">
+                  <span className="text-white font-mono text-sm flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-gray-400" />
                     solution.{languages.find(lang => lang.id === selectedLanguage)?.extension}
                   </span>
 
@@ -425,12 +632,12 @@ function solveProblem(input) {
                       <button
                         key={lang.id}
                         onClick={() => changeLanguage(lang.id)}
-                        className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${selectedLanguage === lang.id
+                        className={`px-3 py-1 rounded-md text-sm font-medium transition-all flex items-center gap-1 ${selectedLanguage === lang.id
                           ? 'bg-blue-600 text-white'
                           : 'text-gray-300 hover:text-white hover:bg-gray-600'
                           }`}
                       >
-                        <span className="mr-1">{lang.icon}</span>
+                        {lang.icon}
                         {lang.name}
                       </button>
                     ))}
@@ -439,8 +646,9 @@ function solveProblem(input) {
 
                 <button
                   onClick={resetCode}
-                  className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700"
+                  className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 flex items-center gap-1"
                 >
+                  <RotateCcw className="w-3 h-3" />
                   Reset Code
                 </button>
               </div>
@@ -468,7 +676,9 @@ function solveProblem(input) {
             <div className="bg-white rounded-lg shadow-md">
               <div className="flex justify-between items-center p-3 border-b">
                 <div>
-                  <h3 className="font-semibold text-gray-800">Output</h3>
+                  <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                    <Terminal className="w-4 h-4" /> Output
+                  </h3>
                   <span className="text-sm text-gray-500">
                     Language: {languages.find(lang => lang.id === selectedLanguage)?.name}
                   </span>
@@ -479,50 +689,22 @@ function solveProblem(input) {
                     disabled={isRunning || isSubmitting}
                     className="bg-gray-700 text-white px-4 py-2 rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    {isRunning ? '▶ Running...' : '▶ Run Code'}
+                    {isRunning ? <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Play className="w-4 h-4" />}
+                    {isRunning ? 'Running...' : 'Run Code'}
                   </button>
                   <button
                     onClick={submitCode}
                     disabled={isRunning || isSubmitting}
                     className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 font-semibold"
                   >
-                    {isSubmitting ? '📤 Submitting...' : '📤 Submit'}
+                    {isSubmitting ? <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full" /> : <Send className="w-4 h-4" />}
+                    {isSubmitting ? 'Submitting...' : 'Submit'}
                   </button>
                 </div>
               </div>
 
-              {/* Test Results Bar */}
-              {testResults && (
-                <div className="p-3 bg-gray-50 border-b">
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">Test Results:</span>
-                      {testResults.action === 'run' && testResults.hiddenCount > 0 && (
-                        <span className="text-xs text-gray-500">({testResults.visibleCount} visible, {testResults.hiddenCount} hidden)</span>
-                      )}
-                      {testResults.isSolved && (
-                        <span className="text-green-600 font-bold text-sm">✓ Solved!</span>
-                      )}
-                    </div>
-                    <span className={`font-bold ${testResults.passed === testResults.total ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                      {testResults.passed}/{testResults.total} passed ({testResults.percentage}%)
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all ${testResults.percentage >= 80 ? 'bg-green-600' :
-                        testResults.percentage >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                        }`}
-                      style={{ width: `${testResults.percentage}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
-
-              <pre className="p-4 bg-gray-50 text-sm min-h-[120px] max-h-60 overflow-y-auto whitespace-pre-wrap font-mono">
-                {output || "Click 'Run Code' to test your solution..."}
-              </pre>
+              {/* Test Results Display */}
+              <TestResultsDisplay testResults={testResults} output={output} />
             </div>
           </div>
         </div>
@@ -532,7 +714,7 @@ function solveProblem(input) {
       <button
         className={`ai-tutor-toggle ${isTutorOpen ? 'active' : ''}`}
         onClick={() => setIsTutorOpen(!isTutorOpen)}
-        title="AI Tutor"
+        title="AI Coding Tutor"
         style={{
           position: 'fixed',
           right: isTutorOpen ? '400px' : '20px',
@@ -555,7 +737,7 @@ function solveProblem(input) {
           justifyContent: 'center'
         }}
       >
-        {isTutorOpen ? '✕' : '🤖'}
+        {isTutorOpen ? <X className="w-8 h-8" /> : <Bot className="w-8 h-8" />}
       </button>
 
       {/* AI Tutor Panel */}

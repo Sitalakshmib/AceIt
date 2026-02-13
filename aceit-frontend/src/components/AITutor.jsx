@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './AITutor.css';
+import {
+    Bot, X, Trash2, Lightbulb, Bug, FileText,
+    BookOpen, MessageCircle, Send, AlertTriangle, CheckCircle
+} from 'lucide-react';
 
 const AITutor = ({
     isOpen,
@@ -28,7 +32,7 @@ What would you like help with?`,
     const [hintLevel, setHintLevel] = useState(1);
     const messagesEndRef = useRef(null);
 
-    const API_BASE = 'http://localhost:8001/tutor';
+    const API_BASE = 'http://localhost:8000/tutor';
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -73,7 +77,7 @@ What would you like help with?`,
                 addMessage('assistant', '❌ Sorry, I couldn\'t generate a hint. Please try again.', 'error');
             }
         } catch (error) {
-            addMessage('assistant', `❌ Error: ${error.message}. Make sure OPENAI_API_KEY is set.`, 'error');
+            addMessage('assistant', `❌ Error: ${error.message}. Check backend connection.`, 'error');
         } finally {
             setIsLoading(false);
         }
@@ -241,15 +245,15 @@ What would you like help with?`,
         <div className="ai-tutor-panel">
             <div className="ai-tutor-header">
                 <div className="header-title">
-                    <span className="tutor-icon">🤖</span>
-                    <span>AI Tutor</span>
+                    <span className="tutor-icon flex items-center justify-center"><Bot className="w-6 h-6" /></span>
+                    <span>AI Coding Tutor</span>
                 </div>
                 <div className="header-actions">
-                    <button onClick={clearChat} className="clear-btn" title="Clear Chat">
-                        🗑️
+                    <button onClick={clearChat} className="clear-btn flex items-center justify-center" title="Clear Chat">
+                        <Trash2 className="w-5 h-5" />
                     </button>
-                    <button onClick={onClose} className="close-btn" title="Close">
-                        ✕
+                    <button onClick={onClose} className="close-btn flex items-center justify-center" title="Close">
+                        <X className="w-5 h-5" />
                     </button>
                 </div>
             </div>
@@ -258,30 +262,30 @@ What would you like help with?`,
                 <button
                     onClick={getHint}
                     disabled={isLoading}
-                    className="action-btn hint-btn"
+                    className="action-btn hint-btn flex items-center justify-center gap-1"
                 >
-                    💡 Hint {hintLevel > 1 ? `(L${hintLevel})` : ''}
+                    <Lightbulb className="w-4 h-4" /> Hint {hintLevel > 1 ? `(L${hintLevel})` : ''}
                 </button>
                 <button
                     onClick={debugCode}
                     disabled={isLoading}
-                    className="action-btn debug-btn"
+                    className="action-btn debug-btn flex items-center justify-center gap-1"
                 >
-                    🐛 Debug
+                    <Bug className="w-4 h-4" /> Debug
                 </button>
                 <button
                     onClick={reviewCode}
                     disabled={isLoading}
-                    className="action-btn review-btn"
+                    className="action-btn review-btn flex items-center justify-center gap-1"
                 >
-                    📝 Review
+                    <FileText className="w-4 h-4" /> Review
                 </button>
                 <button
                     onClick={explainSolution}
                     disabled={isLoading}
-                    className="action-btn explain-btn"
+                    className="action-btn explain-btn flex items-center justify-center gap-1"
                 >
-                    📖 Explain
+                    <BookOpen className="w-4 h-4" /> Explain
                 </button>
             </div>
 
@@ -292,16 +296,30 @@ What would you like help with?`,
                         className={`message ${msg.role} ${msg.type}`}
                     >
                         <div className="message-content">
-                            {msg.content.split('\n').map((line, i) => (
-                                <React.Fragment key={i}>
-                                    {line.startsWith('**') && line.endsWith('**')
-                                        ? <strong>{line.slice(2, -2)}</strong>
-                                        : line.startsWith('- ')
-                                            ? <li>{line.slice(2)}</li>
-                                            : line}
-                                    {i < msg.content.split('\n').length - 1 && <br />}
-                                </React.Fragment>
-                            ))}
+                            {msg.type === 'welcome' ? (
+                                <div className="welcome-message space-y-2">
+                                    <p className="font-medium mb-2">👋 Hi! I'm your AI Coding Tutor. I can help you with:</p>
+                                    <ul className="space-y-1">
+                                        <li className="flex items-center gap-2"><Lightbulb className="w-4 h-4 text-yellow-500" /> <span className="font-bold">Hints</span> - Get progressive hints without spoilers</li>
+                                        <li className="flex items-center gap-2"><Bug className="w-4 h-4 text-red-500" /> <span className="font-bold">Debug</span> - Understand why your code failed</li>
+                                        <li className="flex items-center gap-2"><FileText className="w-4 h-4 text-blue-500" /> <span className="font-bold">Review</span> - Get feedback on your solution</li>
+                                        <li className="flex items-center gap-2"><BookOpen className="w-4 h-4 text-purple-500" /> <span className="font-bold">Explain</span> - Learn the optimal approach</li>
+                                        <li className="flex items-center gap-2"><Send className="w-4 h-4 text-green-500" /> <span className="font-bold">Ask</span> - Any algorithm questions</li>
+                                    </ul>
+                                    <p className="mt-2">What would you like help with?</p>
+                                </div>
+                            ) : (
+                                msg.content.split('\n').map((line, i) => (
+                                    <React.Fragment key={i}>
+                                        {line.startsWith('**') && line.endsWith('**')
+                                            ? <strong>{line.slice(2, -2)}</strong>
+                                            : line.startsWith('- ')
+                                                ? <li>{line.slice(2)}</li>
+                                                : line}
+                                        {i < msg.content.split('\n').length - 1 && <br />}
+                                    </React.Fragment>
+                                ))
+                            )}
                         </div>
                     </div>
                 ))}
@@ -327,9 +345,9 @@ What would you like help with?`,
                 <button
                     onClick={sendChat}
                     disabled={isLoading || !inputValue.trim()}
-                    className="send-btn"
+                    className="send-btn flex items-center justify-center"
                 >
-                    💬
+                    <Send className="w-5 h-5" />
                 </button>
             </div>
         </div>
