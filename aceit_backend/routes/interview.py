@@ -32,7 +32,7 @@ class NextResponse(BaseModel):
 # --- Routes ---
 
 @router.post("/start")
-async def start_interview(req: StartRequest, engine: SimVoiceInterviewer = Depends(get_engine)):
+def start_interview(req: StartRequest, engine: SimVoiceInterviewer = Depends(get_engine)):
     print(f"[INTERVIEW] /interview/start hit by User: {req.user_id}, Type: {req.interview_type}, Topic: {req.topic}")
     try:
         result = engine.start_interview(req.user_id, req.resume_text, req.jd_text, req.interview_type, req.topic, req.project_text)
@@ -41,7 +41,7 @@ async def start_interview(req: StartRequest, engine: SimVoiceInterviewer = Depen
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/answer")
-async def process_answer(
+def process_answer(
     session_id: str = Form(...),
     text_answer: Optional[str] = Form(None),
     audio_file: Optional[UploadFile] = File(None),
@@ -71,7 +71,7 @@ async def process_answer(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/results/{session_id}")
-async def get_results(session_id: str, engine: SimVoiceInterviewer = Depends(get_engine)):
+def get_results(session_id: str, engine: SimVoiceInterviewer = Depends(get_engine)):
     """
     Get comprehensive interview results and analytics
     """

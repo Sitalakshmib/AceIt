@@ -1,19 +1,13 @@
-"""
-AI Tutor Service for AceIt Coding Module
-Provides intelligent tutoring features using Google Gemini
-"""
-
 import os
 from dotenv import load_dotenv
-import google.generativeai as genai
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
+from services.llm_client import LLMClient
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Initialize Gemini client
-genai.configure(api_key=os.getenv("GEMINI_API_KEY_HELL"))
-model = genai.GenerativeModel('gemini-2.5-flash')
+# Initialize LLM Client
+llm = LLMClient()
 
 
 # System prompts for different tutor modes
@@ -160,8 +154,8 @@ Provide a Level {hint_level} hint. Remember:
 
 Current request is Level {hint_level}."""
 
-        response = model.generate_content(prompt)
-        return response.text
+        response = llm.generate_response(prompt)
+        return response
         
     except Exception as e:
         return f"Sorry, I couldn't generate a hint right now. Error: {str(e)}"
@@ -212,8 +206,8 @@ Failed Test Case:
 
 Explain why this code failed and what needs to be fixed (without giving the complete solution)."""
 
-        response = model.generate_content(prompt)
-        return response.text
+        response = llm.generate_response(prompt)
+        return response
         
     except Exception as e:
         return f"Sorry, I couldn't analyze the code right now. Error: {str(e)}"
@@ -262,8 +256,8 @@ Please review this code and provide feedback on:
 3. Code style and readability
 4. Possible optimizations"""
 
-        response = model.generate_content(prompt)
-        return response.text
+        response = llm.generate_response(prompt)
+        return response
         
     except Exception as e:
         return f"Sorry, I couldn't review the code right now. Error: {str(e)}"
@@ -305,8 +299,8 @@ Please explain:
 4. Time and space complexity
 5. Why this approach is optimal"""
 
-        response = model.generate_content(prompt)
-        return response.text
+        response = llm.generate_response(prompt)
+        return response
         
     except Exception as e:
         return f"Sorry, I couldn't explain the solution right now. Error: {str(e)}"
@@ -337,8 +331,8 @@ def chat(
 {context}
 User Question: {user_message}"""
 
-        response = model.generate_content(prompt)
-        return response.text
+        response = llm.generate_response(prompt)
+        return response
         
     except Exception as e:
         return f"Sorry, I couldn't respond right now. Error: {str(e)}"

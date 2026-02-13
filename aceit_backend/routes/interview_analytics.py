@@ -23,7 +23,7 @@ router = APIRouter()
 
 
 @router.get("/analytics/{user_id}")
-async def get_interview_analytics(user_id: str, engine: SimVoiceInterviewer = Depends(get_engine)):
+def get_interview_analytics(user_id: str, engine: SimVoiceInterviewer = Depends(get_engine)):
     """
     Get comprehensive interview performance analytics for a user.
     
@@ -99,7 +99,7 @@ async def get_interview_analytics(user_id: str, engine: SimVoiceInterviewer = De
 
 
 @router.get("/analytics/{user_id}/category/{category}")
-async def get_category_analytics(
+def get_category_analytics(
     user_id: str, 
     category: str, 
     engine: SimVoiceInterviewer = Depends(get_engine)

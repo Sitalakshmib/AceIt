@@ -504,7 +504,7 @@ def generate_detailed_feedback(ats_analysis: dict, skills_analysis: dict, contac
     return feedback
 
 @router.post("/analyze")
-async def analyze_resume(
+def analyze_resume(
     file: UploadFile = File(None),
     job_role: str = Form(...),
     user_id: str = Form(...),
@@ -516,7 +516,7 @@ async def analyze_resume(
     # Extract text from PDF if provided
     if file and file.filename:
         # Read file content
-        file_content = await file.read()
+        file_content = file.file.read()
         
         # Extract text from PDF
         resume_text = extract_text_from_pdf(file_content)
@@ -789,13 +789,13 @@ def create_word_resume(user_data: ResumeUserData, content: dict, template_type: 
     return file_stream.getvalue()
 
 @router.post("/generate-content")
-async def generate_content(request: ResumeUserData):
+def generate_content(request: ResumeUserData):
     """Generate resume content based on user data"""
     content = generate_resume_content_with_ai(request)
     return {"content": content}
 
 @router.post("/download-resume")
-async def download_resume(request: ResumeDownloadRequest):
+def download_resume(request: ResumeDownloadRequest):
     """Generate and download resume as DOCX"""
     try:
         docx_bytes = create_word_resume(

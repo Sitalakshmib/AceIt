@@ -199,6 +199,30 @@ export const codingAPI = {
       params: { user_id: userId }
     });
   },
+  // Bookmark methods
+  addBookmark: (problemId) => {
+    const userId = getCurrentUserId();
+    return api.post('/coding/bookmarks', {
+      user_id: userId,
+      problem_id: problemId
+    });
+  },
+  removeBookmark: (problemId) => {
+    const userId = getCurrentUserId();
+    return api.delete(`/coding/bookmarks/${problemId}`, {
+      params: { user_id: userId }
+    });
+  },
+  getBookmarks: () => {
+    const userId = getCurrentUserId();
+    return api.get('/coding/bookmarks', {
+      params: { user_id: userId }
+    });
+  },
+  getSolution: (problemId) => api.get(`/coding/solution/${problemId}`),
+  getProgressStats: (userId) => {
+    return api.get('/coding/progress/stats', { params: { user_id: userId } });
+  },
 };
 
 export const resumeAPI = {

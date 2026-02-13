@@ -5,7 +5,7 @@ router = APIRouter()
 
 # Get user's overall progress and statistics
 @router.get("/{user_id}")
-async def get_user_progress(user_id: str):
+def get_user_progress(user_id: str):
     """
     Get comprehensive progress data for a user
     """

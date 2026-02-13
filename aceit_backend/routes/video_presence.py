@@ -68,7 +68,7 @@ os.makedirs(TEMP_VIDEO_DIR, exist_ok=True)
 
 
 @router.post("/analyze-answer")
-async def analyze_video_presence_answer(
+def analyze_video_presence_answer(
     audio_file: UploadFile = File(...),
     video_file: Optional[UploadFile] = File(None),
     session_id: Optional[str] = Form(None),
@@ -325,7 +325,7 @@ async def analyze_video_presence_answer(
 
 
 @router.post("/analyze-video-only")
-async def analyze_video_only(
+def analyze_video_only(
     video_file: UploadFile = File(...),
     session_id: Optional[str] = Form(None)
 ):
@@ -387,7 +387,7 @@ async def analyze_video_only(
 
 
 @router.get("/health")
-async def health_check():
+def health_check():
     """
     Health check endpoint for video presence analysis service
     """

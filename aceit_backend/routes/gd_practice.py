@@ -7,12 +7,10 @@ import requests
 
 router = APIRouter()
 
-# Lazy initialize GROQ client  
-def get_groq_api_key():
-    api_key = os.getenv("GROQ_API_GD")
-    if not api_key:
-        raise HTTPException(status_code=500, detail="GROQ API key for GD not configured")
-    return api_key
+from services.llm_client import LLMClient
+
+# Initialize LLM Client
+llm = LLMClient()
 
 class GDRequest(BaseModel):
     topic: str
@@ -85,7 +83,7 @@ GD_TOPICS = [
 ]
 
 @router.get("/topic")
-async def generate_gd_topic():
+def generate_gd_topic():
     """
     Generate a Group Discussion topic using a hybrid approach:
     - 50% chance: Select from curated high-quality list (Standard Topics)
@@ -96,8 +94,6 @@ async def generate_gd_topic():
         # 50% chance to use dynamic generation
         if random.random() < 0.5:
             try:
-                api_key = get_groq_api_key()
-                
                 prompt = """Generate ONE interesting, modern, and debatable Group Discussion topic for MBA/placement interviews.
                 
 The topic should be:
@@ -108,31 +104,12 @@ The topic should be:
 
 Return ONLY the topic text, nothing else. No quotes."""
 
-                response = requests.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json"
-                    },
-                    json={
-                        "model": "llama-3.3-70b-versatile",
-                        "messages": [
-                            {"role": "system", "content": "You are a GD topic generator. Return only the topic text."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        "max_tokens": 50,
-                        "temperature": 0.9
-                    },
-                    timeout=5 # Short timeout to keep it fast
-                )
+                topic = llm.generate_response(prompt)
                 
-                if response.status_code == 200:
-                    result = response.json()
-                    topic = result["choices"][0]["message"]["content"].strip()
-                    # Clean up
-                    topic = topic.replace('"', '').replace("'", "").strip()
-                    if len(topic) > 10: # Ensure valid topic length
-                        return {"topic": topic}
+                # Clean up
+                topic = topic.replace('"', '').replace("'", "").strip()
+                if len(topic) > 10: # Ensure valid topic length
+                    return {"topic": topic}
             except Exception as e:
                 print(f"[WARN] Dynamic topic generation failed: {e}. Falling back to curated list.")
                 # Fallback to curated list logic below
@@ -148,11 +125,12 @@ Return ONLY the topic text, nothing else. No quotes."""
 
 
 @router.post("/submit")
-async def submit_gd_response(request: GDSubmitRequest):
+def submit_gd_response(request: GDSubmitRequest):
     """
     Analyze user's Group Discussion response and provide AI feedback.
     """
-    if not request.user_input or len(request.user_input.strip()) < 20:
+    user_input = request.user_input.strip() if request.user_input else ""
+    if len(user_input) < 20:
         raise HTTPException(status_code=400, detail="Response too short. Please write at least 20 characters.")
     
     try:
@@ -199,28 +177,8 @@ TOPIC_POINTS:
 - [Detailed point 5 with examples and context - 2-3 sentences]
 """
 
-        api_key = get_groq_api_key()
-        
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "llama-3.3-70b-versatile",
-                "messages": [
-                    {"role": "system", "content": "You are an expert GD evaluator. Provide structured feedback in the exact format requested."},
-                    {"role": "user", "content": prompt}
-                ],
-                "max_tokens": 1200,
-                "temperature": 0.7
-            }
-        )
-        
-        response.raise_for_status()
-        result = response.json()
-        analysis = result["choices"][0]["message"]["content"].strip()
+        response_text = llm.generate_response(prompt)
+        analysis = response_text.strip()
         
         # Parse the response
         clarity_score = 7
@@ -300,7 +258,7 @@ TOPIC_POINTS:
 
 # Keep the old generate endpoint for backward compatibility
 @router.post("/generate")
-async def generate_gd_points(request: GDRequest):
+def generate_gd_points(request: GDRequest):
     """
     Generate For/Against points for a Group Discussion topic.
     Uses Groq or OpenAI (Stateless).

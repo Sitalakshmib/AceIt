@@ -227,11 +227,7 @@ const Interview = () => {
       return;
     }
 
-    if (!resumeText.trim()) {
-      alert('Please enter your resume summary');
-      return;
-    }
-
+    // Simplified start: No longer require manual summary/JD entry
     setIsLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/interview/start`, {
@@ -239,8 +235,8 @@ const Interview = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_id: user?.id || 'guest_user',
-          resume_text: resumeText,
-          jd_text: jdText || 'General Software Developer position',
+          resume_text: resumeText || 'Software Developer Candidate',
+          jd_text: jdText || 'General Software Engineering Role',
           interview_type: interviewType,
           topic: topic
         })
@@ -462,93 +458,64 @@ const Interview = () => {
               </div>
             </div>
 
-            {/* Configuration Panel (Only for Technical/HR) */}
-            {interviewType !== 'video-practice' && (
-              <div className="lg:col-span-3 bg-white rounded-[2.5rem] shadow-xl shadow-gray-100 border border-gray-100 p-8 md:p-10">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            {/* Configuration Panel (Technical) */}
+            {interviewType === 'technical' && (
+              <div className="lg:col-span-3 bg-white rounded-[2.5rem] shadow-xl shadow-gray-100 border border-gray-100 p-8 md:p-10 animate-in slide-in-from-bottom-4 duration-500">
+                <div className="max-w-2xl mx-auto space-y-8">
+                  <div className="text-center">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center justify-center">
+                      <Target className="h-5 w-5 mr-2 text-indigo-500" />
+                      Practice Mode Selection
+                    </h3>
 
-                  {/* Left: Topic & Mode */}
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                        <Target className="h-5 w-5 mr-2 text-indigo-500" />
-                        Interview Configuration
-                      </h3>
-
-                      {interviewType === 'technical' && (
-                        <div className="mb-6">
-                          <label className="block text-sm font-semibold text-gray-700 mb-2">Practice Mode</label>
-                          <div className="relative">
-                            <select
-                              value={topic}
-                              onChange={(e) => setTopic(e.target.value)}
-                              className="w-full p-4 pl-4 pr-10 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none font-medium text-gray-700"
-                            >
-                              <option value="realtime">Real-Time Adaptive (Context-Aware)</option>
-                              <option value="python">Python Practice</option>
-                              <option value="java">Java Practice</option>
-                              <option value="sql">SQL / Database Practice</option>
-                              <option value="dotnet">.NET Core Practice</option>
-                            </select>
-                            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
-                              <ArrowRight className="h-4 w-4 rotate-90" />
-                            </div>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-2 ml-1">
-                            {topic === 'realtime'
-                              ? 'Dynamic questions based on your resume and answers.'
-                              : 'Focused deep-dive into specific technical concepts.'}
-                          </p>
-                        </div>
-                      )}
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Job Description (Optional)</label>
-                        <textarea
-                          value={jdText}
-                          onChange={(e) => setJdText(e.target.value)}
-                          placeholder="Paste the job description here to tailor the interview..."
-                          className="w-full p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-sm"
-                          rows="4"
-                        />
+                    <div className="relative">
+                      <select
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        className="w-full p-4 pl-4 pr-10 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none appearance-none font-medium text-gray-700 text-center"
+                      >
+                        <option value="realtime">Real-Time Adaptive (Context-Aware)</option>
+                        <option value="python">Python Practice</option>
+                        <option value="java">Java Practice</option>
+                        <option value="sql">SQL / Database Practice</option>
+                        <option value="dotnet">.NET Core Practice</option>
+                      </select>
+                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
+                        <ArrowRight className="h-4 w-4 rotate-90" />
                       </div>
                     </div>
+                    <p className="text-xs text-center text-gray-500 mt-3">
+                      {topic === 'realtime'
+                        ? 'Starts with general questions and adapts based on your performance.'
+                        : `Focused session targeting ${topic} concepts and logic.`}
+                    </p>
                   </div>
 
-                  {/* Right: Resume Context */}
-                  <div className="flex flex-col h-full">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
-                      <BookOpen className="h-5 w-5 mr-2 text-indigo-500" />
-                      Candidate Context
-                    </h3>
-                    <div className="flex-1">
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Resume Summary *</label>
-                      <textarea
-                        value={resumeText}
-                        onChange={(e) => setResumeText(e.target.value)}
-                        placeholder="Paste a summary of your resume here (skills, experience, projects)..."
-                        className="w-full h-48 p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none text-sm"
-                      />
-                    </div>
+                  <div className="pt-4 flex justify-center">
+                    <button
+                      onClick={handleStart}
+                      disabled={isLoading}
+                      className="flex items-center bg-indigo-600 text-white px-10 py-4 rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transform hover:-translate-y-1"
+                    >
+                      {isLoading ? "Starting Session..." : "Start Technical Interview"}
+                      <Rocket className="ml-2 h-5 w-5" />
+                    </button>
                   </div>
                 </div>
+              </div>
+            )}
 
-                <div className="mt-10 pt-8 border-t border-gray-100 flex justify-end">
-                  <button
-                    onClick={handleStart}
-                    disabled={isLoading || !resumeText.trim()}
-                    className="flex items-center bg-indigo-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transform hover:-translate-y-1"
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center">Starting Session...</span>
-                    ) : (
-                      <>
-                        Start Interview Session
-                        <Rocket className="ml-2 h-5 w-5" />
-                      </>
-                    )}
-                  </button>
-                </div>
+            {/* Start Button for HR/Behavioral Mode */}
+            {interviewType === 'hr' && (
+              <div className="lg:col-span-3 flex justify-center mt-8 animate-in slide-in-from-bottom-4 duration-500">
+                <button
+                  onClick={handleStart}
+                  disabled={isLoading}
+                  className="flex items-center bg-purple-600 text-white px-12 py-5 rounded-2xl font-bold hover:bg-purple-700 disabled:opacity-50 transition-all shadow-lg shadow-purple-200 hover:shadow-purple-300 transform hover:-translate-y-1 text-lg"
+                >
+                  {isLoading ? "Starting Session..." : "Start Behavioral Interview"}
+                  <Briefcase className="ml-3 h-6 w-6" />
+                </button>
               </div>
             )}
             {/* Start Button for Video Presence Mode */}
@@ -1048,7 +1015,7 @@ const Interview = () => {
           {isLoading && (
             <div className="flex justify-start">
               <div className="flex items-end gap-2">
-                <div className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center">
+                <div className="h-8 w-8 rounded-full bg-indigo-600 text-white flex items-center justify-center flex-shrink-0">
                   <MicrochipIcon className="h-4 w-4" />
                 </div>
                 <div className="bg-white px-5 py-3 rounded-2xl rounded-bl-none shadow-sm border border-gray-100">

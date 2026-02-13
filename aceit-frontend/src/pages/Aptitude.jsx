@@ -48,9 +48,20 @@ const Aptitude = () => {
             <p className="text-lg text-gray-500 max-w-2xl mx-auto">
               Your personalized path to cracking aptitude tests. Practice with adaptive questions, simulate real exams, and track your AI-driven growth.
             </p>
+
+            {/* Analytics Entry Button */}
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={() => handleNavigate('analytics')}
+                className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-full hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm group"
+              >
+                <BarChart2 className="h-5 w-5 text-blue-600 group-hover:scale-110 transition-transform" />
+                View Performance Analytics
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Practice Card */}
             <div
               onClick={() => handleNavigate('practice')}
@@ -86,24 +97,6 @@ const Aptitude = () => {
                 </span>
               </div>
             </div>
-
-            {/* Analytics Card */}
-            <div
-              onClick={() => handleNavigate('analytics')}
-              className="group relative bg-white p-8 rounded-[2rem] shadow-xl shadow-gray-100 border border-gray-100 hover:shadow-2xl hover:scale-[1.02] transition-all cursor-pointer overflow-hidden"
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 rounded-bl-[4rem] opacity-50 transition-transform group-hover:scale-110" />
-              <div className="relative z-10">
-                <div className="h-16 w-16 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-8 shadow-sm group-hover:bg-green-600 group-hover:text-white transition-colors duration-300">
-                  <BarChart2 className="h-8 w-8" />
-                </div>
-                <h3 className="text-2xl font-bold text-gray-800 mb-3">Analytics</h3>
-                <p className="text-gray-500 mb-8 leading-relaxed">Deep dive into your performance metrics and get AI-driven growth recommendations.</p>
-                <span className="inline-flex items-center text-green-600 font-bold group-hover:translate-x-2 transition-transform">
-                  View Insights <Brain className="ml-2 h-4 w-4" />
-                </span>
-              </div>
-            </div>
           </div>
         </div>
       ) : (
@@ -130,8 +123,8 @@ const Aptitude = () => {
         </div>
       )}
 
-      {/* AI Coach Overlay - Only available on Intro page to prevent cheating in practice/tests */}
-      {activeView === 'intro' && <AICoachChat compact={true} />}
+      {/* AI Coach Overlay - Available on Intro and Practice pages. Hidden in mock-test to prevent cheating. */}
+      {(activeView === 'intro' || activeView === 'practice') && <AICoachChat compact={activeView === 'practice'} />}
     </div>
   );
 };

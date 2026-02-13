@@ -28,7 +28,7 @@ What would you like help with?`,
     const [hintLevel, setHintLevel] = useState(1);
     const messagesEndRef = useRef(null);
 
-    const API_BASE = 'http://localhost:8001/tutor';
+    const API_BASE = 'http://localhost:8000/tutor';
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -73,7 +73,7 @@ What would you like help with?`,
                 addMessage('assistant', '❌ Sorry, I couldn\'t generate a hint. Please try again.', 'error');
             }
         } catch (error) {
-            addMessage('assistant', `❌ Error: ${error.message}. Make sure OPENAI_API_KEY is set.`, 'error');
+            addMessage('assistant', `❌ Error: ${error.message}. Make sure the backend is running and AI keys are configured.`, 'error');
         } finally {
             setIsLoading(false);
         }

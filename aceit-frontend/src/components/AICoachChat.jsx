@@ -211,7 +211,7 @@ const AICoachChat = ({ summary, compact = false }) => {
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 z-50 hover:scale-110 transition-transform duration-300 group"
+                className="fixed bottom-6 right-6 z-[999] hover:scale-110 transition-transform duration-300 group"
                 title="Chat with AI Coach"
             >
                 <div className="relative">
@@ -235,7 +235,7 @@ const AICoachChat = ({ summary, compact = false }) => {
     }
 
     return (
-        <div className="fixed bottom-8 right-8 w-96 h-[500px] bg-white rounded-3xl shadow-2xl z-50 flex flex-col border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-10 fade-in">
+        <div className="fixed bottom-8 right-8 w-96 h-[500px] bg-white rounded-3xl shadow-2xl z-[999] flex flex-col border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-10 fade-in">
             {/* Hidden Audio Player */}
             <audio ref={audioPlayerRef} className="hidden" controls />
 

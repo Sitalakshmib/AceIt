@@ -59,7 +59,7 @@ class TutorResponse(BaseModel):
 
 # API Endpoints
 @router.post("/hint", response_model=TutorResponse)
-async def get_hint(request: HintRequest):
+def get_hint(request: HintRequest):
     """Get a progressive hint for the current problem"""
     try:
         # Validate hint level
@@ -86,7 +86,7 @@ async def get_hint(request: HintRequest):
 
 
 @router.post("/debug", response_model=TutorResponse)
-async def debug_code(request: DebugRequest):
+def debug_code(request: DebugRequest):
     """Analyze why code failed a test case"""
     try:
         response = ai_service.debug_code(
@@ -112,7 +112,7 @@ async def debug_code(request: DebugRequest):
 
 
 @router.post("/review", response_model=TutorResponse)
-async def review_code(request: ReviewRequest):
+def review_code(request: ReviewRequest):
     """Review submitted code for improvements"""
     try:
         response = ai_service.review_code(
@@ -136,7 +136,7 @@ async def review_code(request: ReviewRequest):
 
 
 @router.post("/explain", response_model=TutorResponse)
-async def explain_solution(request: ExplainRequest):
+def explain_solution(request: ExplainRequest):
     """Explain the optimal solution approach"""
     try:
         response = ai_service.explain_solution(
@@ -159,7 +159,7 @@ async def explain_solution(request: ExplainRequest):
 
 
 @router.post("/chat", response_model=TutorResponse)
-async def chat(request: ChatRequest):
+def chat(request: ChatRequest):
     """General Q&A about algorithms and concepts"""
     try:
         response = ai_service.chat(
@@ -181,11 +181,11 @@ async def chat(request: ChatRequest):
 
 
 @router.get("/status")
-async def get_status():
+def get_status():
     """Check if AI tutor service is available"""
     import os
-    has_key = bool(os.getenv("GEMINI_API_KEY_HELL"))
+    has_key = bool(os.getenv("GEMINI_API_KEY"))
     return {
         "available": has_key,
-        "message": "AI Tutor is ready!" if has_key else "GEMINI_API_KEY_HELL not configured"
+        "message": "AI Tutor is ready!" if has_key else "GEMINI_API_KEY not configured"
     }

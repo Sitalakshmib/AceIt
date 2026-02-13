@@ -15,44 +15,13 @@ try:
 except ImportError:
     OpenAI = None
 
+from services.llm_client import LLMClient
+
 class GDService:
     @staticmethod
-    def _get_client():
-        """
-        Returns (client, provider_name) or raises error.
-        Priority: Groq -> OpenAI
-        """
-        groq_key = os.getenv("GROQ_API_GD")
-        openai_key = os.getenv("OPENAI_API_KEY")
-
-        if groq_key and Groq:
-            return Groq(api_key=groq_key), "groq"
+    def generate_points(topic: str) -> Dict[str, Any]:
+        llm = LLMClient()
         
-        if openai_key and OpenAI:
-            return OpenAI(api_key=openai_key), "openai"
-            
-        return None, None
-
-    @staticmethod
-    def generate_points(topic: str) -> Dict[str, List[str]]:
-        client, provider = GDService._get_client()
-        
-        if not client:
-            # Get API keys for error reporting
-            groq_key = os.getenv("GROQ_API_GD")
-            openai_key = os.getenv("OPENAI_API_KEY")
-            
-            debug_info = []
-            if not groq_key: debug_info.append("Missing GROQ_API_GD")
-            if not openai_key: debug_info.append("Missing OPENAI_API_KEY")
-            if not Groq: debug_info.append("Groq lib not imported")
-            if not OpenAI: debug_info.append("OpenAI lib not imported")
-            
-            return {
-                "error": True,
-                "message": f"Configuration Error: {', '.join(debug_info)}"
-            }
-
         prompt = f"""
         You are a placement training assistant helping students prepare for Group Discussions (GD).
         
@@ -74,20 +43,17 @@ class GDService:
         """
 
         try:
-            model = "llama-3.3-70b-versatile" if provider == "groq" else "gpt-4o-mini"
+            response_text = llm.generate_response(prompt)
+            # LLMClient might return JSON string, let's try to parse it
+            import re
             
-            completion = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": "You are a helpful GD training assistant. Output JSON only."},
-                    {"role": "user", "content": prompt}
-                ],
-                response_format={"type": "json_object"},
-                temperature=0.7
-            )
-            
-            content = completion.choices[0].message.content
-            data = json.loads(content)
+            # Find JSON block if it exists
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            if json_match:
+                data = json.loads(json_match.group(0))
+            else:
+                # If no JSON block found, try parsing the whole thing
+                data = json.loads(response_text)
             
             return {
                 "status": "success",
@@ -96,7 +62,7 @@ class GDService:
             }
 
         except Exception as e:
-            print(f"[GD Error] {provider}: {str(e)}")
+            print(f"[GD Error]: {str(e)}")
             return {
                 "error": True,
                 "message": f"AI Generation Failed: {str(e)}"

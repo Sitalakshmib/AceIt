@@ -17,6 +17,7 @@ from models.aptitude_sql import UserAptitudeProgress
 from models.analytics_sql import QuestionAttempt
 from models.mock_test_sql import MockTestAttempt
 from models.user_coding_progress import UserCodingProgress
+from models.coding_problem_sql import CodingProblem
 from models.interview_models import InterviewSession
 
 
@@ -139,10 +140,17 @@ class UnifiedAnalyticsService:
             progress_records = db.query(UserCodingProgress)\
                 .filter(UserCodingProgress.user_id == user_id).all()
             
+            # Get total problems in database
+            total_db_problems = db.query(CodingProblem).count()
+            
             # Calculate stats
             total_attempted = len(progress_records)
             total_solved = sum(1 for p in progress_records if p.is_solved)
             success_rate = (total_solved / total_attempted * 100) if total_attempted > 0 else 0
+            
+            # Progress percentage based on total database problems
+            progress_percentage = (total_solved / total_db_problems * 100) if total_db_problems > 0 else 0
+            
             total_attempts = sum(p.attempts or 0 for p in progress_records)
             
             # Get last practiced date
@@ -155,7 +163,9 @@ class UnifiedAnalyticsService:
                 "sessions_count": total_attempted,
                 "problems_attempted": total_attempted,
                 "problems_solved": total_solved,
+                "total_problems": total_db_problems,
                 "success_rate": round(success_rate, 1),
+                "progress_percentage": round(progress_percentage, 1),
                 "total_attempts": total_attempts,
                 "last_practiced": last_practiced.isoformat() if last_practiced else None,
                 "has_data": total_attempted > 0
@@ -166,7 +176,9 @@ class UnifiedAnalyticsService:
                 "sessions_count": 0,
                 "problems_attempted": 0,
                 "problems_solved": 0,
+                "total_problems": 0,
                 "success_rate": 0,
+                "progress_percentage": 0,
                 "total_attempts": 0,
                 "last_practiced": None,
                 "has_data": False
@@ -360,6 +372,7 @@ class UnifiedAnalyticsService:
             "sessions": coding_data["sessions_count"],
             "performance_level": "Good" if coding_data["success_rate"] >= 60 else "Moderate" if coding_data["success_rate"] >= 40 else "Low",
             "performance_score": coding_data["success_rate"],
+            "progress_percentage": coding_data["progress_percentage"],
             "last_practiced": coding_data["last_practiced"],
             "trend": "up" if coding_data["success_rate"] > 50 else "stable",
             "has_data": coding_data["has_data"]

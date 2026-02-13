@@ -4,7 +4,8 @@ from database_postgres import get_db, SessionLocal
 from models.coding_problem_sql import CodingProblem
 from models.user_coding_progress import UserCodingProgress
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
+import pytz
 from services.leetcode import get_leetcode_problems, get_problem_details
 from services.code_executor import execute_code
 from services.local_problems import get_local_problems
@@ -14,6 +15,13 @@ router = APIRouter()
 
 # In-memory cache for problems to avoid hitting DB/API too often
 problem_cache = {}
+
+# Indian Standard Time timezone
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_ist_now():
+    """Get current time in IST"""
+    return datetime.now(IST)
 
 
 def get_db_problems(db: Session):
@@ -36,7 +44,7 @@ def get_db_problem_by_id(db: Session, problem_id: str):
 
 
 @router.get("/problems")
-async def get_coding_problems_route():
+def get_coding_problems_route():
     """
     Get all coding problems.
     Fetches from Neon PostgreSQL database, falls back to local_problems.py if DB is unavailable.
@@ -162,7 +170,7 @@ async def get_coding_problems_route():
 
 # Get a specific coding problem by ID
 @router.get("/problems/{problem_id}")
-async def get_coding_problem_route(problem_id: str):
+def get_coding_problem_route(problem_id: str):
     """
     Get a specific coding problem by its ID
     """
@@ -236,7 +244,7 @@ async def get_coding_problem_route(problem_id: str):
 
 # Submit code for evaluation
 @router.post("/submit")
-async def submit_code(payload: dict):
+def submit_code(payload: dict):
     """
     Execute code for a problem (HackerRank-style).
     Supports two actions:
@@ -438,7 +446,7 @@ async def submit_code(payload: dict):
 
 
 @router.get("/user-progress")
-async def get_user_progress(user_id: str = None):
+def get_user_progress(user_id: str = None):
     """
     Get user's coding progress including solved problems.
     Returns list of solved problem IDs.
@@ -476,7 +484,7 @@ async def get_user_progress(user_id: str = None):
 
 
 @router.get("/problems/{problem_id}/solution")
-async def get_solution(problem_id: str):
+def get_solution(problem_id: str):
     # Check cache first
     if problem_id in problem_cache:
         return {"solution": problem_cache[problem_id].get("solution", "No solution available")}
@@ -491,3 +499,251 @@ async def get_solution(problem_id: str):
         db.close()
     
     return {"solution": "No solution available for this problem"}
+
+
+# Bookmark endpoints
+@router.post("/bookmarks")
+def add_bookmark(payload: dict):
+    """Add a problem to user's bookmarks"""
+    from sqlalchemy import text
+    
+    user_id = payload.get("user_id")
+    problem_id = payload.get("problem_id")
+    
+    if not user_id or not problem_id:
+        raise HTTPException(status_code=400, detail="user_id and problem_id are required")
+    
+    db = SessionLocal()
+    try:
+        # Check if bookmark already exists
+        result = db.execute(
+            text("SELECT id FROM bookmarked_problems WHERE user_id = :user_id AND problem_id = :problem_id"),
+            {"user_id": user_id, "problem_id": problem_id}
+        )
+        existing = result.fetchone()
+        
+        if existing:
+            return {"message": "Already bookmarked", "bookmarked": True}
+        
+        # Add bookmark
+        db.execute(
+            text("INSERT INTO bookmarked_problems (user_id, problem_id) VALUES (:user_id, :problem_id)"),
+            {"user_id": user_id, "problem_id": problem_id}
+        )
+        db.commit()
+        
+        return {"message": "Bookmark added successfully", "bookmarked": True}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error adding bookmark: {str(e)}")
+    finally:
+        db.close()
+
+
+@router.delete("/bookmarks/{problem_id}")
+def remove_bookmark(problem_id: str, user_id: str):
+    """Remove a problem from user's bookmarks"""
+    from sqlalchemy import text
+    
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id is required")
+    
+    db = SessionLocal()
+    try:
+        result = db.execute(
+            text("DELETE FROM bookmarked_problems WHERE user_id = :user_id AND problem_id = :problem_id"),
+            {"user_id": user_id, "problem_id": problem_id}
+        )
+        db.commit()
+        
+        if result.rowcount == 0:
+            return {"message": "Bookmark not found", "bookmarked": False}
+        
+        return {"message": "Bookmark removed successfully", "bookmarked": False}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error removing bookmark: {str(e)}")
+    finally:
+        db.close()
+
+
+@router.get("/bookmarks")
+def get_bookmarks(user_id: str):
+    """Get all bookmarked problems for a user"""
+    from sqlalchemy import text
+    
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id is required")
+    
+    db = SessionLocal()
+    try:
+        result = db.execute(
+            text("SELECT problem_id, created_at FROM bookmarked_problems WHERE user_id = :user_id ORDER BY created_at DESC"),
+            {"user_id": user_id}
+        )
+        bookmarks = result.fetchall()
+        
+        bookmark_list = [
+            {
+                "problem_id": row[0],
+                "bookmarked_at": row[1].isoformat() if row[1] else None
+            }
+            for row in bookmarks
+        ]
+        
+        return {
+            "bookmarks": bookmark_list,
+            "total": len(bookmark_list)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching bookmarks: {str(e)}")
+    finally:
+        db.close()
+
+
+@router.get("/progress/stats")
+def get_progress_stats(user_id: str):
+    """
+    Get comprehensive progress statistics for a user.
+    Simplified version that actually works.
+    """
+    from sqlalchemy import text
+    from datetime import datetime, timedelta
+    from collections import defaultdict
+    
+    if not user_id:
+        raise HTTPException(status_code=400, detail="user_id is required")
+    
+    db = SessionLocal()
+    try:
+        # If user_id is an email, convert it to UUID
+        if '@' in user_id:
+            from models.user_sql import User
+            user = db.query(User).filter(User.email == user_id).first()
+            if user:
+                user_id = str(user.id)
+            else:
+                # Return empty stats for non-existent user
+                from models.coding_problem_sql import CodingProblem
+                total_in_db = db.query(CodingProblem).count()
+                return {
+                    "total_solved": 0,
+                    "total_problems": total_in_db,
+                    "completion_percentage": 0,
+                    "current_streak": 0,
+                    "max_streak": 0,
+                    "solved_today": 0,
+                    "category_stats": {},
+                    "difficulty_stats": {"Easy": {"solved": 0, "total": 0}, "Medium": {"solved": 0, "total": 0}, "Hard": {"solved": 0, "total": 0}},
+                    "recent_activity": [],
+                    "recent_solved": []
+                }
+        
+        # Get all problems from database
+        from models.coding_problem_sql import CodingProblem
+        db_problems = db.query(CodingProblem).all()
+        total_problems = len(db_problems)
+        
+        # Convert to dict format for processing
+        all_problems = []
+        for p in db_problems:
+            all_problems.append({
+                "id": p.id,
+                "title": p.title,
+                "difficulty": p.difficulty,
+                "tags": p.tags if isinstance(p.tags, list) else []
+            })
+        
+        # Get solved problems for this user
+        solved_query = text("SELECT problem_id, last_submission_date FROM user_coding_progress WHERE user_id = :user_id AND is_solved = true")
+        solved_result = db.execute(solved_query, {"user_id": user_id})
+        solved_rows = solved_result.fetchall()
+        
+        total_solved = len(solved_rows)
+        
+        # Simple stats
+        completion_percentage = round((total_solved / total_problems * 100), 1) if total_problems > 0 else 0
+        
+        # Count by difficulty and category
+        difficulty_stats = {
+            "Easy": {"solved": 0, "total": 0},
+            "Medium": {"solved": 0, "total": 0},
+            "Hard": {"solved": 0, "total": 0}
+        }
+        category_stats = defaultdict(lambda: {"solved": 0, "total": 0})
+        
+        solved_ids = set(row[0] for row in solved_rows)
+        
+        for problem in all_problems:
+            diff = problem.get("difficulty", "Medium")
+            if diff in difficulty_stats:
+                difficulty_stats[diff]["total"] += 1
+                if problem.get("id") in solved_ids:
+                    difficulty_stats[diff]["solved"] += 1
+            
+            for tag in problem.get("tags", []):
+                category_stats[tag]["total"] += 1
+                if problem.get("id") in solved_ids:
+                    category_stats[tag]["solved"] += 1
+        
+        # Calculate streak (simplified)
+        today = get_ist_now().date()
+        dates_with_solves = set()
+        for row in solved_rows:
+            if row[1]:
+                dates_with_solves.add(row[1].date())
+        
+        current_streak = 0
+        # Start counting streak if we solved today or yesterday
+        if today in dates_with_solves or (today - timedelta(days=1)) in dates_with_solves:
+            check_date = today
+            while check_date in dates_with_solves:
+                current_streak += 1
+                check_date = check_date - timedelta(days=1)
+        
+        max_streak = current_streak  # Simplified
+        
+        # Solved today - count of unique problems solved today
+        solved_today = len([d for d in dates_with_solves if d == today])
+        
+        # Recent activity (last 30 days)
+        thirty_days_ago = today - timedelta(days=30)
+        activity_data = {}
+        for row in solved_rows:
+            if row[1] and row[1].date() >= thirty_days_ago:
+                date_str = row[1].strftime('%Y-%m-%d')
+                activity_data[date_str] = activity_data.get(date_str, 0) + 1
+        
+        # Recent solved (last 10)
+        recent_solved = []
+        sorted_rows = sorted(solved_rows, key=lambda x: x[1] if x[1] else datetime.min, reverse=True)[:10]
+        for row in sorted_rows:
+            problem = next((p for p in all_problems if p.get("id") == row[0]), None)
+            if problem:
+                recent_solved.append({
+                    "problem_id": problem.get("id"),
+                    "title": problem.get("title", "Unknown"),
+                    "difficulty": problem.get("difficulty", "Medium"),
+                    "tags": problem.get("tags", []),
+                    "solved_at": row[1].isoformat() if row[1] else None
+                })
+        
+        return {
+            "total_solved": total_solved,
+            "total_problems": total_problems,
+            "completion_percentage": completion_percentage,
+            "current_streak": current_streak,
+            "max_streak": max_streak,
+            "solved_today": solved_today,
+            "category_stats": dict(category_stats),
+            "difficulty_stats": difficulty_stats,
+            "recent_activity": [{"date": date, "count": count} for date, count in sorted(activity_data.items())],
+            "recent_solved": recent_solved
+        }
+    except Exception as e:
+        import traceback
+        error_detail = f"Error fetching progress stats: {str(e)}\n{traceback.format_exc()}"
+        print(error_detail)
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
+    finally:
+        db.close()

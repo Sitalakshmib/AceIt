@@ -207,13 +207,23 @@ const Dashboard = () => {
               {/* Progress Section */}
               <div className="mt-auto">
                 <div className="flex justify-between items-end mb-2">
-                  <span className="text-sm font-bold text-gray-400">Success Rate</span>
-                  <span className="text-2xl font-black text-gray-900">{Math.round(module.performance_score)}%</span>
+                  <span className="text-sm font-bold text-gray-400">
+                    {module.module === 'Coding' ? 'Progress' : 'Success Rate'}
+                  </span>
+                  <span className="text-2xl font-black text-gray-900">
+                    {Math.round(module.module === 'Coding' && module.progress_percentage !== undefined
+                      ? module.progress_percentage
+                      : module.performance_score)}%
+                  </span>
                 </div>
                 <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className={`h-full bg-gradient-to-r ${getModuleColor(module.module)} transition-all duration-1000`}
-                    style={{ width: `${module.performance_score}%` }}
+                    style={{
+                      width: `${module.module === 'Coding' && module.progress_percentage !== undefined
+                        ? module.progress_percentage
+                        : module.performance_score}%`
+                    }}
                   ></div>
                 </div>
               </div>

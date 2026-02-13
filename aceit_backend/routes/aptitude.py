@@ -49,7 +49,7 @@ def format_questions(questions, include_explanations=False):
 # --- ENDPOINTS ---
 
 @router.get("/categories")
-async def get_categories(db: Session = Depends(get_db)):
+def get_categories(db: Session = Depends(get_db)):
     """Get available aptitude categories and topics"""
     # Group topics by category and sort them
     results = db.query(AptitudeQuestion.category, AptitudeQuestion.topic).distinct().all()
@@ -69,7 +69,7 @@ async def get_categories(db: Session = Depends(get_db)):
     return {"categories": sorted_categories}
 
 @router.get("/questions")
-async def get_aptitude_questions(
+def get_aptitude_questions(
     user_id: Optional[str] = None, 
     topic: Optional[str] = None, 
     category: Optional[str] = None,
@@ -117,7 +117,7 @@ async def get_aptitude_questions(
     return format_questions(selected_questions, include_explanations)
 
 @router.post("/submit")
-async def submit_answers(payload: dict, db: Session = Depends(get_db)):
+def submit_answers(payload: dict, db: Session = Depends(get_db)):
     """
     Submit user answers, calculate score, and update adaptive progress
     """
@@ -226,7 +226,7 @@ async def submit_answers(payload: dict, db: Session = Depends(get_db)):
         }
 
 @router.post("/detailed-results")
-async def get_detailed_results(payload: dict, db: Session = Depends(get_db)):
+def get_detailed_results(payload: dict, db: Session = Depends(get_db)):
     """Get detailed results with explanations for answered questions"""
     user_answers = payload.get("answers", {})
     
@@ -260,7 +260,7 @@ async def get_detailed_results(payload: dict, db: Session = Depends(get_db)):
     return results
 
 @router.get("/proficiency/{user_id}")
-async def get_user_proficiency(user_id: str, db: Session = Depends(get_db)):
+def get_user_proficiency(user_id: str, db: Session = Depends(get_db)):
     """Get user's progress via SQL"""
     progress_records = db.query(UserAptitudeProgress).filter(UserAptitudeProgress.user_id == user_id).all()
     
@@ -287,7 +287,7 @@ async def get_user_proficiency(user_id: str, db: Session = Depends(get_db)):
 # ========== PRACTICE MODE ENDPOINTS (IndiaBIX Style) ==========
 
 @router.get("/practice/next-question")
-async def get_next_practice_question(
+def get_next_practice_question(
     user_id: str,
     category: str,
     topic: Optional[str] = None,
@@ -318,7 +318,7 @@ async def get_next_practice_question(
 
 
 @router.post("/practice/submit-answer")
-async def submit_practice_answer(payload: dict, db: Session = Depends(get_db)):
+def submit_practice_answer(payload: dict, db: Session = Depends(get_db)):
     """
     Submit answer and get instant feedback with explanation.
     IndiaBIX style: Immediate correctness, explanation, and adaptive feedback.
@@ -351,7 +351,7 @@ async def submit_practice_answer(payload: dict, db: Session = Depends(get_db)):
 # ========== ELITE ADAPTIVE APTITUDE ENDPOINTS ==========
 
 @router.post("/elite/generate-question")
-async def generate_elite_question(payload: dict, db: Session = Depends(get_db)):
+def generate_elite_question(payload: dict, db: Session = Depends(get_db)):
     """
     [DISABLED] Generate AI-powered elite question based on user profile.
     This feature is currently disabled.
@@ -363,7 +363,7 @@ async def generate_elite_question(payload: dict, db: Session = Depends(get_db)):
 
 
 @router.get("/elite/adaptive-profile/{user_id}")
-async def get_adaptive_profile(
+def get_adaptive_profile(
     user_id: str,
     topic: Optional[str] = None,
     category: Optional[str] = None,
@@ -489,7 +489,7 @@ async def get_adaptive_profile(
 
 
 @router.post("/elite/practice-session")
-async def start_elite_practice_session(payload: dict, db: Session = Depends(get_db)):
+def start_elite_practice_session(payload: dict, db: Session = Depends(get_db)):
     """
     [DISABLED] Start an adaptive practice session with AI-generated questions.
     This feature is currently disabled.
@@ -501,7 +501,7 @@ async def start_elite_practice_session(payload: dict, db: Session = Depends(get_
 
 
 @router.get("/elite/error-analysis/{user_id}")
-async def get_error_analysis(
+def get_error_analysis(
     user_id: str,
     topic: Optional[str] = None,
     db: Session = Depends(get_db)

@@ -49,8 +49,8 @@ const GDPractice = () => {
     };
 
     const submitResponse = async () => {
-        if (!userResponse.trim()) {
-            alert('Please write your response before submitting.');
+        if (userResponse.trim().length < 20) {
+            alert('Your response is too short. Please write at least 20 characters.');
             return;
         }
 
@@ -69,10 +69,15 @@ const GDPractice = () => {
             });
 
             const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.detail || 'Failed to submit response');
+            }
+
             setFeedback(data);
         } catch (error) {
             console.error('Error submitting response:', error);
-            alert('Failed to submit response. Please try again.');
+            alert(`Error: ${error.message}`);
         } finally {
             setIsLoading(false);
         }

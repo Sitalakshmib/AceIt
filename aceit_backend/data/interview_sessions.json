@@ -3773,5 +3773,1002 @@
         "facial_composure": 20
       }
     }
+  },
+  "5ab3826e-fc02-491d-aa09-d5bd3933639b": {
+    "id": "5ab3826e-fc02-491d-aa09-d5bd3933639b",
+    "user_id": "test_user",
+    "resume": "",
+    "jd": "",
+    "interview_type": "technical",
+    "topic": "python",
+    "project_text": "",
+    "q_bank": [
+      "Data Types & Variables",
+      "Lists & Tuples",
+      "Dictionaries",
+      "Functions Basics",
+      "String Operations",
+      "Conditional Statements",
+      "Loops",
+      "List Comprehensions",
+      "Exception Handling",
+      "File Handling"
+    ],
+    "history": [],
+    "current_q_index": 0,
+    "answer_count": 0,
+    "status": "active",
+    "round": 1,
+    "weak_areas": [],
+    "start_time": "2026-02-13T19:12:54.730538",
+    "scores": [],
+    "qa_pairs": []
+  },
+  "31c0afe6-715a-4dc9-a95c-f76bbc4359e4": {
+    "id": "31c0afe6-715a-4dc9-a95c-f76bbc4359e4",
+    "user_id": "7f12936a-0622-4715-ad1a-e81e720ca132",
+    "resume": "AI",
+    "jd": "General Software Developer position",
+    "interview_type": "technical",
+    "topic": "realtime",
+    "project_text": "",
+    "q_bank": [
+      "Introduction and Background",
+      "AI Development Experience",
+      "Programming Languages",
+      "Data Structures and Algorithms",
+      "Machine Learning",
+      "Software Design Patterns",
+      "Cloud Computing",
+      "Database Management Systems",
+      "Web Development Frameworks",
+      "DevOps and Deployment"
+    ],
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hello! I am your AI Interviewer for this Technical interview. This will be an adaptive conversation based on your background and experience. Let's begin. Please introduce yourself and tell me about your technical background."
+      },
+      {
+        "role": "user",
+        "content": "My name is Karthika and I am doing B-tech in Artificial Intelligence and Data Science at Vishujyothi."
+      },
+      {
+        "role": "assistant",
+        "content": "What specific areas of Artificial Intelligence and Data Science interest you the most, and have you had a chance to work on any projects related to these fields during your time at Vishujyothi?"
+      }
+    ],
+    "current_q_index": 1,
+    "answer_count": 1,
+    "status": "active",
+    "round": 1,
+    "weak_areas": [],
+    "start_time": "2026-02-13T19:37:18.410858",
+    "scores": [
+      70,
+      70
+    ],
+    "qa_pairs": [
+      {
+        "question": "Hello! I am your AI Interviewer for this Technical interview. This will be an adaptive conversation based on your background and experience. Let's begin. Please introduce yourself and tell me about your technical background.",
+        "answer": "My name is Karthika and I am doing B-tech in Artificial Intelligence and Data Science at Vishujyothi.",
+        "score": 70
+      }
+    ],
+    "last_feedback": {
+      "score": 70,
+      "quality": "needs_work",
+      "feedback_text": "It's great that you've introduced yourself, Karthika, but could you please provide more details about your technical background and interests in Artificial Intelligence and Data Science?"
+    }
+  },
+  "0310760c-371a-4a33-8550-96247b7ec98f": {
+    "id": "0310760c-371a-4a33-8550-96247b7ec98f",
+    "user_id": "7f12936a-0622-4715-ad1a-e81e720ca132",
+    "resume": "AI",
+    "jd": "General Software Developer position",
+    "interview_type": "hr",
+    "topic": "realtime",
+    "project_text": "",
+    "q_bank": [
+      "Tell me about a time when you had to explain a complex idea to a non-technical person. How did you approach it?",
+      "Describe a situation where you worked with a team to achieve a common goal. What was your role, and how did you contribute?",
+      "How do you handle a situation where you disagree with a team member's approach to a project?",
+      "Tell me about a time when you took initiative on a project or task. What drove you to take the lead?",
+      "Describe a situation where you had to manage multiple tasks with tight deadlines. How did you prioritize and handle the pressure?",
+      "Tell me about a time when you received feedback on your work. How did you respond and what changes did you make?",
+      "Describe a situation where you had to adapt to a new process or workflow. How did you handle the transition?",
+      "What motivates you to continue learning and growing in your career?",
+      "Tell me about a time when you identified a weakness in your skills or knowledge. How did you address it?",
+      "Describe a situation where you had to make a difficult decision that involved balancing individual and team interests. What was the outcome?"
+    ],
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hello! I am your AI Interviewer for this HR/Behavioral interview. I have prepared 10 questions. Let's begin. Please introduce yourself."
+      }
+    ],
+    "current_q_index": 0,
+    "answer_count": 0,
+    "status": "active",
+    "round": 1,
+    "weak_areas": [],
+    "start_time": "2026-02-13T19:38:20.174954",
+    "scores": [],
+    "qa_pairs": []
+  },
+  "d1ae5cf3-91e3-4ff0-bee8-a65b3ee5f05a": {
+    "id": "d1ae5cf3-91e3-4ff0-bee8-a65b3ee5f05a",
+    "user_id": "7f12936a-0622-4715-ad1a-e81e720ca132",
+    "resume": "Software Developer Candidate",
+    "jd": "General Software Engineering Role",
+    "interview_type": "technical",
+    "topic": "realtime",
+    "project_text": "",
+    "q_bank": [
+      "Introduction and Background",
+      "Programming Languages",
+      "Data Structures and Algorithms",
+      "Object-Oriented Programming",
+      "Database Management Systems",
+      "Cloud Computing Platforms",
+      "Web Development Frameworks",
+      "Version Control Systems",
+      "Testing and Debugging Methodologies",
+      "DevOps and Continuous Integration"
+    ],
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hello! I am your AI Interviewer for this Technical interview. This will be an adaptive conversation based on your background and experience. Let's begin. Please introduce yourself and tell me about your technical background."
+      }
+    ],
+    "current_q_index": 0,
+    "answer_count": 0,
+    "status": "active",
+    "round": 1,
+    "weak_areas": [],
+    "start_time": "2026-02-13T19:51:09.175327",
+    "scores": [],
+    "qa_pairs": []
+  },
+  "14574129-439b-4b02-a544-dc0b31cc3e31": {
+    "id": "14574129-439b-4b02-a544-dc0b31cc3e31",
+    "user_id": "7f12936a-0622-4715-ad1a-e81e720ca132",
+    "resume": "Software Developer Candidate",
+    "jd": "General Software Engineering Role",
+    "interview_type": "hr",
+    "topic": "realtime",
+    "project_text": "",
+    "q_bank": [
+      "Tell me about a time when you had to communicate complex ideas to a non-technical team member. How did you approach the situation?",
+      "Describe a situation where you worked collaboratively with a team to achieve a common goal. What was your role, and how did you contribute?",
+      "Tell me about a time when you had to manage a conflict with a colleague. How did you resolve the issue?",
+      "Describe a situation where you took initiative on a project. What steps did you take, and what was the outcome?",
+      "Tell me about a time when you faced a tight deadline. How did you manage your time and prioritize tasks to meet the deadline?",
+      "Describe a situation where you received feedback on your work. How did you respond, and what changes did you make as a result?",
+      "Tell me about a time when you had to adapt to a significant change in a project or team. How did you handle the transition?",
+      "Describe a situation where you set and achieved a difficult goal. What motivated you, and what steps did you take to reach the goal?",
+      "Tell me about a time when you recognized a weakness in your skills or knowledge. What steps did you take to address the weakness?",
+      "How do you handle a situation where you disagree with a team member's idea or approach? Can you give me an example from your experience?"
+    ],
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hello! I am your AI Interviewer for this HR/Behavioral interview. I have prepared 10 questions. Let's begin. Please introduce yourself."
+      }
+    ],
+    "current_q_index": 0,
+    "answer_count": 0,
+    "status": "active",
+    "round": 1,
+    "weak_areas": [],
+    "start_time": "2026-02-13T19:53:43.510751",
+    "scores": [],
+    "qa_pairs": []
+  },
+  "session_1770992636300": {
+    "id": "session_1770992636300",
+    "user_id": "7f12936a-0622-4715-ad1a-e81e720ca132",
+    "interview_type": "video-practice",
+    "topic": "presence",
+    "start_time": "2026-02-13T19:54:17.599093",
+    "status": "completed",
+    "round": 1,
+    "scores": [
+      68.2,
+      42.4,
+      83.0
+    ],
+    "qa_pairs": [
+      {
+        "question": "Why do you want to work for this company?",
+        "timestamp": "2026-02-13T19:54:17.599072",
+        "metrics": {
+          "answerDuration": 7.78,
+          "eyeContactTime": 6.45,
+          "steadyHeadTime": 7.51,
+          "engagingExpressionTime": 6.21,
+          "hesitationTime": 0
+        },
+        "feedback": {
+          "presence_summary": "Overall Presence: Fair | Confidence: Moderate | Stress Indicators: Mild",
+          "visual_observations": [
+            "Metrics captured via frontend real-time analysis."
+          ],
+          "speech_observations": [
+            "Audio analysis unavailable - visual analysis only"
+          ],
+          "confidence_indicators": {
+            "confidence_level": "Moderate",
+            "stress_level": "Mild",
+            "presence_quality": "Fair"
+          },
+          "temporal_insights": [
+            ""
+          ],
+          "improvement_tips": [
+            "Continue practicing to maintain consistency"
+          ],
+          "faults_detected": [],
+          "strengths": [
+            "Real-time tracking enabled."
+          ]
+        },
+        "indicators": {
+          "confidence": "Moderate",
+          "stress": "Mild",
+          "presence_quality": "Fair",
+          "overall_score": 68.2,
+          "visual_score": 86.4,
+          "audio_score": 50,
+          "component_scores": {
+            "eye_contact": 82.9,
+            "head_stability": 96.5,
+            "audio_confidence": 50,
+            "facial_composure": 79.8
+          }
+        },
+        "hesitation_analysis": null
+      },
+      {
+        "question": "What motivates you?",
+        "timestamp": "2026-02-13T19:54:32.651103",
+        "metrics": {
+          "answerDuration": 6.07,
+          "eyeContactTime": 0.33,
+          "steadyHeadTime": 6.01,
+          "engagingExpressionTime": 0.0,
+          "hesitationTime": 0
+        },
+        "feedback": {
+          "presence_summary": "Overall Presence: Needs Improvement | Confidence: Low | Stress Indicators: Mild",
+          "visual_observations": [
+            "Metrics captured via frontend real-time analysis."
+          ],
+          "speech_observations": [
+            "Audio analysis unavailable - visual analysis only"
+          ],
+          "confidence_indicators": {
+            "confidence_level": "Low",
+            "stress_level": "Mild",
+            "presence_quality": "Needs Improvement"
+          },
+          "temporal_insights": [
+            ""
+          ],
+          "improvement_tips": [
+            "Continue practicing to maintain consistency"
+          ],
+          "faults_detected": [],
+          "strengths": [
+            "Real-time tracking enabled."
+          ]
+        },
+        "indicators": {
+          "confidence": "Low",
+          "stress": "Mild",
+          "presence_quality": "Needs Improvement",
+          "overall_score": 42.4,
+          "visual_score": 34.8,
+          "audio_score": 50,
+          "component_scores": {
+            "eye_contact": 20,
+            "head_stability": 99.0,
+            "audio_confidence": 50,
+            "facial_composure": 20
+          }
+        },
+        "hesitation_analysis": null
+      },
+      {
+        "question": "Describe a challenge you faced and how you handled it.",
+        "timestamp": "2026-02-13T19:54:45.966622",
+        "metrics": {
+          "answerDuration": 7.0,
+          "eyeContactTime": 7.0,
+          "steadyHeadTime": 7.0,
+          "engagingExpressionTime": 3.0,
+          "hesitationTime": 0
+        },
+        "feedback": {
+          "presence_summary": "Overall Presence: Fair | Confidence: Good | Stress Indicators: Moderate",
+          "visual_observations": [
+            "Metrics captured via frontend real-time analysis."
+          ],
+          "speech_observations": [
+            {
+              "observation": "Pauses detected",
+              "explanation": "Word repetitions can disrupt the natural flow of your answer."
+            },
+            {
+              "observation": "Detected 1 speech repetition (e.g., 'i,... i,')",
+              "explanation": ""
+            }
+          ],
+          "confidence_indicators": {
+            "confidence_level": "Good",
+            "stress_level": "Moderate",
+            "presence_quality": "Fair"
+          },
+          "temporal_insights": [
+            ""
+          ],
+          "improvement_tips": [
+            "Continue practicing to maintain consistency",
+            "Try varying your pace to add more dynamism"
+          ],
+          "faults_detected": [],
+          "strengths": [
+            "Real-time tracking enabled.",
+            "Recorded response duration: 6.96 seconds",
+            "Speech was mostly smooth with minimal fillers",
+            "Speech flow was natural and well-organized"
+          ]
+        },
+        "indicators": {
+          "confidence": "Good",
+          "stress": "Moderate",
+          "presence_quality": "Fair",
+          "overall_score": 83.0,
+          "visual_score": 81.0,
+          "audio_score": 85,
+          "component_scores": {
+            "eye_contact": 100,
+            "head_stability": 100,
+            "audio_confidence": 85,
+            "facial_composure": 42.9
+          }
+        },
+        "hesitation_analysis": {
+          "transcript": "I think I don't know. I, I, I don't know.",
+          "filler_words": {
+            "total_count": 0,
+            "conversational_count": 0,
+            "prolonged_vowels_count": 0,
+            "filler_words_detected": [],
+            "conversational_fillers_detected": [],
+            "filler_frequency_percent": 0.0,
+            "word_count": 10,
+            "details": {},
+            "conv_details": {},
+            "clusters": {
+              "count": 0,
+              "max_size": 0,
+              "level": "none",
+              "interpretation": "No filler clustering detected"
+            },
+            "distribution": {
+              "pattern": "none",
+              "concentration": "none",
+              "start_count": 0,
+              "middle_count": 0,
+              "end_count": 0,
+              "interpretation": "No significant filler pattern detected"
+            }
+          },
+          "pauses": {
+            "long_pauses_count": 0,
+            "thinking_pauses": 0,
+            "nervous_pauses": 0,
+            "average_pause_duration": 0.0,
+            "pause_pattern": "insufficient_data"
+          },
+          "speech_continuity": {
+            "continuity_score": 90,
+            "flow_pattern": "smooth",
+            "repetitions_count": 1,
+            "repetition_samples": [
+              "i,"
+            ],
+            "avg_words_per_phrase": 10.0,
+            "interpretation": "Flow appears natural"
+          },
+          "temporal_progression": {
+            "trend": "stable",
+            "progression": "Speech quality remained consistent throughout",
+            "total_duration": 6.96,
+            "start_quality": "good",
+            "end_quality": "good",
+            "filler_density": {
+              "start": 0.0,
+              "middle": 0.0,
+              "end": 0.0
+            },
+            "interpretation": "Speech quality remained consistent throughout"
+          },
+          "confidence_indicator": "Good",
+          "stress_indicator": "Mild",
+          "confidence_score": 85,
+          "feedback": {
+            "summary": "Presence Analysis: 10 words | 0 fillers | 0 pauses",
+            "speech_delivery": {
+              "observations": [
+                "Pauses detected",
+                "Detected 1 speech repetition (e.g., 'i,... i,')"
+              ],
+              "explanations": [
+                "Word repetitions can disrupt the natural flow of your answer."
+              ]
+            },
+            "patterns_detected": [],
+            "improvement_suggestions": [
+              "Continue practicing to maintain consistency",
+              "Try varying your pace to add more dynamism"
+            ],
+            "faults_detected": [],
+            "positive_notes": [
+              "Recorded response duration: 6.96 seconds",
+              "Speech was mostly smooth with minimal fillers",
+              "Speech flow was natural and well-organized"
+            ]
+          },
+          "all_fillers_detected": []
+        }
+      }
+    ],
+    "feedback": {
+      "presence_summary": "Overall Presence: Fair | Confidence: Good | Stress Indicators: Moderate",
+      "visual_observations": [
+        "Metrics captured via frontend real-time analysis."
+      ],
+      "speech_observations": [
+        {
+          "observation": "Pauses detected",
+          "explanation": "Word repetitions can disrupt the natural flow of your answer."
+        },
+        {
+          "observation": "Detected 1 speech repetition (e.g., 'i,... i,')",
+          "explanation": ""
+        }
+      ],
+      "confidence_indicators": {
+        "confidence_level": "Good",
+        "stress_level": "Moderate",
+        "presence_quality": "Fair"
+      },
+      "temporal_insights": [
+        ""
+      ],
+      "improvement_tips": [
+        "Continue practicing to maintain consistency",
+        "Try varying your pace to add more dynamism"
+      ],
+      "faults_detected": [],
+      "strengths": [
+        "Real-time tracking enabled.",
+        "Recorded response duration: 6.96 seconds",
+        "Speech was mostly smooth with minimal fillers",
+        "Speech flow was natural and well-organized"
+      ]
+    },
+    "indicators": {
+      "confidence": "Good",
+      "stress": "Moderate",
+      "presence_quality": "Fair",
+      "overall_score": 83.0,
+      "visual_score": 81.0,
+      "audio_score": 85,
+      "component_scores": {
+        "eye_contact": 100,
+        "head_stability": 100,
+        "audio_confidence": 85,
+        "facial_composure": 42.9
+      }
+    }
+  },
+  "session_1770992704019": {
+    "id": "session_1770992704019",
+    "user_id": "7f12936a-0622-4715-ad1a-e81e720ca132",
+    "interview_type": "video-practice",
+    "topic": "presence",
+    "start_time": "2026-02-13T19:55:27.577804",
+    "status": "completed",
+    "round": 1,
+    "scores": [
+      53.2,
+      47.7,
+      76.2
+    ],
+    "qa_pairs": [
+      {
+        "question": "What is your greatest weakness?",
+        "timestamp": "2026-02-13T19:55:27.577791",
+        "metrics": {
+          "answerDuration": 14.2,
+          "eyeContactTime": 13.88,
+          "steadyHeadTime": 14.2,
+          "engagingExpressionTime": 0.22,
+          "hesitationTime": 0
+        },
+        "feedback": {
+          "presence_summary": "Overall Presence: Needs Improvement | Confidence: Moderate | Stress Indicators: Noticeable",
+          "visual_observations": [
+            "Metrics captured via frontend real-time analysis."
+          ],
+          "speech_observations": [
+            {
+              "observation": "Speech analysis (19 words): Detected 2 filler words (uh, um)",
+              "explanation": "Specific hesitation sounds used: uh, um. Minimizing these will improve clarity."
+            },
+            {
+              "observation": "Pauses detected",
+              "explanation": ""
+            }
+          ],
+          "confidence_indicators": {
+            "confidence_level": "Moderate",
+            "stress_level": "Noticeable",
+            "presence_quality": "Needs Improvement"
+          },
+          "temporal_insights": [
+            "",
+            "Speech became smoother as you progressed"
+          ],
+          "improvement_tips": [
+            "Continue practicing to maintain consistency"
+          ],
+          "faults_detected": [],
+          "strengths": [
+            "Real-time tracking enabled.",
+            "Recorded response duration: 14.16 seconds",
+            "Speech was mostly smooth with minimal fillers",
+            "Speech flow was natural and well-organized",
+            "Showed clear improvement as you progressed"
+          ]
+        },
+        "indicators": {
+          "confidence": "Moderate",
+          "stress": "Noticeable",
+          "presence_quality": "Needs Improvement",
+          "overall_score": 53.2,
+          "visual_score": 66.4,
+          "audio_score": 40,
+          "component_scores": {
+            "eye_contact": 97.7,
+            "head_stability": 100,
+            "audio_confidence": 40,
+            "facial_composure": 20
+          }
+        },
+        "hesitation_analysis": {
+          "transcript": "My greatest weakness is my, um, uh, my, my hobby, or my character state for things to be perfect.",
+          "filler_words": {
+            "total_count": 2,
+            "conversational_count": 0,
+            "prolonged_vowels_count": 0,
+            "filler_words_detected": [
+              "uh",
+              "um"
+            ],
+            "conversational_fillers_detected": [],
+            "filler_frequency_percent": 10.53,
+            "word_count": 19,
+            "details": {
+              "uh": 1,
+              "um": 1
+            },
+            "conv_details": {},
+            "clusters": {
+              "count": 1,
+              "max_size": 2,
+              "level": "occasional",
+              "interpretation": "Filler word clusters often indicate nervous or uncertain speech"
+            },
+            "distribution": {
+              "pattern": "front_loaded",
+              "concentration": "start",
+              "start_count": 4,
+              "middle_count": 0,
+              "end_count": 0,
+              "interpretation": "Most fillers occurred at the start, suggesting initial nervousness that decreased"
+            }
+          },
+          "pauses": {
+            "long_pauses_count": 0,
+            "thinking_pauses": 0,
+            "nervous_pauses": 0,
+            "average_pause_duration": 0.0,
+            "pause_pattern": "insufficient_data"
+          },
+          "speech_continuity": {
+            "continuity_score": 100,
+            "flow_pattern": "smooth",
+            "repetitions_count": 0,
+            "repetition_samples": [],
+            "avg_words_per_phrase": 19.0,
+            "interpretation": "Flow appears natural"
+          },
+          "temporal_progression": {
+            "trend": "improving",
+            "progression": "Speech became smoother as you progressed",
+            "total_duration": 14.16,
+            "start_quality": "needs_improvement",
+            "end_quality": "good",
+            "filler_density": {
+              "start": 4.0,
+              "middle": 0.0,
+              "end": 0.0
+            },
+            "interpretation": "Speech became smoother as you progressed"
+          },
+          "confidence_indicator": "Low",
+          "stress_indicator": "Noticeable",
+          "confidence_score": 40,
+          "feedback": {
+            "summary": "Presence Analysis: 19 words | 2 fillers | 0 pauses",
+            "speech_delivery": {
+              "observations": [
+                "Speech analysis (19 words): Detected 2 filler words (uh, um)",
+                "Pauses detected"
+              ],
+              "explanations": [
+                "Specific hesitation sounds used: uh, um. Minimizing these will improve clarity."
+              ]
+            },
+            "patterns_detected": [
+              "Speech became smoother as you progressed"
+            ],
+            "improvement_suggestions": [],
+            "faults_detected": [],
+            "positive_notes": [
+              "Recorded response duration: 14.16 seconds",
+              "Speech was mostly smooth with minimal fillers",
+              "Speech flow was natural and well-organized",
+              "Showed clear improvement as you progressed"
+            ]
+          },
+          "all_fillers_detected": [
+            "um",
+            "uh"
+          ]
+        }
+      },
+      {
+        "question": "Tell me about a time you worked in a team.",
+        "timestamp": "2026-02-13T19:55:40.338577",
+        "metrics": {
+          "answerDuration": 7.76,
+          "eyeContactTime": 7.26,
+          "steadyHeadTime": 7.76,
+          "engagingExpressionTime": 0.22,
+          "hesitationTime": 0
+        },
+        "feedback": {
+          "presence_summary": "Overall Presence: Needs Improvement | Confidence: Low | Stress Indicators: Mild",
+          "visual_observations": [
+            "Metrics captured via frontend real-time analysis."
+          ],
+          "speech_observations": [
+            {
+              "observation": "Several long pauses (1) may indicate uncertainty or difficulty formulating thoughts",
+              "explanation": "1 long pause may indicate difficulty formulating thoughts"
+            }
+          ],
+          "confidence_indicators": {
+            "confidence_level": "Low",
+            "stress_level": "Mild",
+            "presence_quality": "Needs Improvement"
+          },
+          "temporal_insights": [
+            ""
+          ],
+          "improvement_tips": [
+            "Continue practicing to maintain consistency"
+          ],
+          "faults_detected": [],
+          "strengths": [
+            "Real-time tracking enabled.",
+            "Recorded response duration: 7.74 seconds",
+            "Speech was mostly smooth with minimal fillers",
+            "Speech flow was natural and well-organized"
+          ]
+        },
+        "indicators": {
+          "confidence": "Low",
+          "stress": "Mild",
+          "presence_quality": "Needs Improvement",
+          "overall_score": 47.7,
+          "visual_score": 65.5,
+          "audio_score": 30,
+          "component_scores": {
+            "eye_contact": 93.6,
+            "head_stability": 100,
+            "audio_confidence": 30,
+            "facial_composure": 20
+          }
+        },
+        "hesitation_analysis": {
+          "transcript": "The best example for it is my... Group project.",
+          "filler_words": {
+            "total_count": 0,
+            "conversational_count": 0,
+            "prolonged_vowels_count": 0,
+            "filler_words_detected": [],
+            "conversational_fillers_detected": [],
+            "filler_frequency_percent": 0.0,
+            "word_count": 9,
+            "details": {},
+            "conv_details": {},
+            "clusters": {
+              "count": 0,
+              "max_size": 0,
+              "level": "none",
+              "interpretation": "No filler clustering detected"
+            },
+            "distribution": {
+              "pattern": "none",
+              "concentration": "none",
+              "start_count": 0,
+              "middle_count": 0,
+              "end_count": 0,
+              "interpretation": "No significant filler pattern detected"
+            }
+          },
+          "pauses": {
+            "long_pauses_count": 1,
+            "thinking_pauses": 0,
+            "nervous_pauses": 1,
+            "average_pause_duration": 2.5,
+            "max_pause_duration": 2.5,
+            "pause_pattern": "frequent_uncertainty",
+            "total_pauses": 1,
+            "total_pause_duration": 2.5,
+            "interpretation": "Several long pauses (1) may indicate uncertainty or difficulty formulating thoughts"
+          },
+          "speech_continuity": {
+            "continuity_score": 95.0,
+            "flow_pattern": "smooth",
+            "repetitions_count": 0,
+            "repetition_samples": [],
+            "avg_words_per_phrase": 4.5,
+            "interpretation": "Flow appears natural"
+          },
+          "temporal_progression": {
+            "trend": "stable",
+            "progression": "Speech quality remained consistent throughout",
+            "total_duration": 7.74,
+            "start_quality": "good",
+            "end_quality": "good",
+            "filler_density": {
+              "start": 0.0,
+              "middle": 0.0,
+              "end": 0.0
+            },
+            "interpretation": "Speech quality remained consistent throughout"
+          },
+          "confidence_indicator": "Low",
+          "stress_indicator": "Noticeable",
+          "confidence_score": 30,
+          "feedback": {
+            "summary": "Presence Analysis: 9 words | 0 fillers | 1 pauses",
+            "speech_delivery": {
+              "observations": [
+                "Several long pauses (1) may indicate uncertainty or difficulty formulating thoughts"
+              ],
+              "explanations": [
+                "1 long pause may indicate difficulty formulating thoughts"
+              ]
+            },
+            "patterns_detected": [],
+            "improvement_suggestions": [],
+            "faults_detected": [],
+            "positive_notes": [
+              "Recorded response duration: 7.74 seconds",
+              "Speech was mostly smooth with minimal fillers",
+              "Speech flow was natural and well-organized"
+            ]
+          },
+          "all_fillers_detected": []
+        }
+      },
+      {
+        "question": "How do you handle conflict with a coworker?",
+        "timestamp": "2026-02-13T19:56:00.202875",
+        "metrics": {
+          "answerDuration": 15.52,
+          "eyeContactTime": 15.52,
+          "steadyHeadTime": 15.52,
+          "engagingExpressionTime": 0.33,
+          "hesitationTime": 0
+        },
+        "feedback": {
+          "presence_summary": "Overall Presence: Strong | Confidence: Good | Stress Indicators: Mild",
+          "visual_observations": [
+            "Metrics captured via frontend real-time analysis."
+          ],
+          "speech_observations": [
+            {
+              "observation": "Pauses detected",
+              "explanation": ""
+            }
+          ],
+          "confidence_indicators": {
+            "confidence_level": "Good",
+            "stress_level": "Mild",
+            "presence_quality": "Strong"
+          },
+          "temporal_insights": [
+            "",
+            "Speech became smoother as you progressed"
+          ],
+          "improvement_tips": [
+            "Continue practicing to maintain consistency",
+            "Try varying your pace to add more dynamism"
+          ],
+          "faults_detected": [],
+          "strengths": [
+            "Real-time tracking enabled.",
+            "Recorded response duration: 15.48 seconds",
+            "Speech was mostly smooth with minimal fillers",
+            "Speech flow was natural and well-organized",
+            "Showed clear improvement as you progressed"
+          ]
+        },
+        "indicators": {
+          "confidence": "Good",
+          "stress": "Mild",
+          "presence_quality": "Strong",
+          "overall_score": 76.2,
+          "visual_score": 67.4,
+          "audio_score": 85,
+          "component_scores": {
+            "eye_contact": 100,
+            "head_stability": 100,
+            "audio_confidence": 85,
+            "facial_composure": 20
+          }
+        },
+        "hesitation_analysis": {
+          "transcript": "Umm, for handling a conflict, usually I will take down the problem and communicate with the teammates.",
+          "filler_words": {
+            "total_count": 0,
+            "conversational_count": 0,
+            "prolonged_vowels_count": 0,
+            "filler_words_detected": [],
+            "conversational_fillers_detected": [],
+            "filler_frequency_percent": 0.0,
+            "word_count": 17,
+            "details": {},
+            "conv_details": {},
+            "clusters": {
+              "count": 1,
+              "max_size": 2,
+              "level": "occasional",
+              "interpretation": "Filler word clusters often indicate nervous or uncertain speech"
+            },
+            "distribution": {
+              "pattern": "front_loaded",
+              "concentration": "start",
+              "start_count": 4,
+              "middle_count": 0,
+              "end_count": 0,
+              "interpretation": "Most fillers occurred at the start, suggesting initial nervousness that decreased"
+            }
+          },
+          "pauses": {
+            "long_pauses_count": 0,
+            "thinking_pauses": 0,
+            "nervous_pauses": 0,
+            "average_pause_duration": 0.0,
+            "pause_pattern": "insufficient_data"
+          },
+          "speech_continuity": {
+            "continuity_score": 100,
+            "flow_pattern": "smooth",
+            "repetitions_count": 0,
+            "repetition_samples": [],
+            "avg_words_per_phrase": 17.0,
+            "interpretation": "Flow appears natural"
+          },
+          "temporal_progression": {
+            "trend": "improving",
+            "progression": "Speech became smoother as you progressed",
+            "total_duration": 15.48,
+            "start_quality": "needs_improvement",
+            "end_quality": "good",
+            "filler_density": {
+              "start": 4.0,
+              "middle": 0.0,
+              "end": 0.0
+            },
+            "interpretation": "Speech became smoother as you progressed"
+          },
+          "confidence_indicator": "Good",
+          "stress_indicator": "Mild",
+          "confidence_score": 85,
+          "feedback": {
+            "summary": "Presence Analysis: 17 words | 0 fillers | 0 pauses",
+            "speech_delivery": {
+              "observations": [
+                "Pauses detected"
+              ],
+              "explanations": []
+            },
+            "patterns_detected": [
+              "Speech became smoother as you progressed"
+            ],
+            "improvement_suggestions": [
+              "Continue practicing to maintain consistency",
+              "Try varying your pace to add more dynamism"
+            ],
+            "faults_detected": [],
+            "positive_notes": [
+              "Recorded response duration: 15.48 seconds",
+              "Speech was mostly smooth with minimal fillers",
+              "Speech flow was natural and well-organized",
+              "Showed clear improvement as you progressed"
+            ]
+          },
+          "all_fillers_detected": []
+        }
+      }
+    ],
+    "feedback": {
+      "presence_summary": "Overall Presence: Strong | Confidence: Good | Stress Indicators: Mild",
+      "visual_observations": [
+        "Metrics captured via frontend real-time analysis."
+      ],
+      "speech_observations": [
+        {
+          "observation": "Pauses detected",
+          "explanation": ""
+        }
+      ],
+      "confidence_indicators": {
+        "confidence_level": "Good",
+        "stress_level": "Mild",
+        "presence_quality": "Strong"
+      },
+      "temporal_insights": [
+        "",
+        "Speech became smoother as you progressed"
+      ],
+      "improvement_tips": [
+        "Continue practicing to maintain consistency",
+        "Try varying your pace to add more dynamism"
+      ],
+      "faults_detected": [],
+      "strengths": [
+        "Real-time tracking enabled.",
+        "Recorded response duration: 15.48 seconds",
+        "Speech was mostly smooth with minimal fillers",
+        "Speech flow was natural and well-organized",
+        "Showed clear improvement as you progressed"
+      ]
+    },
+    "indicators": {
+      "confidence": "Good",
+      "stress": "Mild",
+      "presence_quality": "Strong",
+      "overall_score": 76.2,
+      "visual_score": 67.4,
+      "audio_score": 85,
+      "component_scores": {
+        "eye_contact": 100,
+        "head_stability": 100,
+        "audio_confidence": 85,
+        "facial_composure": 20
+      }
+    }
   }
 }
