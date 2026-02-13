@@ -286,7 +286,7 @@ const VideoPractice = ({ userId, onBack, onComplete }) => {
                 const formData = new FormData();
                 formData.append('audio_file', audioBlob, 'answer.webm');
                 formData.append('session_id', sessionUuid);
-                formData.append('user_id', userId || 'anonymous');
+                formData.append('user_id', userId || 'guest_user');
 
                 // Add Visual Metrics
                 formData.append('eye_contact_time', (stats.focusedDuration / 1000).toFixed(2));

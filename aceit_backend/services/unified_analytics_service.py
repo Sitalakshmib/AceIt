@@ -181,7 +181,6 @@ class UnifiedAnalyticsService:
         """
         try:
             # Import the singleton interviewer engine
-            from services.sim_voice_interviewer import SimVoiceInterviewer
             from routes.interview import get_engine
             
             engine = get_engine()
@@ -198,25 +197,36 @@ class UnifiedAnalyticsService:
                     "technical_sessions": 0,
                     "hr_sessions": 0,
                     "video_presence_sessions": 0,
+                    "technical_score": 0,
+                    "hr_score": 0,
+                    "video_presence_score": 0,
                     "average_score": 0,
                     "last_practiced": None,
                     "weak_areas": [],
                     "has_data": False
                 }
             
+            # Helper for category averaging
+            def _get_cat_avg(sessions):
+                scores = []
+                for s in sessions:
+                    s_scores = s.get("scores", [])
+                    if s_scores:
+                        scores.extend(s_scores)
+                    elif "indicators" in s: # Video presence fallback
+                        scores.append(s["indicators"].get("overall_score", 0))
+                return round(sum(scores) / len(scores), 1) if scores else 0
+
             # Categorize by interview type
             technical_sessions = [s for s in user_sessions if s.get("interview_type") == "technical"]
             hr_sessions = [s for s in user_sessions if s.get("interview_type") == "hr"]
             video_sessions = [s for s in user_sessions if s.get("interview_type") == "video-practice"]
             
-            # Calculate average score across all sessions
-            all_scores = []
-            for session in user_sessions:
-                scores = session.get("scores", [])
-                if scores:
-                    all_scores.extend(scores)
-            
-            average_score = round(sum(all_scores) / len(all_scores), 1) if all_scores else 0
+            # Calculate average scores
+            tech_score = _get_cat_avg(technical_sessions)
+            hr_score = _get_cat_avg(hr_sessions)
+            video_score = _get_cat_avg(video_sessions)
+            overall_score = _get_cat_avg(user_sessions)
             
             # Collect weak areas
             weak_areas = []
@@ -224,29 +234,44 @@ class UnifiedAnalyticsService:
                 weak_areas.extend(session.get("weak_areas", []))
             weak_areas = list(set(weak_areas))[:3]  # Unique, top 3
             
-            # Get last practiced date
+            # Get last practiced date (Safely handle both string and datetime)
             last_practiced = None
             start_times = [s.get("start_time") for s in user_sessions if s.get("start_time")]
             if start_times:
-                last_practiced = max(start_times).isoformat()
+                latest = max(start_times)
+                # Ensure it's returned as an ISO string
+                if isinstance(latest, str):
+                    last_practiced = latest
+                elif hasattr(latest, "isoformat"):
+                    last_practiced = latest.isoformat()
+                else:
+                    last_practiced = str(latest)
             
             return {
                 "total_sessions": len(user_sessions),
                 "technical_sessions": len(technical_sessions),
                 "hr_sessions": len(hr_sessions),
                 "video_presence_sessions": len(video_sessions),
-                "average_score": average_score,
+                "technical_score": tech_score,
+                "hr_score": hr_score,
+                "video_presence_score": video_score,
+                "average_score": overall_score,
                 "last_practiced": last_practiced,
                 "weak_areas": weak_areas,
                 "has_data": len(user_sessions) > 0
             }
         except Exception as e:
             print(f"[UnifiedAnalytics] Error getting interview summary: {e}")
+            import traceback
+            traceback.print_exc()
             return {
                 "total_sessions": 0,
                 "technical_sessions": 0,
                 "hr_sessions": 0,
                 "video_presence_sessions": 0,
+                "technical_score": 0,
+                "hr_score": 0,
+                "video_presence_score": 0,
                 "average_score": 0,
                 "last_practiced": None,
                 "weak_areas": [],
@@ -273,15 +298,34 @@ class UnifiedAnalyticsService:
         if interview_data["has_data"]:
             modules_used.append("Interviews")
         
-        # Calculate practice streak (simplified - based on recent activity)
-        # For now, we'll use a placeholder. A proper implementation would check daily activity.
+        # Calculate practice streak (based on last practiced dates)
+        # Check if user practiced today or yesterday
+        today = datetime.now().date()
+        yesterday = today - timedelta(days=1)
+        
+        last_dates = []
+        if aptitude_data["last_practiced"]:
+            last_dates.append(datetime.fromisoformat(aptitude_data["last_practiced"]).date())
+        if coding_data["last_practiced"]:
+            last_dates.append(datetime.fromisoformat(coding_data["last_practiced"]).date())
+        if interview_data["last_practiced"]:
+            last_dates.append(datetime.fromisoformat(interview_data["last_practiced"]).date())
+            
         practice_streak = 0
+        if last_dates:
+            most_recent = max(last_dates)
+            if most_recent == today or most_recent == yesterday:
+                # Basic streak: if practiced recently, show at least 1
+                # In a real system, we'd count continuous days from DB
+                practice_streak = 1 if most_recent == yesterday else 2
         
         # Overall improvement trend (simplified)
         trend = "stable"
         if aptitude_data["has_data"] and aptitude_data["accuracy"] > 70:
             trend = "improving"
         elif coding_data["has_data"] and coding_data["success_rate"] > 60:
+            trend = "improving"
+        elif interview_data["has_data"] and interview_data["average_score"] > 70:
             trend = "improving"
         
         return {
@@ -325,10 +369,10 @@ class UnifiedAnalyticsService:
         modules.append({
             "module": "Technical Interview",
             "sessions": interview_data["technical_sessions"],
-            "performance_level": "Good" if interview_data["average_score"] >= 70 else "Moderate" if interview_data["average_score"] >= 50 else "Low",
-            "performance_score": interview_data["average_score"],
+            "performance_level": "Good" if interview_data["technical_score"] >= 70 else "Moderate" if interview_data["technical_score"] >= 50 else "Low",
+            "performance_score": interview_data["technical_score"],
             "last_practiced": interview_data["last_practiced"],
-            "trend": "up" if interview_data["average_score"] > 60 else "stable",
+            "trend": "up" if interview_data["technical_score"] > 60 else "stable",
             "has_data": interview_data["technical_sessions"] > 0
         })
         
@@ -336,34 +380,22 @@ class UnifiedAnalyticsService:
         modules.append({
             "module": "HR Interview",
             "sessions": interview_data["hr_sessions"],
-            "performance_level": "Good" if interview_data["average_score"] >= 70 else "Moderate" if interview_data["average_score"] >= 50 else "Low",
-            "performance_score": interview_data["average_score"],
+            "performance_level": "Good" if interview_data["hr_score"] >= 70 else "Moderate" if interview_data["hr_score"] >= 50 else "Low",
+            "performance_score": interview_data["hr_score"],
             "last_practiced": interview_data["last_practiced"],
             "trend": "stable",
             "has_data": interview_data["hr_sessions"] > 0
         })
         
         # Video Presence
-        video_score = interview_data.get("average_score", 0) if interview_data["video_presence_sessions"] > 0 else 0
         modules.append({
             "module": "Video Presence",
             "sessions": interview_data["video_presence_sessions"],
-            "performance_level": "Good" if video_score >= 70 else "Moderate" if video_score >= 50 else "Low",
-            "performance_score": video_score,
+            "performance_level": "Good" if interview_data["video_presence_score"] >= 70 else "Moderate" if interview_data["video_presence_score"] >= 50 else "Low",
+            "performance_score": interview_data["video_presence_score"],
             "last_practiced": interview_data["last_practiced"],
             "trend": "stable",
             "has_data": interview_data["video_presence_sessions"] > 0
-        })
-        
-        # GD Practice (placeholder - not tracked in current system)
-        modules.append({
-            "module": "GD Practice",
-            "sessions": 0,
-            "performance_level": "N/A",
-            "performance_score": 0,
-            "last_practiced": None,
-            "trend": "stable",
-            "has_data": False
         })
         
         return modules
@@ -510,12 +542,49 @@ class UnifiedAnalyticsService:
                         "score": 100 if submission.is_solved else 0
                     })
             
-            # Sort by date (most recent first)
-            activities.sort(key=lambda x: x["date"] if x["date"] else "", reverse=True)
+            # Get recent interview sessions
+            from routes.interview import get_engine
+            engine = get_engine()
+            user_sessions = [
+                session for session in engine.sessions.values()
+                if session.get("user_id") == user_id
+            ]
+            
+            # Sort by start time desc
+            user_sessions.sort(key=lambda x: str(x.get("start_time", "")), reverse=True)
+            
+            for session in user_sessions[:5]:
+                start_time = session.get("start_time")
+                if start_time:
+                    # Convert to ISO string if it's a datetime object
+                    date_str = start_time.isoformat() if hasattr(start_time, "isoformat") else str(start_time)
+                    
+                    scores = session.get("scores", [])
+                    avg_score = round(sum(scores) / len(scores), 1) if scores else 0
+                    
+                    category = session.get("interview_type", "Interview")
+                    # Map category names for UI
+                    display_category = {
+                        "technical": "Technical Interview",
+                        "hr": "HR Interview",
+                        "video-practice": "Video Presence"
+                    }.get(category, category.title())
+                    
+                    activities.append({
+                        "module": display_category,
+                        "type": "Practice Session",
+                        "date": date_str,
+                        "result": f"{avg_score}% score",
+                        "score": avg_score
+                    })
+            
+            # Sort all activities by date (most recent first)
+            # Need to handle potential None dates
+            activities.sort(key=lambda x: x["date"] if x.get("date") else "", reverse=True)
             
             # Return top 10 most recent
             return activities[:10]
             
         except Exception as e:
             print(f"[UnifiedAnalytics] Error getting recent activity: {e}")
-            return []
+            return activities # Return what we have so far

@@ -238,7 +238,7 @@ const Interview = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: user?.id || 'demo_user',
+          user_id: user?.id || 'guest_user',
           resume_text: resumeText,
           jd_text: jdText || 'General Software Developer position',
           interview_type: interviewType,
@@ -356,7 +356,7 @@ const Interview = () => {
   if (view === 'video-practice') {
     return (
       <VideoPractice
-        userId={user?.id}
+        userId={user?.id || 'guest_user'}
         onBack={() => setView('setup')}
         onComplete={() => setView('completed')}
       />
