@@ -271,7 +271,7 @@ const VideoPractice = ({ userId, onBack, onComplete }) => {
         // Percentages for scoring
         const eyeMetric = (stats.focusedDuration / totalTimeMs) * 100;
         const stabilityMetric = (stats.steadyDuration / totalTimeMs) * 100;
-        const tensionMetric = (stats.neutralDuration / totalTimeMs) * 100; // Legacy mapping (Neutral isn't "Tense" but logic reused)
+        const warmthMetric = (stats.warmDuration / totalTimeMs) * 100;
 
         // ... (audio logic remains same) ...
 
@@ -328,29 +328,31 @@ const VideoPractice = ({ userId, onBack, onComplete }) => {
             voiceMetric = 30;
         }
 
-        // Composite Score logic
-        let confidence = (
-            (eyeMetric * 0.4) +
-            (stabilityMetric * 0.3) +
-            (voiceMetric * 0.3)
-            // Warmth is bonus, treated separately
-        );
+        // Separate Audio and Video Scores
+        // Visual Presence Score = Average of Eye Contact, Stability, and Warmth
+        let visualScore = (eyeMetric + stabilityMetric + warmthMetric) / 3;
 
-        // Bonus for warmth
-        if (stats.warmDuration > (totalTimeMs * 0.1)) confidence += 5;
+        // Speech Clarity Score = voiceMetric (from backend)
+        let audioScore = voiceMetric;
 
         // Fallback for zero data
-        if (totalTimeMs < 2000) confidence = Math.max(confidence, 40); // Too short
-        confidence = Math.min(Math.max(confidence, 30), 100);
+        if (totalTimeMs < 2000) {
+            visualScore = Math.max(visualScore, 40);
+            audioScore = Math.max(audioScore, 40);
+        }
+
+        visualScore = Math.min(Math.max(visualScore, 20), 100);
+        audioScore = Math.min(Math.max(audioScore, 20), 100);
 
         const reportItem = {
             question: questions[currentQuestionIndex],
             eyeMetric: Math.round(eyeMetric),
             stabilityMetric: Math.round(stabilityMetric),
-            confidence: Math.round(confidence),
-            voiceFeedback: vFeedback,
-            visualFeedback: generateFeedback(eyeMetric, stabilityMetric, stats.warmDuration, totalTimeMs),
+            warmthMetric: Math.round(warmthMetric),
+            visualScore: Math.round(visualScore),
+            audioScore: Math.round(audioScore),
             hesitationData: hesitationData,
+            visualFeedback: generateVisualFeedback(eyeMetric, stabilityMetric, stats.warmDuration, totalTimeMs),
             timeStats: {
                 total: totalSeconds,
                 focused: focusedSeconds,
@@ -365,7 +367,7 @@ const VideoPractice = ({ userId, onBack, onComplete }) => {
         setSessionReport(prev => [...prev, reportItem]);
     };
 
-    const generateFeedback = (eye, stability, warmTime, totalTime) => {
+    const generateVisualFeedback = (eye, stability, warmTime, totalTime) => {
         const feedback = {
             summary: "Professional presence analysis complete.",
             details: [],
@@ -637,23 +639,47 @@ const VideoPractice = ({ userId, onBack, onComplete }) => {
                                             <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Question {idx + 1}</span>
                                             <h3 className="text-xl font-bold text-gray-800 mt-1">{item.question}</h3>
                                         </div>
-                                        <div className="flex items-center gap-3">
-                                            {/* Composite Score Circle */}
-                                            <div className="relative w-16 h-16">
-                                                <svg viewBox="0 0 100 100" className="transform -rotate-90">
-                                                    <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="8" />
-                                                    <circle
-                                                        cx="50" cy="50" r="40"
-                                                        fill="none"
-                                                        stroke={item.confidence > 75 ? '#10b981' : item.confidence > 50 ? '#3b82f6' : '#f59e0b'}
-                                                        strokeWidth="8"
-                                                        strokeDasharray={`${item.confidence * 2.51} 251`}
-                                                        strokeLinecap="round"
-                                                    />
-                                                </svg>
-                                                <div className="absolute inset-0 flex items-center justify-center">
-                                                    <span className="text-sm font-bold text-gray-700">{Math.round(item.confidence)}</span>
+                                        <div className="flex items-center gap-6">
+                                            {/* Visual Score Circle */}
+                                            <div className="flex flex-col items-center">
+                                                <div className="relative w-16 h-16">
+                                                    <svg viewBox="0 0 100 100" className="transform -rotate-90">
+                                                        <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+                                                        <circle
+                                                            cx="50" cy="50" r="40"
+                                                            fill="none"
+                                                            stroke={item.visualScore > 75 ? '#10b981' : item.visualScore > 50 ? '#3b82f6' : '#f59e0b'}
+                                                            strokeWidth="8"
+                                                            strokeDasharray={`${item.visualScore * 2.51} 251`}
+                                                            strokeLinecap="round"
+                                                        />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <span className="text-sm font-bold text-gray-700">{item.visualScore}</span>
+                                                    </div>
                                                 </div>
+                                                <span className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Visual</span>
+                                            </div>
+
+                                            {/* Audio Score Circle */}
+                                            <div className="flex flex-col items-center">
+                                                <div className="relative w-16 h-16">
+                                                    <svg viewBox="0 0 100 100" className="transform -rotate-90">
+                                                        <circle cx="50" cy="50" r="40" fill="none" stroke="#e5e7eb" strokeWidth="8" />
+                                                        <circle
+                                                            cx="50" cy="50" r="40"
+                                                            fill="none"
+                                                            stroke={item.audioScore > 75 ? '#10b981' : item.audioScore > 50 ? '#3b82f6' : '#f59e0b'}
+                                                            strokeWidth="8"
+                                                            strokeDasharray={`${item.audioScore * 2.51} 251`}
+                                                            strokeLinecap="round"
+                                                        />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <span className="text-sm font-bold text-gray-700">{item.audioScore}</span>
+                                                    </div>
+                                                </div>
+                                                <span className="text-[10px] font-bold text-gray-400 mt-1 uppercase">Audio</span>
                                             </div>
                                         </div>
                                     </div>
@@ -667,9 +693,14 @@ const VideoPractice = ({ userId, onBack, onComplete }) => {
 
                                             {hesitation ? (
                                                 <div className="space-y-4">
+                                                    {feedback.summary && (
+                                                        <div className="text-[11px] font-bold text-gray-400 uppercase tracking-tighter mb-1">
+                                                            Analysis Summary: {feedback.summary}
+                                                        </div>
+                                                    )}
                                                     {/* Observations */}
                                                     {feedback.speech_delivery?.observations?.map((obs, i) => (
-                                                        <div key={i} className="bg-orange-50 p-3 rounded-lg border border-orange-100">
+                                                        <div key={i} className="bg-orange-50 p-3 rounded-lg border border-orange-100 mb-2">
                                                             <div className="flex items-start gap-2">
                                                                 <span className="text-orange-500 mt-0.5"></span>
                                                                 <div>
@@ -684,13 +715,46 @@ const VideoPractice = ({ userId, onBack, onComplete }) => {
                                                         </div>
                                                     ))}
 
+                                                    {/* NEW: Faults/Improvement Areas */}
+                                                    {feedback.faults_detected?.length > 0 && (
+                                                        <div className="bg-red-50 p-3 rounded-lg border border-red-100 mb-2">
+                                                            <p className="text-xs font-bold text-red-800 uppercase mb-1">Areas for Improvement</p>
+                                                            <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                                                                {feedback.faults_detected.map((fault, i) => (
+                                                                    <li key={i} className="leading-tight">{fault}</li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+
                                                     {/* Positive Notes */}
                                                     {feedback.positive_notes?.length > 0 && (
-                                                        <div className="bg-green-50 p-3 rounded-lg border border-green-100">
+                                                        <div className="bg-green-50 p-3 rounded-lg border border-green-100 mb-4">
                                                             <p className="text-xs font-bold text-green-800 uppercase mb-1">Strengths</p>
                                                             <ul className="list-disc list-inside text-sm text-gray-700">
                                                                 {feedback.positive_notes.map((note, i) => <li key={i}>{note}</li>)}
                                                             </ul>
+                                                        </div>
+                                                    )}
+
+                                                    {/* NEW: Speech Transcript Transparency */}
+                                                    {hesitation.transcript && (
+                                                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                                            <p className="text-[10px] font-bold text-gray-400 uppercase mb-2 tracking-widest">Speech Transcript (AI Heard)</p>
+                                                            <p className="text-sm text-gray-600 italic leading-relaxed">
+                                                                "{hesitation.transcript.split(' ').map((word, i) => {
+                                                                    const cleanWord = word.toLowerCase().replace(/[.,!?;:]/g, '');
+                                                                    const isFiller = hesitation.all_fillers_detected?.some(f => cleanWord === f.toLowerCase());
+                                                                    return (
+                                                                        <span key={i} className={isFiller ? "text-orange-600 font-bold bg-orange-100 px-0.5 rounded" : ""}>
+                                                                            {word}{' '}
+                                                                        </span>
+                                                                    );
+                                                                })}"
+                                                            </p>
+                                                            {hesitation.all_fillers_detected?.length === 0 && (
+                                                                <p className="text-[10px] text-green-600 font-bold mt-2">✓ No hesitation sounds detected in this answer.</p>
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
@@ -789,10 +853,7 @@ const VideoPractice = ({ userId, onBack, onComplete }) => {
                         })}
                     </div>
 
-                    <div className="mt-8 flex justify-center gap-4">
-                        <button onClick={startSession} className="px-8 py-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-lg transition-all transform hover:scale-105">
-                            Practice Again
-                        </button>
+                    <div className="mt-8 flex justify-center">
                         <button onClick={onBack} className="px-8 py-4 border-2 border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all">
                             Back to Menu
                         </button>

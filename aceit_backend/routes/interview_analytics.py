@@ -316,6 +316,28 @@ def _aggregate_video_presence(sessions: List[Dict]) -> Dict:
     all_improvements = []
     
     for s in sessions:
+        # Check qa_pairs first (more granular)
+        qa_pairs = s.get("qa_pairs", [])
+        if qa_pairs:
+            for qa in qa_pairs:
+                qa_feedback = qa.get("feedback", {})
+                if qa_feedback:
+                    # strengths
+                    for st in qa_feedback.get("strengths", []):
+                        if isinstance(st, dict):
+                            all_strengths.append(st.get("observation", str(st)))
+                        else:
+                            all_strengths.append(str(st))
+                            
+                    # improvements/tips
+                    for imp in qa_feedback.get("improvement_tips", []):
+                        all_improvements.append(str(imp))
+                        
+                    # faults
+                    for f in qa_feedback.get("faults_detected", []):
+                        all_improvements.append(str(f))
+                    
+        # Also check top-level session feedback (for completeness/legacy)
         feedback = s.get("feedback", {})
         if feedback:
             # Extract from newer structure (visual_metrics etc)
@@ -326,14 +348,26 @@ def _aggregate_video_presence(sessions: List[Dict]) -> Dict:
                 obs = visual.get("observations", [])
                 if obs: all_strengths.extend(obs)
             
-            # Legacy/Alternate structure fallback
-            all_strengths.extend(feedback.get("visual_observations", []))
-            all_strengths.extend(feedback.get("speech_observations", []))
-            all_improvements.extend(feedback.get("improvement_tips", []))
-            
-    # Deduplicate and limit
-    unique_strengths = list(set(all_strengths))[:3]
-    unique_improvements = list(set(all_improvements))[:3]
+                # Legacy/Alternate structure fallback
+                all_strengths.extend(feedback.get("visual_observations", []))
+                
+                # speech_observations are dicts: {"observation": "...", "explanation": "..."}
+                speech_obs = feedback.get("speech_observations", [])
+                for obs in speech_obs:
+                    if isinstance(obs, dict):
+                        all_strengths.append(obs.get("observation", ""))
+                    else:
+                        all_strengths.append(str(obs))
+                        
+                all_improvements.extend(feedback.get("improvement_tips", []))
+                all_improvements.extend(feedback.get("faults_detected", []))
+                
+        # Deduplicate and limit (ensure all items are strings first)
+        all_strengths = [str(s) for s in all_strengths if s]
+        all_improvements = [str(i) for i in all_improvements if i]
+        
+        unique_strengths = list(set(all_strengths))[:3]
+        unique_improvements = list(set(all_improvements))[:3]
     
     return {
         "sessions_count": len(sessions),
@@ -441,36 +475,10 @@ def _calculate_skill_insights(
         "has_data": hr_metrics["has_data"]
     })
     
-    # Confidence & Presence (from video presence)
+    # Video Presence (Aggregated)
     video_score = video_metrics.get("average_score", 0) if video_metrics["has_data"] else 0
     skills.append({
-        "skill": "Confidence & Presence",
-        "score": video_score,
-        "level": "Good" if video_score >= 70 else "Moderate" if video_score >= 50 else "Low",
-        "has_data": video_metrics["has_data"]
-    })
-    
-    # Speech Clarity (derived from HR and video presence)
-    speech_score = 0
-    speech_data_count = 0
-    if hr_metrics["has_data"]:
-        speech_score += hr_score
-        speech_data_count += 1
-    if video_metrics["has_data"]:
-        speech_score += video_score
-        speech_data_count += 1
-    
-    speech_avg = round(speech_score / speech_data_count, 1) if speech_data_count > 0 else 0
-    skills.append({
-        "skill": "Speech Clarity",
-        "score": speech_avg,
-        "level": "Good" if speech_avg >= 70 else "Moderate" if speech_avg >= 50 else "Low",
-        "has_data": speech_data_count > 0
-    })
-    
-    # Eye Contact & Body Language (from video presence)
-    skills.append({
-        "skill": "Eye Contact & Body Language",
+        "skill": "Video Presence",
         "score": video_score,
         "level": "Good" if video_score >= 70 else "Moderate" if video_score >= 50 else "Low",
         "has_data": video_metrics["has_data"]

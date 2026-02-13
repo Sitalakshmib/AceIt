@@ -411,10 +411,10 @@ class UnifiedAnalyticsService:
             "level": "Good" if communication_score >= 70 else "Moderate" if communication_score >= 50 else "Low"
         })
         
-        # Confidence / Presence (Video Presence)
+        # Video Presence (Aggregated)
         confidence_score = interview_data.get("average_score", 0) if interview_data["video_presence_sessions"] > 0 else 0
         skills.append({
-            "skill": "Confidence & Presence",
+            "skill": "Video Presence",
             "score": round(confidence_score, 1),
             "level": "Good" if confidence_score >= 70 else "Moderate" if confidence_score >= 50 else "Low"
         })

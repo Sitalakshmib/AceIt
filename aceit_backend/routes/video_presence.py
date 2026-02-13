@@ -231,7 +231,10 @@ async def analyze_video_presence_answer(
                     "overall_score": indicators.get("overall_score")
                 },
                 "feedback": feedback
-            }
+            },
+            # Explicitly include hesitation_analysis at top level for VideoPractice.jsx compatibility
+            "hesitation_analysis": audio_analysis.get("hesitation_analysis") if audio_analysis.get("status") == "success" else None,
+            "transcript": audio_analysis.get("transcript", "") if audio_analysis.get("status") == "success" else ""
         }
         
         logger.info("[SUCCESS] Multi-modal analysis complete")
@@ -254,7 +257,10 @@ async def analyze_video_presence_answer(
                     "steadyHeadTime": steady_head_time,
                     "engagingExpressionTime": warm_expression_time,
                     "hesitationTime": audio_analysis.get("hesitation_analysis", {}).get("total_hesitation_duration", 0) if audio_analysis.get("status") == "success" else 0
-                }
+                },
+                "feedback": feedback,
+                "indicators": indicators,
+                "hesitation_analysis": audio_analysis.get("hesitation_analysis") if audio_analysis.get("status") == "success" else None
             }
             
             # Update existing session or create new one
@@ -267,6 +273,9 @@ async def analyze_video_presence_answer(
                 if "scores" not in video_session:
                     video_session["scores"] = []
                 video_session["scores"].append(indicators.get("overall_score", 0))
+                # Update top-level feedback to reflect the latest state
+                video_session["feedback"] = feedback
+                video_session["indicators"] = indicators
             else:
                 video_session = {
                     "id": session_uuid,

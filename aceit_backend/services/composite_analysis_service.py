@@ -68,17 +68,20 @@ def calculate_composite_indicators(
         hesitation = audio_analysis.get("hesitation_analysis", {})
         audio_confidence_score = hesitation.get("confidence_score", 50)
     
-    # Calculate composite score (weighted average)
-    # Eye Contact: 30%, Head Stability: 20%, Audio: 30%, Facial Composure: 20%
-    composite_score = (
-        eye_contact_score * 0.30 +
-        head_stability_score * 0.20 +
-        audio_confidence_score * 0.30 +
-        facial_composure_score * 0.20
-    )
+    # Calculate separate scores
+    # Visual Score: Simple average of Eye, Head, and Facial Composure (as requested)
+    visual_score = (eye_contact_score + head_stability_score + facial_composure_score) / 3
+    
+    # Audio Score: From hesitation analysis
+    audio_score = audio_confidence_score
+    
+    # Combined Overall Score (for legacy/summary use)
+    composite_score = (visual_score + audio_score) / 2
     
     # Apply "never zero" logic - minimum score of 30
     composite_score = max(composite_score, 30)
+    visual_score = max(visual_score, 30)
+    audio_score = max(audio_score, 30)
     
     # Map to qualitative confidence indicator
     if composite_score >= 75:
@@ -102,11 +105,14 @@ def calculate_composite_indicators(
     if audio_analysis and audio_analysis.get("status") == "success":
         hesitation = audio_analysis.get("hesitation_analysis", {})
         filler_freq = hesitation.get("filler_words", {}).get("filler_frequency_percent", 0)
-        nervous_pauses = hesitation.get("pauses", {}).get("nervous_pauses", 0)
+        pauses = hesitation.get("pauses", {})
+        nervous_pauses = pauses.get("nervous_pauses", 0)
+        long_pauses = pauses.get("long_pauses_count", 0)
+        repetitions = hesitation.get("speech_continuity", {}).get("repetitions_count", 0)
         
-        if filler_freq > 8 or nervous_pauses > 3:
+        if filler_freq > 8 or nervous_pauses > 3 or long_pauses > 4 or repetitions > 3:
             stress_signals.append("high_hesitation")
-        elif filler_freq > 4 or nervous_pauses > 1:
+        elif filler_freq > 4 or nervous_pauses > 1 or long_pauses > 1 or repetitions > 0:
             stress_signals.append("moderate_hesitation")
     
     # Map to qualitative stress indicator
@@ -129,12 +135,14 @@ def calculate_composite_indicators(
         "confidence": confidence,
         "stress": stress,
         "presence_quality": presence_quality,
-        "overall_score": round(composite_score, 2),  # Internal metric only
+        "overall_score": round(composite_score, 1),
+        "visual_score": round(visual_score, 1),
+        "audio_score": round(audio_score, 1),
         "component_scores": {  # For debugging/logging
-            "eye_contact": round(eye_contact_score, 2),
-            "head_stability": round(head_stability_score, 2),
-            "audio_confidence": round(audio_confidence_score, 2),
-            "facial_composure": round(facial_composure_score, 2)
+            "eye_contact": round(eye_contact_score, 1),
+            "head_stability": round(head_stability_score, 1),
+            "audio_confidence": round(audio_confidence_score, 1),
+            "facial_composure": round(facial_composure_score, 1)
         }
     }
 
@@ -162,6 +170,7 @@ def generate_composite_feedback(
         "confidence_indicators": {},
         "temporal_insights": [],
         "improvement_tips": [],
+        "faults_detected": [],
         "strengths": []
     }
     
@@ -220,6 +229,10 @@ def generate_composite_feedback(
         # Add audio strengths
         positive_notes = audio_feedback.get("positive_notes", [])
         feedback["strengths"].extend(positive_notes)
+        
+        # NEW: Add audio faults
+        faults_detected = audio_feedback.get("faults_detected", [])
+        feedback["faults_detected"].extend(faults_detected)
     
     # Combine improvement tips from both modalities
     improvement_tips = []
