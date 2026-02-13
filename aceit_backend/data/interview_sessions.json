@@ -3324,5 +3324,454 @@
         "facial_composure": 20
       }
     }
+  },
+  "session_1770969953946": {
+    "id": "session_1770969953946",
+    "user_id": "7f12936a-0622-4715-ad1a-e81e720ca132",
+    "interview_type": "video-practice",
+    "topic": "presence",
+    "start_time": "2026-02-13T13:36:04.498209",
+    "status": "completed",
+    "round": 1,
+    "scores": [
+      60.8,
+      62.3,
+      60.8
+    ],
+    "qa_pairs": [
+      {
+        "question": "Tell me about a time you worked in a team.",
+        "timestamp": "2026-02-13T13:36:04.498189",
+        "metrics": {
+          "answerDuration": 0.84,
+          "eyeContactTime": 0.84,
+          "steadyHeadTime": 0.84,
+          "engagingExpressionTime": 0.0,
+          "hesitationTime": 0
+        },
+        "feedback": {
+          "presence_summary": "Overall Presence: Fair | Confidence: Moderate | Stress Indicators: Mild",
+          "visual_observations": [
+            "Metrics captured via frontend real-time analysis."
+          ],
+          "speech_observations": [
+            {
+              "observation": "Pauses detected",
+              "explanation": ""
+            }
+          ],
+          "confidence_indicators": {
+            "confidence_level": "Moderate",
+            "stress_level": "Mild",
+            "presence_quality": "Fair"
+          },
+          "temporal_insights": [
+            ""
+          ],
+          "improvement_tips": [
+            "Continue practicing to maintain consistency"
+          ],
+          "faults_detected": [],
+          "strengths": [
+            "Real-time tracking enabled.",
+            "Recorded response duration: 0.84 seconds",
+            "Speech was mostly smooth with minimal fillers"
+          ]
+        },
+        "indicators": {
+          "confidence": "Moderate",
+          "stress": "Mild",
+          "presence_quality": "Fair",
+          "overall_score": 60.8,
+          "visual_score": 66.7,
+          "audio_score": 55,
+          "component_scores": {
+            "eye_contact": 100,
+            "head_stability": 100,
+            "audio_confidence": 55,
+            "facial_composure": 20
+          }
+        },
+        "hesitation_analysis": {
+          "transcript": "Thank you.",
+          "filler_words": {
+            "total_count": 0,
+            "conversational_count": 0,
+            "prolonged_vowels_count": 0,
+            "filler_words_detected": [],
+            "conversational_fillers_detected": [],
+            "filler_frequency_percent": 0.0,
+            "word_count": 2,
+            "details": {},
+            "conv_details": {},
+            "clusters": {
+              "count": 0,
+              "max_size": 0,
+              "level": "none",
+              "interpretation": "No filler clustering detected"
+            },
+            "distribution": {
+              "pattern": "none",
+              "concentration": "none",
+              "start_count": 0,
+              "middle_count": 0,
+              "end_count": 0,
+              "interpretation": "No significant filler pattern detected"
+            }
+          },
+          "pauses": {
+            "long_pauses_count": 0,
+            "thinking_pauses": 0,
+            "nervous_pauses": 0,
+            "average_pause_duration": 0.0,
+            "pause_pattern": "insufficient_data"
+          },
+          "speech_continuity": {
+            "continuity_score": 70.0,
+            "flow_pattern": "moderate",
+            "repetitions_count": 0,
+            "repetition_samples": [],
+            "avg_words_per_phrase": 2.0,
+            "interpretation": "Flow appears natural"
+          },
+          "temporal_progression": {
+            "trend": "stable",
+            "progression": "Speech quality remained consistent throughout",
+            "total_duration": 0.84,
+            "start_quality": "good",
+            "end_quality": "good",
+            "filler_density": {
+              "start": 0.0,
+              "middle": 0.0,
+              "end": 0.0
+            },
+            "interpretation": "Speech quality remained consistent throughout"
+          },
+          "confidence_indicator": "Moderate",
+          "stress_indicator": "Moderate",
+          "confidence_score": 55,
+          "feedback": {
+            "summary": "Presence Analysis: 2 words | 0 fillers | 0 pauses",
+            "speech_delivery": {
+              "observations": [
+                "Pauses detected"
+              ],
+              "explanations": []
+            },
+            "patterns_detected": [],
+            "improvement_suggestions": [],
+            "faults_detected": [],
+            "positive_notes": [
+              "Recorded response duration: 0.84 seconds",
+              "Speech was mostly smooth with minimal fillers"
+            ]
+          },
+          "all_fillers_detected": []
+        }
+      },
+      {
+        "question": "Why should we hire you?",
+        "timestamp": "2026-02-13T13:36:13.610831",
+        "metrics": {
+          "answerDuration": 4.47,
+          "eyeContactTime": 4.47,
+          "steadyHeadTime": 4.47,
+          "engagingExpressionTime": 0.38,
+          "hesitationTime": 0
+        },
+        "feedback": {
+          "presence_summary": "Overall Presence: Fair | Confidence: Moderate | Stress Indicators: Mild",
+          "visual_observations": [
+            "Metrics captured via frontend real-time analysis."
+          ],
+          "speech_observations": [
+            {
+              "observation": "Pauses detected",
+              "explanation": ""
+            }
+          ],
+          "confidence_indicators": {
+            "confidence_level": "Moderate",
+            "stress_level": "Mild",
+            "presence_quality": "Fair"
+          },
+          "temporal_insights": [
+            ""
+          ],
+          "improvement_tips": [
+            "Continue practicing to maintain consistency"
+          ],
+          "faults_detected": [],
+          "strengths": [
+            "Real-time tracking enabled.",
+            "Recorded response duration: 4.44 seconds",
+            "Speech was mostly smooth with minimal fillers"
+          ]
+        },
+        "indicators": {
+          "confidence": "Moderate",
+          "stress": "Mild",
+          "presence_quality": "Fair",
+          "overall_score": 62.3,
+          "visual_score": 69.5,
+          "audio_score": 55,
+          "component_scores": {
+            "eye_contact": 100,
+            "head_stability": 100,
+            "audio_confidence": 55,
+            "facial_composure": 20
+          }
+        },
+        "hesitation_analysis": {
+          "transcript": "Oh...",
+          "filler_words": {
+            "total_count": 0,
+            "conversational_count": 0,
+            "prolonged_vowels_count": 0,
+            "filler_words_detected": [],
+            "conversational_fillers_detected": [],
+            "filler_frequency_percent": 0.0,
+            "word_count": 1,
+            "details": {},
+            "conv_details": {},
+            "clusters": {
+              "count": 0,
+              "max_size": 0,
+              "level": "none",
+              "interpretation": "No filler clustering detected"
+            },
+            "distribution": {
+              "pattern": "none",
+              "concentration": "none",
+              "start_count": 0,
+              "middle_count": 0,
+              "end_count": 0,
+              "interpretation": "No significant filler pattern detected"
+            }
+          },
+          "pauses": {
+            "long_pauses_count": 0,
+            "thinking_pauses": 0,
+            "nervous_pauses": 0,
+            "average_pause_duration": 0.0,
+            "pause_pattern": "insufficient_data"
+          },
+          "speech_continuity": {
+            "continuity_score": 60.0,
+            "flow_pattern": "moderate",
+            "repetitions_count": 0,
+            "repetition_samples": [],
+            "avg_words_per_phrase": 1.0,
+            "interpretation": "Flow appears natural"
+          },
+          "temporal_progression": {
+            "trend": "stable",
+            "progression": "Speech quality remained consistent throughout",
+            "total_duration": 4.44,
+            "start_quality": "good",
+            "end_quality": "good",
+            "filler_density": {
+              "start": 0.0,
+              "middle": 0.0,
+              "end": 0.0
+            },
+            "interpretation": "Speech quality remained consistent throughout"
+          },
+          "confidence_indicator": "Moderate",
+          "stress_indicator": "Moderate",
+          "confidence_score": 55,
+          "feedback": {
+            "summary": "Presence Analysis: 1 words | 0 fillers | 0 pauses",
+            "speech_delivery": {
+              "observations": [
+                "Pauses detected"
+              ],
+              "explanations": []
+            },
+            "patterns_detected": [],
+            "improvement_suggestions": [],
+            "faults_detected": [],
+            "positive_notes": [
+              "Recorded response duration: 4.44 seconds",
+              "Speech was mostly smooth with minimal fillers"
+            ]
+          },
+          "all_fillers_detected": []
+        }
+      },
+      {
+        "question": "Describe a time you failed and what you learned from it.",
+        "timestamp": "2026-02-13T13:36:24.260107",
+        "metrics": {
+          "answerDuration": 0.94,
+          "eyeContactTime": 0.94,
+          "steadyHeadTime": 0.94,
+          "engagingExpressionTime": 0.0,
+          "hesitationTime": 0
+        },
+        "feedback": {
+          "presence_summary": "Overall Presence: Fair | Confidence: Moderate | Stress Indicators: Mild",
+          "visual_observations": [
+            "Metrics captured via frontend real-time analysis."
+          ],
+          "speech_observations": [
+            {
+              "observation": "Pauses detected",
+              "explanation": ""
+            }
+          ],
+          "confidence_indicators": {
+            "confidence_level": "Moderate",
+            "stress_level": "Mild",
+            "presence_quality": "Fair"
+          },
+          "temporal_insights": [
+            ""
+          ],
+          "improvement_tips": [
+            "Continue practicing to maintain consistency"
+          ],
+          "faults_detected": [],
+          "strengths": [
+            "Real-time tracking enabled.",
+            "Recorded response duration: 0.9 seconds",
+            "Speech was mostly smooth with minimal fillers"
+          ]
+        },
+        "indicators": {
+          "confidence": "Moderate",
+          "stress": "Mild",
+          "presence_quality": "Fair",
+          "overall_score": 60.8,
+          "visual_score": 66.7,
+          "audio_score": 55,
+          "component_scores": {
+            "eye_contact": 100,
+            "head_stability": 100,
+            "audio_confidence": 55,
+            "facial_composure": 20
+          }
+        },
+        "hesitation_analysis": {
+          "transcript": "Thank you.",
+          "filler_words": {
+            "total_count": 0,
+            "conversational_count": 0,
+            "prolonged_vowels_count": 0,
+            "filler_words_detected": [],
+            "conversational_fillers_detected": [],
+            "filler_frequency_percent": 0.0,
+            "word_count": 2,
+            "details": {},
+            "conv_details": {},
+            "clusters": {
+              "count": 0,
+              "max_size": 0,
+              "level": "none",
+              "interpretation": "No filler clustering detected"
+            },
+            "distribution": {
+              "pattern": "none",
+              "concentration": "none",
+              "start_count": 0,
+              "middle_count": 0,
+              "end_count": 0,
+              "interpretation": "No significant filler pattern detected"
+            }
+          },
+          "pauses": {
+            "long_pauses_count": 0,
+            "thinking_pauses": 0,
+            "nervous_pauses": 0,
+            "average_pause_duration": 0.0,
+            "pause_pattern": "insufficient_data"
+          },
+          "speech_continuity": {
+            "continuity_score": 70.0,
+            "flow_pattern": "moderate",
+            "repetitions_count": 0,
+            "repetition_samples": [],
+            "avg_words_per_phrase": 2.0,
+            "interpretation": "Flow appears natural"
+          },
+          "temporal_progression": {
+            "trend": "stable",
+            "progression": "Speech quality remained consistent throughout",
+            "total_duration": 0.9,
+            "start_quality": "good",
+            "end_quality": "good",
+            "filler_density": {
+              "start": 0.0,
+              "middle": 0.0,
+              "end": 0.0
+            },
+            "interpretation": "Speech quality remained consistent throughout"
+          },
+          "confidence_indicator": "Moderate",
+          "stress_indicator": "Moderate",
+          "confidence_score": 55,
+          "feedback": {
+            "summary": "Presence Analysis: 2 words | 0 fillers | 0 pauses",
+            "speech_delivery": {
+              "observations": [
+                "Pauses detected"
+              ],
+              "explanations": []
+            },
+            "patterns_detected": [],
+            "improvement_suggestions": [],
+            "faults_detected": [],
+            "positive_notes": [
+              "Recorded response duration: 0.9 seconds",
+              "Speech was mostly smooth with minimal fillers"
+            ]
+          },
+          "all_fillers_detected": []
+        }
+      }
+    ],
+    "feedback": {
+      "presence_summary": "Overall Presence: Fair | Confidence: Moderate | Stress Indicators: Mild",
+      "visual_observations": [
+        "Metrics captured via frontend real-time analysis."
+      ],
+      "speech_observations": [
+        {
+          "observation": "Pauses detected",
+          "explanation": ""
+        }
+      ],
+      "confidence_indicators": {
+        "confidence_level": "Moderate",
+        "stress_level": "Mild",
+        "presence_quality": "Fair"
+      },
+      "temporal_insights": [
+        ""
+      ],
+      "improvement_tips": [
+        "Continue practicing to maintain consistency"
+      ],
+      "faults_detected": [],
+      "strengths": [
+        "Real-time tracking enabled.",
+        "Recorded response duration: 0.9 seconds",
+        "Speech was mostly smooth with minimal fillers"
+      ]
+    },
+    "indicators": {
+      "confidence": "Moderate",
+      "stress": "Mild",
+      "presence_quality": "Fair",
+      "overall_score": 60.8,
+      "visual_score": 66.7,
+      "audio_score": 55,
+      "component_scores": {
+        "eye_contact": 100,
+        "head_stability": 100,
+        "audio_confidence": 55,
+        "facial_composure": 20
+      }
+    }
   }
 }
