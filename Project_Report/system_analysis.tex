@@ -1,0 +1,57 @@
+%!TeX root = main.tex
+\chapter{System Analysis}
+
+\section{Feasibility Study}
+The feasibility of developing \textbf{AceIt} was analyzed across three dimensions:
+\begin{itemize}
+    \item \textbf{Technical Feasibility}: The availability of robust APIs like Google Gemini and modern web frameworks (React, FastAPI) ensures that building a responsive, AI-driven application is technically viable.
+    \item \textbf{Operational Feasibility}: The platform is designed for intuitive use, requiring no specialized hardware beyond a standard computer with internet access, a webcam, and a microphone. This ensures high adoption potential among students.
+    \item \textbf{Economic Feasibility}: Utilizing open-source libraries and cost-effective cloud services minimizes development and maintenance costs, making the project economically sustainable.
+\end{itemize}
+
+\section{Requirements Specification}
+
+\subsection{Functional Requirements}
+\begin{enumerate}
+    \item \textbf{User Authentication}: Secure login and registration system.
+    \item \textbf{Simulated Interview}:
+        \begin{itemize}
+            \item AI-driven question generation based on resume and job description.
+            \item Audio response capture and transcription.
+            \item Real-time feedback on answers.
+        \end{itemize}
+    \item \textbf{Coding Arena}:
+        \begin{itemize}
+            \item Code editor supporting multiple languages (Python, Java, etc.).
+            \item Code execution and test case validation.
+            \item AI Tutor for hints and debugging.
+        \end{itemize}
+    \item \textbf{Resume Analysis}: Upload and analyze resumes for ATS compatibility.
+    \item \textbf{Dashboard}: Visualize performance metrics and progress.
+\end{enumerate}
+
+\subsection{Non-Functional Requirements}
+\begin{enumerate}
+    \item \textbf{Performance}: The system should respond to user inputs within 2 seconds.
+    \item \textbf{Scalability}: The architecture should support concurrent users.
+    \item \textbf{Reliability}: 99.9\% uptime for core services.
+    \item \textbf{Security}: User data, especially resumes and audio recordings, must be processed securely.
+\end{enumerate}
+
+\section{Software and Hardware Requirements}
+\subsection{Software Requirements}
+\begin{itemize}
+    \item \textbf{Operating System}: Windows / Linux / macOS
+    \item \textbf{Programming Languages}: Python (Backend), JavaScript (Frontend)
+    \item \textbf{Frameworks}: FastAPI, React.js
+    \item \textbf{Dependencies}: Google Generative AI SDK, Tailwind CSS, PostgreSQL
+    \item \textbf{Tools}: VS Code, Git
+\end{itemize}
+
+\subsection{Hardware Requirements}
+\begin{itemize}
+    \item \textbf{Processor}: Intel Core i5 or equivalent (recommended)
+    \item \textbf{RAM}: 8GB minimum
+    \item \textbf{Peripherals}: Webcam and Microphone for interview modules
+    \item \textbf{Internet}: Stable broadband connection
+\end{itemize}

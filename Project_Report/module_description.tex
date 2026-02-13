@@ -1,0 +1,39 @@
+%!TeX root = main.tex
+\chapter{Module Description}
+
+\section{Authentication Module}
+This module ensures secure access to the platform. Users can register and log in using their email credentials. We utilize JSON Web Tokens (JWT) for session management, ensuring that API endpoints are protected and user data remains private.
+
+\section{Simulated Interview Module}
+The core of the platform, this module simulates a real interview environment.
+\begin{itemize}
+    \item \textbf{Setup}: Users upload their resume and optionally a job description. The AI analyzes these documents to tailor the interview context.
+    \item \textbf{Interaction}: The interview proceeds in a chat-like interface. Users can type their answers or use the microphone to speak. The system uses Speech-to-Text (STT) to transcribe audio answers.
+    \item \textbf{AI Interviewer}: Powered by Google Gemini, the AI interviewer asks relevant follow-up questions, probes deeper into technical topics, and assesses soft skills.
+    \item \textbf{Feedback}: After the session, the user receives detailed feedback on their answers, highlighting strengths and areas for improvement.
+\end{itemize}
+
+\section{Coding Arena Module}
+Designed for technical skill enhancement, this module offers a robust code editor.
+\begin{itemize}
+    \item \textbf{Problem Library}: A curated list of coding problems across various difficulty levels and topics (Arrays, Strings, DP, etc.).
+    \item \textbf{Multi-Language Support}: Users can code in Python, Java, C++, and more.
+    \item \textbf{AI Tutor}: An integrated assistant that offers hints without giving away the solution. It can also debug code, explaining errors in simple terms, and review successful submissions for optimization.
+\end{itemize}
+
+\section{Resume Analyzer Module}
+This module helps users optimize their resumes for Applicant Tracking Systems (ATS).
+\begin{itemize}
+    \item \textbf{Parsing}: The system extracts text from uploaded PDF resumes.
+    \item \textbf{Scoring}: It compares the resume content against industry standards or specific job descriptions.
+    \item \textbf{Recommendations}: The module suggests keywords to include, formatting improvements, and highlights missing sections.
+\end{itemize}
+
+\section{Analytics Dashboard}
+The dashboard provides a visual overview of the user's progress. It tracks metrics such as:
+\begin{itemize}
+    \item Number of interviews completed.
+    \item Average interview scores.
+    \item Coding problems solved by difficulty.
+    \item Skills proficiency radar charts.
+\end{itemize}

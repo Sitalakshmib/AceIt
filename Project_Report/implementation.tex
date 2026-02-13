@@ -1,0 +1,34 @@
+%!TeX root = main.tex
+\chapter{Implementation}
+
+\section{Backend Services}
+The backend, built with FastAPI, exposes RESTful endpoints for the frontend application. It handles user authentication, session management, and integration with external AI services.
+
+\subsection{AI Service}
+The core AI logic resides in `services/ai_service.py`. It utilizes the `google.generativeai` library to interact with the Gemini model.
+\begin{enumerate}
+    \item \textbf{Hint Generation}: The system constructs a prompt containing the problem description, user's current code, and desired hint level. It instructs the LLM to provide progressive hints without revealing the full solution.
+    \item \textbf{Debugging}: When a user's code fails test cases, the backend captures the input, expected output, and actual output. It then prompts the AI to analyze the discrepancy and suggest fixes.
+    \item \textbf{Code Review}: Upon successful submission, the AI reviews the code for complexity, style, and potential optimizations.
+\end{enumerate}
+
+\subsection{Interview Logic}
+The `services/interview_service.py` manages the state of mock interviews. It maintains conversation history to ensure context-aware follow-up questions. Audio data from the frontend is processed using OpenAI's Whisper model (or similar STT service) to convert speech to text before sending it to the LLM.
+
+\section{Frontend Application}
+The frontend is a Single Page Application (SPA) built with React.
+\begin{itemize}
+    \item \textbf{Routing}: `react-router-dom` manages navigation between the Dashboard, Coding Arena, and Interview modules.
+    \item \textbf{State Management}: React Context API is used for global state like user authentication and theme preferences. Local component state manages form inputs and UI toggles.
+    \item \textbf{Code Editor}: The Monaco Editor component provides a rich coding experience with syntax highlighting and auto-completion for multiple languages.
+    \item \textbf{Real-time Feedback}: The UI updates asynchronously to display AI responses and test results without reloading the page.
+\end{itemize}
+
+\section{Database Schema}
+PostgreSQL is used to persist data. Key tables include:
+\begin{itemize}
+    \item \texttt{users}: Stores credentials and profile information.
+    \item \texttt{interviews}: Records session details, scores, and transcripts.
+    \item \texttt{coding\_problems}: detailed problem descriptions, test cases, and tags.
+    \item \texttt{submissions}: Tracks user code submissions and results.
+\end{itemize}

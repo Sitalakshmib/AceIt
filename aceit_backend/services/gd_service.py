@@ -38,6 +38,10 @@ class GDService:
         client, provider = GDService._get_client()
         
         if not client:
+            # Get API keys for error reporting
+            groq_key = os.getenv("GROQ_API_GD")
+            openai_key = os.getenv("OPENAI_API_KEY")
+            
             debug_info = []
             if not groq_key: debug_info.append("Missing GROQ_API_GD")
             if not openai_key: debug_info.append("Missing OPENAI_API_KEY")

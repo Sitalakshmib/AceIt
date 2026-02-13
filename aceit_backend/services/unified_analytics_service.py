@@ -344,11 +344,12 @@ class UnifiedAnalyticsService:
         })
         
         # Video Presence
+        video_score = interview_data.get("average_score", 0) if interview_data["video_presence_sessions"] > 0 else 0
         modules.append({
             "module": "Video Presence",
             "sessions": interview_data["video_presence_sessions"],
-            "performance_level": "Moderate",
-            "performance_score": 0,
+            "performance_level": "Good" if video_score >= 70 else "Moderate" if video_score >= 50 else "Low",
+            "performance_score": video_score,
             "last_practiced": interview_data["last_practiced"],
             "trend": "stable",
             "has_data": interview_data["video_presence_sessions"] > 0
@@ -411,11 +412,11 @@ class UnifiedAnalyticsService:
         })
         
         # Confidence / Presence (Video Presence)
-        confidence_score = 50  # Placeholder
+        confidence_score = interview_data.get("average_score", 0) if interview_data["video_presence_sessions"] > 0 else 0
         skills.append({
             "skill": "Confidence & Presence",
             "score": round(confidence_score, 1),
-            "level": "Moderate"
+            "level": "Good" if confidence_score >= 70 else "Moderate" if confidence_score >= 50 else "Low"
         })
         
         # Consistency / Practice Habit

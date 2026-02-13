@@ -10,6 +10,59 @@ class SimVoiceInterviewer:
     def __init__(self):
         self.llm = LLMClient()
         self.sessions = {} # In-memory store
+        self.SESSIONS_FILE = "data/interview_sessions.json"
+        self._load_sessions()
+        
+    def _load_sessions(self):
+        """Load sessions from file"""
+        import os
+        if os.path.exists(self.SESSIONS_FILE):
+            try:
+                with open(self.SESSIONS_FILE, 'r') as f:
+                    self.sessions = json.load(f)
+                print(f"[SimVoice] Loaded {len(self.sessions)} sessions from {self.SESSIONS_FILE}")
+            except Exception as e:
+                print(f"[ERROR] Failed to load sessions: {e}")
+                self.sessions = {}
+        else:
+            print("[SimVoice] No existing sessions file found. Starting fresh.")
+
+    def _save_sessions(self):
+        """Save sessions to file"""
+        import os
+        try:
+            # Ensure data directory exists
+            os.makedirs(os.path.dirname(self.SESSIONS_FILE), exist_ok=True)
+            
+            # Convert datetime objects to strings before saving
+            serializable_sessions = {}
+            for s_id, session in self.sessions.items():
+                s_copy = session.copy()
+                # Handle datetime fields
+                if isinstance(s_copy.get("start_time"), datetime):
+                    s_copy["start_time"] = s_copy["start_time"].isoformat()
+                    
+                serializable_sessions[s_id] = s_copy
+                
+            with open(self.SESSIONS_FILE, 'w') as f:
+                json.dump(serializable_sessions, f, indent=2)
+            print(f"[SimVoice] Saved {len(self.sessions)} sessions to file")
+        except Exception as e:
+            print(f"[ERROR] Failed to save sessions: {e}")
+
+    def add_external_session(self, session_data):
+        """Allow other modules (like Video Presence) to save sessions"""
+        if "id" not in session_data:
+            session_data["id"] = str(uuid.uuid4())
+            
+        # Ensure timestamp is string for storage consistency
+        if isinstance(session_data.get("start_time"), datetime):
+            session_data["start_time"] = session_data["start_time"].isoformat()
+            
+        self.sessions[session_data["id"]] = session_data
+        self._save_sessions()
+        return session_data["id"] 
+
         
     def start_interview(self, user_id: str, resume: str = "", jd: str = "", interview_type: str = "technical", topic: str = "realtime", project_text: str = ""):
         """
@@ -47,6 +100,8 @@ class SimVoiceInterviewer:
             "qa_pairs": []  # Track question-answer pairs with scores
         }
         self.sessions[session_id] = session
+        self._save_sessions()
+
         
         # 3. First Question (Intro or Direct Technical Start)
         topic = session.get("topic", "realtime")
@@ -113,6 +168,7 @@ class SimVoiceInterviewer:
         # 2. Update Session
         session['q_bank'] = new_q_bank
         session['current_q_index'] = 0
+
         session['round'] = 2
         session['status'] = 'active'
         
@@ -122,6 +178,10 @@ class SimVoiceInterviewer:
         # Update History
         self._add_history(session_id, "assistant", next_q_text)
         session["current_q_index"] += 1
+        
+        # Save changes
+        self._save_sessions()
+
         
         # Generate Audio
         audio_url = voice_service.synthesize(next_q_text)
@@ -169,6 +229,9 @@ class SimVoiceInterviewer:
         
         print(f"[SimVoice] User Said: {user_text}")
         self._add_history(session_id, "user", user_text)
+        
+        # Save progress so far
+        self._save_sessions()
         
         # 2. Increment answer count
         session["answer_count"] += 1

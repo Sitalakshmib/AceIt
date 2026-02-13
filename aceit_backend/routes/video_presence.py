@@ -21,12 +21,16 @@ IMPORTANT:
 Author: AceIt Backend Team
 """
 
-from fastapi import APIRouter, HTTPException, File, UploadFile, Form
+from fastapi import APIRouter, HTTPException, File, UploadFile, Form, Depends
 from typing import Optional
 import shutil
 import os
 import uuid
 import logging
+from datetime import datetime
+from routes.interview import get_engine
+from services.sim_voice_interviewer import SimVoiceInterviewer
+
 
 # Import analysis services
 from services.video_analysis_service import analyze_audio_hesitation
@@ -67,8 +71,16 @@ os.makedirs(TEMP_VIDEO_DIR, exist_ok=True)
 async def analyze_video_presence_answer(
     audio_file: UploadFile = File(...),
     video_file: Optional[UploadFile] = File(None),
-    session_id: Optional[str] = Form(None)
+    session_id: Optional[str] = Form(None),
+    user_id: Optional[str] = Form(None),
+    eye_contact_time: Optional[float] = Form(0.0),
+    steady_head_time: Optional[float] = Form(0.0),
+    warm_expression_time: Optional[float] = Form(0.0),
+    answer_duration: Optional[float] = Form(0.0),
+    question_text: Optional[str] = Form(""),
+    engine: SimVoiceInterviewer = Depends(get_engine)
 ):
+
     """
     Analyze student video and audio for comprehensive presence analysis
     
@@ -111,8 +123,9 @@ async def analyze_video_presence_answer(
         
         logger.info(f"[AUDIO] Saved to: {temp_audio_path}")
         
-        # Save video file if provided
-        visual_analysis = None
+        visual_analysis = None # Initialize visual_analysis to None by default
+
+        # Case 1: Video file is provided, attempt full visual analysis
         if video_file:
             video_extension = os.path.splitext(video_file.filename)[1] or ".webm"
             unique_video_filename = f"{session_uuid}_{uuid.uuid4()}{video_extension}"
@@ -141,6 +154,30 @@ async def analyze_video_presence_answer(
                         "status": "error",
                         "message": "Visual analysis unavailable - MediaPipe not installed"
                     }
+                else:
+                    # In a real scenario, we would call analyze_video_frames(temp_video_path) here
+                    # For now, we'll use the frontend metrics as the primary source if video analysis fails
+                    pass
+
+        # Fallback: Use frontend-calculated metrics if available and video_analysis is missing/failed
+        if (not visual_analysis or visual_analysis.get("status") == "error") and answer_duration > 0:
+            eye_pct = min(100, (eye_contact_time / answer_duration) * 100)
+            steady_pct = min(100, (steady_head_time / answer_duration) * 100)
+            warm_pct = min(100, (warm_expression_time / answer_duration) * 100)
+            
+            visual_analysis = {
+                "status": "success",
+                "visual_analysis": {
+                    "eye_contact": {"facing_camera_percentage": eye_pct},
+                    "head_movement": {"stability_score": steady_pct},
+                    "facial_tension": {"composite_tension_score": max(0, 100 - warm_pct)},
+                    "feedback": {
+                        "observations": ["Metrics captured via frontend real-time analysis."],
+                        "strengths": ["Real-time tracking enabled."],
+                        "improvement_suggestions": []
+                    }
+                }
+            }
         
         # Perform audio hesitation analysis
         logger.info(f"[AUDIO] Analyzing audio for hesitation patterns...")
@@ -198,7 +235,62 @@ async def analyze_video_presence_answer(
         }
         
         logger.info("[SUCCESS] Multi-modal analysis complete")
+        logger.info("[SUCCESS] Multi-modal analysis complete")
+        
+        # --- PERSISTENCE: Save result as a session ---
+        try:
+            # Use provided user_id or fallback to session_id if it looks like a user_id (simple heuristic)
+            # ideally user_id should be passed from frontend
+            final_user_id = user_id or "anonymous"
+            
+            # Construct session object compatible with analytics
+            # Store per-question visual metrics
+            answer_metrics = {
+                "question": question_text,
+                "timestamp": datetime.now().isoformat(),
+                "metrics": {
+                    "answerDuration": answer_duration,
+                    "eyeContactTime": eye_contact_time,
+                    "steadyHeadTime": steady_head_time,
+                    "engagingExpressionTime": warm_expression_time,
+                    "hesitationTime": audio_analysis.get("hesitation_analysis", {}).get("total_hesitation_duration", 0) if audio_analysis.get("status") == "success" else 0
+                }
+            }
+            
+            # Update existing session or create new one
+            if session_uuid in engine.sessions:
+                video_session = engine.sessions[session_uuid]
+                if "qa_pairs" not in video_session:
+                    video_session["qa_pairs"] = []
+                video_session["qa_pairs"].append(answer_metrics)
+                # Update aggregated scores if needed
+                if "scores" not in video_session:
+                    video_session["scores"] = []
+                video_session["scores"].append(indicators.get("overall_score", 0))
+            else:
+                video_session = {
+                    "id": session_uuid,
+                    "user_id": final_user_id,
+                    "interview_type": "video-practice",
+                    "topic": "presence",
+                    "start_time": datetime.now().isoformat(),
+                    "status": "completed",
+                    "round": 1,
+                    "scores": [indicators.get("overall_score", 0)],
+                    "qa_pairs": [answer_metrics],
+                    "feedback": feedback,
+                    "indicators": indicators
+                }
+            
+            engine.add_external_session(video_session)
+            logger.info(f"[PERSISTENCE] Saved video presence answer for user {final_user_id} in session {session_uuid}")
+            
+        except Exception as save_err:
+            logger.error(f"[ERROR] Failed to save video presence session: {save_err}")
+            # Don't fail the request if saving fails
+        
         return response
+
         
     except Exception as e:
         logger.error(f"[ERROR] Error in analyze_video_presence_answer: {e}")

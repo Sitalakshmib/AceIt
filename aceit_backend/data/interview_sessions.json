@@ -1,0 +1,505 @@
+{
+  "23630843-14b0-4900-829c-af49849c1a3e": {
+    "id": "23630843-14b0-4900-829c-af49849c1a3e",
+    "user_id": "test_user_persistence_verify",
+    "interview_type": "technical",
+    "topic": "python",
+    "start_time": "2026-02-13T10:40:40.367163",
+    "status": "completed",
+    "scores": [
+      85,
+      90,
+      75
+    ],
+    "qa_pairs": [
+      {
+        "question": "Q1",
+        "answer": "A1",
+        "score": 85
+      },
+      {
+        "question": "Q2",
+        "answer": "A2",
+        "score": 90
+      },
+      {
+        "question": "Q3",
+        "answer": "A3",
+        "score": 75
+      }
+    ],
+    "weak_areas": [
+      "Decorators"
+    ]
+  },
+  "127383c4-8afe-4b5b-aef2-22c78f6a79f7": {
+    "id": "127383c4-8afe-4b5b-aef2-22c78f6a79f7",
+    "user_id": "test_user_persistence_verify",
+    "interview_type": "technical",
+    "topic": "python",
+    "start_time": "2026-02-13T10:40:56.617356",
+    "status": "completed",
+    "scores": [
+      85,
+      90,
+      75
+    ],
+    "qa_pairs": [
+      {
+        "question": "Q1",
+        "answer": "A1",
+        "score": 85
+      },
+      {
+        "question": "Q2",
+        "answer": "A2",
+        "score": 90
+      },
+      {
+        "question": "Q3",
+        "answer": "A3",
+        "score": 75
+      }
+    ],
+    "weak_areas": [
+      "Decorators"
+    ]
+  },
+  "474f9cfc-ef60-4e9f-abad-eeefdad3b8db": {
+    "id": "474f9cfc-ef60-4e9f-abad-eeefdad3b8db",
+    "user_id": "test_user_persistence_verify",
+    "interview_type": "technical",
+    "topic": "python",
+    "start_time": "2026-02-13T10:42:11.869706",
+    "status": "completed",
+    "scores": [
+      85,
+      90,
+      75
+    ],
+    "qa_pairs": [
+      {
+        "question": "Q1",
+        "answer": "A1",
+        "score": 85
+      },
+      {
+        "question": "Q2",
+        "answer": "A2",
+        "score": 90
+      },
+      {
+        "question": "Q3",
+        "answer": "A3",
+        "score": 75
+      }
+    ],
+    "weak_areas": [
+      "Decorators"
+    ]
+  },
+  "ac5181a6-1115-42f8-b598-4e315a49addb": {
+    "id": "ac5181a6-1115-42f8-b598-4e315a49addb",
+    "user_id": "test_user_persistence_verify",
+    "interview_type": "technical",
+    "topic": "python",
+    "start_time": "2026-02-13T10:42:58.834025",
+    "status": "completed",
+    "scores": [
+      85,
+      90,
+      75
+    ],
+    "qa_pairs": [
+      {
+        "question": "Q1",
+        "answer": "A1",
+        "score": 85
+      },
+      {
+        "question": "Q2",
+        "answer": "A2",
+        "score": 90
+      },
+      {
+        "question": "Q3",
+        "answer": "A3",
+        "score": 75
+      }
+    ],
+    "weak_areas": [
+      "Decorators"
+    ]
+  },
+  "a95f5236-c96a-4469-b71e-26d7172d5e62": {
+    "id": "a95f5236-c96a-4469-b71e-26d7172d5e62",
+    "user_id": "7f12936a-0622-4715-ad1a-e81e720ca132",
+    "resume": "AI\n",
+    "jd": "General Software Developer position",
+    "interview_type": "technical",
+    "topic": "realtime",
+    "project_text": "",
+    "q_bank": [
+      "Introduction and Background",
+      "AI Fundamentals",
+      "Machine Learning Algorithms",
+      "Deep Learning Experience",
+      "Natural Language Processing",
+      "Computer Vision",
+      "Software Development Methodologies",
+      "Programming Languages",
+      "Data Structures and Algorithms",
+      "Cloud Computing Integration"
+    ],
+    "history": [
+      {
+        "role": "assistant",
+        "content": "Hello! I am your AI Interviewer for this Technical interview. This will be an adaptive conversation based on your background and experience. Let's begin. Please introduce yourself and tell me about your technical background."
+      },
+      {
+        "role": "user",
+        "content": "Okay."
+      },
+      {
+        "role": "assistant",
+        "content": "Can you please start again and introduce yourself, sharing a bit about your technical background and what you're interested in?"
+      },
+      {
+        "role": "user",
+        "content": "My name is Kartika Jayajandran and I am doing big tech in artificial intelligence and data science."
+      },
+      {
+        "role": "assistant",
+        "content": "Can you tell me about a particular aspect of artificial intelligence or data science that fascinates you the most, and why?"
+      },
+      {
+        "role": "user",
+        "content": "I am more interested in artificial intelligence because of its ability to act less like a human and degenerative AI thing."
+      },
+      {
+        "role": "assistant",
+        "content": "Could you clarify what you meant by 'degenerative AI thing', and how it relates to your interests in artificial intelligence?"
+      }
+    ],
+    "current_q_index": 3,
+    "answer_count": 3,
+    "status": "active",
+    "round": 1,
+    "weak_areas": [
+      "General"
+    ],
+    "start_time": "2026-02-13T10:45:43.722647",
+    "scores": [
+      0,
+      0,
+      60,
+      60,
+      60,
+      60
+    ],
+    "qa_pairs": [
+      {
+        "question": "Hello! I am your AI Interviewer for this Technical interview. This will be an adaptive conversation based on your background and experience. Let's begin. Please introduce yourself and tell me about your technical background.",
+        "answer": "Okay.",
+        "score": 0
+      },
+      {
+        "question": "Can you please start again and introduce yourself, sharing a bit about your technical background and what you're interested in?",
+        "answer": "My name is Kartika Jayajandran and I am doing big tech in artificial intelligence and data science.",
+        "score": 60
+      },
+      {
+        "question": "Can you tell me about a particular aspect of artificial intelligence or data science that fascinates you the most, and why?",
+        "answer": "I am more interested in artificial intelligence because of its ability to act less like a human and degenerative AI thing.",
+        "score": 60
+      }
+    ],
+    "last_feedback": {
+      "score": 60,
+      "quality": "needs_work",
+      "feedback_text": "It's great that you're interested in artificial intelligence, but your explanation about 'degenerative AI thing' is a bit unclear - could you please clarify or provide more context about what you mean by that term, and how it relates to your interests in AI?"
+    }
+  },
+  "f3dfae14-326f-4e80-b341-20b10089e83b": {
+    "id": "f3dfae14-326f-4e80-b341-20b10089e83b",
+    "user_id": "7f12936a-0622-4715-ad1a-e81e720ca132",
+    "resume": "AI\n",
+    "jd": "General Software Developer position",
+    "interview_type": "technical",
+    "topic": "realtime",
+    "project_text": "",
+    "q_bank": [
+      "Introduction and Background",
+      "AI Fundamentals",
+      "Machine Learning Experience",
+      "Programming Languages",
+      "Data Structures and Algorithms",
+      "Software Development Methodologies",
+      "Cloud Computing Platforms",
+      "Natural Language Processing",
+      "Computer Vision",
+      "Neural Network Architecture"
+    ],
+    "history": [],
+    "current_q_index": 0,
+    "answer_count": 0,
+    "status": "active",
+    "round": 1,
+    "weak_areas": [],
+    "start_time": "2026-02-13T10:54:37.977237",
+    "scores": [],
+    "qa_pairs": []
+  },
+  "session_1770962009304": {
+    "id": "session_1770962009304",
+    "user_id": "anonymous",
+    "interview_type": "video-practice",
+    "topic": "presence",
+    "start_time": "2026-02-13T11:23:57.785493",
+    "status": "completed",
+    "round": 1,
+    "scores": [
+      67.68,
+      65.49,
+      39.3
+    ],
+    "qa_pairs": [
+      {
+        "question": "What do you consider your greatest strength?",
+        "timestamp": "2026-02-13T11:23:57.785480",
+        "metrics": {
+          "answerDuration": 16.42,
+          "eyeContactTime": 16.42,
+          "steadyHeadTime": 16.42,
+          "engagingExpressionTime": 2.2,
+          "hesitationTime": 0
+        }
+      },
+      {
+        "question": "Tell me about a time you demonstrated leadership.",
+        "timestamp": "2026-02-13T11:24:28.866610",
+        "metrics": {
+          "answerDuration": 26.05,
+          "eyeContactTime": 25.33,
+          "steadyHeadTime": 26.05,
+          "engagingExpressionTime": 1.72,
+          "hesitationTime": 0
+        }
+      },
+      {
+        "question": "What motivates you?",
+        "timestamp": "2026-02-13T11:24:55.453836",
+        "metrics": {
+          "answerDuration": 11.09,
+          "eyeContactTime": 2.17,
+          "steadyHeadTime": 8.28,
+          "engagingExpressionTime": 1.94,
+          "hesitationTime": 0
+        }
+      }
+    ],
+    "feedback": {
+      "presence_summary": "Overall Presence: Fair | Confidence: Moderate | Stress Indicators: Mild",
+      "visual_observations": [
+        "Metrics captured via frontend real-time analysis."
+      ],
+      "speech_observations": [
+        "Audio analysis unavailable - visual analysis only"
+      ],
+      "confidence_indicators": {
+        "confidence_level": "Moderate",
+        "stress_level": "Mild",
+        "presence_quality": "Fair"
+      },
+      "temporal_insights": [
+        ""
+      ],
+      "improvement_tips": [
+        "Continue practicing to maintain consistency"
+      ],
+      "strengths": [
+        "Real-time tracking enabled."
+      ]
+    },
+    "indicators": {
+      "confidence": "Moderate",
+      "stress": "Mild",
+      "presence_quality": "Fair",
+      "overall_score": 67.68,
+      "component_scores": {
+        "eye_contact": 100,
+        "head_stability": 100,
+        "audio_confidence": 50,
+        "facial_composure": 20
+      }
+    }
+  },
+  "session_1770962137290": {
+    "id": "session_1770962137290",
+    "user_id": "anonymous",
+    "interview_type": "video-practice",
+    "topic": "presence",
+    "start_time": "2026-02-13T11:26:16.487240",
+    "status": "completed",
+    "round": 1,
+    "scores": [
+      85.0,
+      49.76,
+      64.37
+    ],
+    "qa_pairs": [
+      {
+        "question": "Describe a situation where you had to meet a tight deadline.",
+        "timestamp": "2026-02-13T11:26:16.487221",
+        "metrics": {
+          "answerDuration": 11.15,
+          "eyeContactTime": 11.15,
+          "steadyHeadTime": 11.15,
+          "engagingExpressionTime": 11.15,
+          "hesitationTime": 0
+        }
+      },
+      {
+        "question": "Tell me about a project you are proud of.",
+        "timestamp": "2026-02-13T11:26:35.484894",
+        "metrics": {
+          "answerDuration": 7.79,
+          "eyeContactTime": 0.0,
+          "steadyHeadTime": 7.79,
+          "engagingExpressionTime": 5.75,
+          "hesitationTime": 0
+        }
+      },
+      {
+        "question": "What is your greatest weakness?",
+        "timestamp": "2026-02-13T11:26:59.012936",
+        "metrics": {
+          "answerDuration": 8.91,
+          "eyeContactTime": 6.91,
+          "steadyHeadTime": 5.98,
+          "engagingExpressionTime": 5.65,
+          "hesitationTime": 0
+        }
+      }
+    ],
+    "feedback": {
+      "presence_summary": "Overall Presence: Strong | Confidence: Good | Stress Indicators: Mild",
+      "visual_observations": [
+        "Metrics captured via frontend real-time analysis."
+      ],
+      "speech_observations": [
+        "Audio analysis unavailable - visual analysis only"
+      ],
+      "confidence_indicators": {
+        "confidence_level": "Good",
+        "stress_level": "Mild",
+        "presence_quality": "Strong"
+      },
+      "temporal_insights": [
+        ""
+      ],
+      "improvement_tips": [
+        "Continue practicing to maintain consistency"
+      ],
+      "strengths": [
+        "Real-time tracking enabled."
+      ]
+    },
+    "indicators": {
+      "confidence": "Good",
+      "stress": "Mild",
+      "presence_quality": "Strong",
+      "overall_score": 85.0,
+      "component_scores": {
+        "eye_contact": 100,
+        "head_stability": 100,
+        "audio_confidence": 50,
+        "facial_composure": 100
+      }
+    }
+  },
+  "session_1770962713191": {
+    "id": "session_1770962713191",
+    "user_id": "7f12936a-0622-4715-ad1a-e81e720ca132",
+    "interview_type": "video-practice",
+    "topic": "presence",
+    "start_time": "2026-02-13T11:35:41.803252",
+    "status": "completed",
+    "round": 1,
+    "scores": [
+      72.23,
+      30,
+      85.0
+    ],
+    "qa_pairs": [
+      {
+        "question": "What is your greatest weakness?",
+        "timestamp": "2026-02-13T11:35:41.803239",
+        "metrics": {
+          "answerDuration": 19.17,
+          "eyeContactTime": 19.17,
+          "steadyHeadTime": 19.17,
+          "engagingExpressionTime": 6.93,
+          "hesitationTime": 0
+        }
+      },
+      {
+        "question": "Describe a time you failed and what you learned from it.",
+        "timestamp": "2026-02-13T11:35:51.574777",
+        "metrics": {
+          "answerDuration": 4.63,
+          "eyeContactTime": 0.0,
+          "steadyHeadTime": 0.73,
+          "engagingExpressionTime": 0.29,
+          "hesitationTime": 0
+        }
+      },
+      {
+        "question": "What motivates you?",
+        "timestamp": "2026-02-13T11:36:07.717514",
+        "metrics": {
+          "answerDuration": 5.71,
+          "eyeContactTime": 5.71,
+          "steadyHeadTime": 5.71,
+          "engagingExpressionTime": 5.71,
+          "hesitationTime": 0
+        }
+      }
+    ],
+    "feedback": {
+      "presence_summary": "Overall Presence: Fair | Confidence: Moderate | Stress Indicators: Mild",
+      "visual_observations": [
+        "Metrics captured via frontend real-time analysis."
+      ],
+      "speech_observations": [
+        "Audio analysis unavailable - visual analysis only"
+      ],
+      "confidence_indicators": {
+        "confidence_level": "Moderate",
+        "stress_level": "Mild",
+        "presence_quality": "Fair"
+      },
+      "temporal_insights": [
+        ""
+      ],
+      "improvement_tips": [
+        "Continue practicing to maintain consistency"
+      ],
+      "strengths": [
+        "Real-time tracking enabled."
+      ]
+    },
+    "indicators": {
+      "confidence": "Moderate",
+      "stress": "Mild",
+      "presence_quality": "Fair",
+      "overall_score": 72.23,
+      "component_scores": {
+        "eye_contact": 100,
+        "head_stability": 100,
+        "audio_confidence": 50,
+        "facial_composure": 36.15
+      }
+    }
+  }
+}

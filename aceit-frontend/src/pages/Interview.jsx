@@ -2,12 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../services/api';
 import VideoPractice from '../components/Interview/VideoPractice';
-import aiAvatar from '../assets/ai-avatar.png'; // Import the new avatar
+const aiAvatar = "/ai-avatar.png"; // Use public asset directly
 import {
   Users, Briefcase, Video, Mic, MessageSquare, Rocket, Target,
   Cpu, BookOpen, Clock, Activity, Award, ArrowRight, Zap, Play, Square,
-  CheckCircle2, AlertCircle, X, Volume2, MicOff, Camera
+  CheckCircle2, AlertCircle, X, Volume2, MicOff, Camera, BarChart2
 } from 'lucide-react';
+import InterviewAnalytics from '../components/Interview/InterviewAnalytics';
 
 // Motivational quotes for timeout modal
 const MOTIVATIONAL_QUOTES = [
@@ -353,7 +354,13 @@ const Interview = () => {
 
   // Video Practice View
   if (view === 'video-practice') {
-    return <VideoPractice onBack={() => setView('setup')} />;
+    return (
+      <VideoPractice
+        userId={user?.id}
+        onBack={() => setView('setup')}
+        onComplete={() => setView('completed')}
+      />
+    );
   }
 
   // Setup View
@@ -371,6 +378,17 @@ const Interview = () => {
             <p className="text-lg text-gray-500 max-w-2xl mx-auto">
               Simulate real-world interviews with AI-driven testing. Practice technical concepts, behavioral questions, and boost your confidence.
             </p>
+
+            {/* Analytics Entry Button */}
+            <div className="mt-6 flex justify-center">
+              <button
+                onClick={() => setView('analytics')}
+                className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 text-gray-700 font-semibold rounded-full hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm group"
+              >
+                <BarChart2 className="h-5 w-5 text-indigo-600 group-hover:scale-110 transition-transform" />
+                View Performance Analytics
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
@@ -683,8 +701,15 @@ const Interview = () => {
                 </div>
               )}
 
-              {/* Action Button */}
-              <div className="flex justify-center pb-8">
+              {/* Action Buttons */}
+              <div className="flex justify-center gap-4 pb-8">
+                <button
+                  onClick={() => setView('setup')}
+                  className="bg-gray-100 text-gray-700 px-8 py-4 rounded-xl hover:bg-gray-200 font-bold shadow-lg transition-all flex items-center"
+                >
+                  <ArrowRight className="h-5 w-5 mr-2 rotate-180" />
+                  Back to Selection
+                </button>
                 <button
                   onClick={() => {
                     setView('setup');
@@ -696,7 +721,7 @@ const Interview = () => {
                   }}
                   className="bg-gray-900 text-white px-10 py-4 rounded-xl hover:bg-black font-bold shadow-lg transition-transform hover:-translate-y-1 flex items-center"
                 >
-                  <ArrowRight className="h-5 w-5 mr-2 rotate-180" />
+                  <Zap className="h-5 w-5 mr-2" />
                   Start New Session
                 </button>
               </div>
@@ -722,7 +747,20 @@ const Interview = () => {
     );
   }
 
-  // Chat View
+  // Analytics View
+  if (view === 'analytics') {
+    return (
+      <InterviewAnalytics
+        userId={user?.id || 'demo_user'}
+        onBack={() => setView('setup')}
+        onStartPractice={(type) => {
+          setInterviewType(type);
+          setView('setup');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="h-screen bg-gray-50 flex flex-col font-sans">
       {/* Hidden Audio Player for Logic - Updated to toggle isAiSpeaking */}

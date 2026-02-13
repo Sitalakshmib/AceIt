@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { codingAPI } from '../services/api';
 import AITutor from '../components/AITutor';
 import Editor from '@monaco-editor/react';
+import { ArrowLeft } from 'lucide-react';
 
 const Coding = () => {
   const [code, setCode] = useState(`// Write your solution here
@@ -433,6 +434,17 @@ function solveProblem(input) {
     <div className="p-8 min-h-screen bg-gray-50">
       {/* Header */}
       <div className="mb-10 text-center max-w-7xl mx-auto">
+        {/* Back Button */}
+        <div className="flex justify-start mb-4">
+          <button
+            onClick={() => setHasStarted(false)}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all font-medium text-gray-700 shadow-sm hover:shadow-md"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </button>
+        </div>
+
         <div className="inline-block p-4 bg-blue-50 rounded-2xl mb-4">
           <span className="text-4xl font-bold text-blue-600">{ }</span>
         </div>

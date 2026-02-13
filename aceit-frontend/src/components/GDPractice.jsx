@@ -37,7 +37,7 @@ const GDPractice = () => {
         setTimerRunning(false);
 
         try {
-            const res = await fetch(`${API_BASE_URL}/gd/topic`);
+            const res = await fetch(`${API_BASE_URL}/gd-practice/topic`);
             const data = await res.json();
             setTopic(data.topic);
         } catch (error) {
@@ -58,7 +58,7 @@ const GDPractice = () => {
         setIsLoading(true);
 
         try {
-            const res = await fetch(`${API_BASE_URL}/gd/submit`, {
+            const res = await fetch(`${API_BASE_URL}/gd-practice/submit`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

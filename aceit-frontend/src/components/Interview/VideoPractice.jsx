@@ -19,19 +19,33 @@ const QUESTION_BANK = [
     "What do you consider your greatest strength?",
     "Describe a challenge you faced and how you handled it.",
     "Why do you want to work for this company?",
-    "Where do you see yourself in five years?"
+    "Where do you see yourself in five years?",
+    "Tell me about a time you worked in a team.",
+    "What is your greatest weakness?",
+    "Describe a situation where you had to meet a tight deadline.",
+    "How do you handle conflict with a coworker?",
+    "Tell me about a time you demonstrated leadership.",
+    "What motivates you?",
+    "Describe a time you failed and what you learned from it.",
+    "How do you prioritize your work?",
+    "Tell me about a project you are proud of.",
+    "Why should we hire you?"
 ];
 
 // Backend API endpoint
 const API_BASE_URL = 'http://localhost:8000';
 
-const VideoPractice = ({ onBack }) => {
+const VideoPractice = ({ userId, onBack, onComplete }) => {
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
     const [isModelLoaded, setIsModelLoaded] = useState(false);
 
     // Session State
-    const [mode, setMode] = useState('idle'); // 'idle', 'question', 'answering', 'feedback', 'summary'
+    const [mode, setMode] = useState('idle'); // 'idle', 'question', 'readyToAnswer', 'answering', 'feedback', 'summary'
+    const modeRef = useRef(mode);
+    useEffect(() => { modeRef.current = mode; }, [mode]);
+
+    const [sessionUuid, setSessionUuid] = useState(`session_${Date.now()}`);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [questions, setQuestions] = useState([]);
 
@@ -47,13 +61,15 @@ const VideoPractice = ({ onBack }) => {
 
     // Stats Accumulation
     const answerStatsRef = useRef({
-        frames: 0,
-        goodEyeContactFrames: 0,
-        stableHeadFrames: 0,
-        tenseFrames: 0,
-        speechFrames: 0,
-        silenceFrames: 0,
-        confidenceSum: 0
+        startTime: 0,
+        lastFrameTime: 0,
+        totalDuration: 0,
+        focusedDuration: 0,
+        distractedDuration: 0,
+        steadyDuration: 0,
+        movingDuration: 0,
+        warmDuration: 0,
+        neutralDuration: 0
     });
 
     const [sessionReport, setSessionReport] = useState([]);
@@ -164,20 +180,24 @@ const VideoPractice = ({ onBack }) => {
         setMode('question');
         const utterance = new SpeechSynthesisUtterance(q);
         utterance.rate = 1.0;
-        utterance.onend = () => startAnswering();
+        utterance.onend = () => setMode('readyToAnswer');
         window.speechSynthesis.speak(utterance);
     };
 
     const startAnswering = () => {
         setMode('answering');
+        const now = performance.now();
         answerStatsRef.current = {
-            frames: 0,
-            goodEyeContactFrames: 0,
-            stableHeadFrames: 0,
-            tenseFrames: 0,
-            speechFrames: 0,
-            silenceFrames: 0,
-            confidenceSum: 0
+            startTime: now,
+            lastFrameTime: now,
+            totalDuration: 0,
+            focusedDuration: 0,
+            distractedDuration: 0,
+            steadyDuration: 0,
+            movingDuration: 0,
+            warmDuration: 0,
+            neutralDuration: 0,
+            frames: 0 // Keep for debug
         };
         isPracticingRef.current = true;
 
@@ -235,13 +255,25 @@ const VideoPractice = ({ onBack }) => {
         // Stop audio recording and get blob
         const audioBlob = await stopAudioRecording();
 
-        // Calculate Visual Metrics
+        // Calculate Time-Based Visual Metrics
         const stats = answerStatsRef.current;
-        const totalFrames = stats.frames || 1;
+        const totalTimeMs = stats.totalDuration || 1; // Avoid divide by zero
 
-        const eyeMetric = (stats.goodEyeContactFrames / totalFrames) * 100;
-        const stabilityMetric = (stats.stableHeadFrames / totalFrames) * 100;
-        const tensionMetric = (stats.tenseFrames / totalFrames) * 100; // Lower is better
+        // Convert to seconds for display
+        const totalSeconds = (totalTimeMs / 1000).toFixed(1);
+        const focusedSeconds = (stats.focusedDuration / 1000).toFixed(1);
+        const distractedSeconds = (stats.distractedDuration / 1000).toFixed(1);
+        const steadySeconds = (stats.steadyDuration / 1000).toFixed(1);
+        const movingSeconds = (stats.movingDuration / 1000).toFixed(1);
+        const warmSeconds = (stats.warmDuration / 1000).toFixed(1);
+        const neutralSeconds = (stats.neutralDuration / 1000).toFixed(1);
+
+        // Percentages for scoring
+        const eyeMetric = (stats.focusedDuration / totalTimeMs) * 100;
+        const stabilityMetric = (stats.steadyDuration / totalTimeMs) * 100;
+        const tensionMetric = (stats.neutralDuration / totalTimeMs) * 100; // Legacy mapping (Neutral isn't "Tense" but logic reused)
+
+        // ... (audio logic remains same) ...
 
         // Get REAL audio hesitation analysis from backend
         let voiceMetric = 50;  // Default fallback
@@ -253,14 +285,21 @@ const VideoPractice = ({ onBack }) => {
                 console.log('[BACKEND] Sending audio to backend for analysis...');
                 const formData = new FormData();
                 formData.append('audio_file', audioBlob, 'answer.webm');
-                formData.append('session_id', `session_${Date.now()}`);
+                formData.append('session_id', sessionUuid);
+                formData.append('user_id', userId || 'anonymous');
 
+                // Add Visual Metrics
+                formData.append('eye_contact_time', (stats.focusedDuration / 1000).toFixed(2));
+                formData.append('steady_head_time', (stats.steadyDuration / 1000).toFixed(2));
+                formData.append('warm_expression_time', (stats.warmDuration / 1000).toFixed(2));
+                formData.append('answer_duration', (stats.totalDuration / 1000).toFixed(2));
+                formData.append('question_text', questions[currentQuestionIndex]);
                 const response = await axios.post(
                     `${API_BASE_URL}/video-presence/analyze-answer`,
                     formData,
                     {
                         headers: { 'Content-Type': 'multipart/form-data' },
-                        timeout: 30000  // 30 second timeout
+                        timeout: 30000
                     }
                 );
 
@@ -268,12 +307,8 @@ const VideoPractice = ({ onBack }) => {
 
                 if (response.data.status === 'success' && response.data.hesitation_analysis) {
                     hesitationData = response.data.hesitation_analysis;
-
-                    // Calculate voice metric from REAL hesitation data
                     const confidenceScore = hesitationData.confidence_score || 50;
                     voiceMetric = confidenceScore;
-
-                    // Use real feedback from backend (now structured)
                     vFeedback = hesitationData.feedback?.summary || "Speech analyzed.";
                 } else if (response.data.status === 'no_speech') {
                     vFeedback = "No speech detected. Please check your microphone.";
@@ -285,7 +320,7 @@ const VideoPractice = ({ onBack }) => {
             } catch (error) {
                 console.error('[ERROR] Backend audio analysis failed:', error);
                 vFeedback = "Audio analysis unavailable.";
-                voiceMetric = 50;  // Neutral fallback
+                voiceMetric = 50;
             }
         } else {
             console.warn('[WARNING] No audio recorded');
@@ -293,17 +328,20 @@ const VideoPractice = ({ onBack }) => {
             voiceMetric = 30;
         }
 
-        // Composite Confidence Score (REAL multi-modal)
+        // Composite Score logic
         let confidence = (
-            (eyeMetric * 0.3) +
-            (stabilityMetric * 0.2) +
-            (voiceMetric * 0.3) +
-            ((100 - tensionMetric) * 0.2)
+            (eyeMetric * 0.4) +
+            (stabilityMetric * 0.3) +
+            (voiceMetric * 0.3)
+            // Warmth is bonus, treated separately
         );
 
-        // Fallback for zero data (ensure never zero)
-        if (totalFrames < 10) confidence = Math.max(confidence, 40);
-        confidence = Math.max(confidence, 30);  // Absolute minimum
+        // Bonus for warmth
+        if (stats.warmDuration > (totalTimeMs * 0.1)) confidence += 5;
+
+        // Fallback for zero data
+        if (totalTimeMs < 2000) confidence = Math.max(confidence, 40); // Too short
+        confidence = Math.min(Math.max(confidence, 30), 100);
 
         const reportItem = {
             question: questions[currentQuestionIndex],
@@ -311,14 +349,23 @@ const VideoPractice = ({ onBack }) => {
             stabilityMetric: Math.round(stabilityMetric),
             confidence: Math.round(confidence),
             voiceFeedback: vFeedback,
-            visualFeedback: generateFeedback(eyeMetric, stabilityMetric, tensionMetric),
-            hesitationData: hesitationData  // Store for detailed display
+            visualFeedback: generateFeedback(eyeMetric, stabilityMetric, stats.warmDuration, totalTimeMs),
+            hesitationData: hesitationData,
+            timeStats: {
+                total: totalSeconds,
+                focused: focusedSeconds,
+                distracted: distractedSeconds,
+                steady: steadySeconds,
+                moving: movingSeconds,
+                warm: warmSeconds,
+                neutral: neutralSeconds
+            }
         };
 
         setSessionReport(prev => [...prev, reportItem]);
     };
 
-    const generateFeedback = (eye, stability, tension) => {
+    const generateFeedback = (eye, stability, warmTime, totalTime) => {
         const feedback = {
             summary: "Professional presence analysis complete.",
             details: [],
@@ -336,15 +383,17 @@ const VideoPractice = ({ onBack }) => {
         if (stability < 60) {
             feedback.details.push("Detectable head movement or fidgeting.");
             feedback.suggestions.push("Aim for a stable, grounded posture.");
+        } else {
+            feedback.details.push("Head posture remained steady and composed.");
         }
 
-        // Tension is now a percentage (average tension score)
-        // If tension metric > 30 (on 0-100 scale), it's noticeable
-        if (tension > 20) {
-            feedback.details.push("Micro-expressions of tension observed (e.g., brow or mouth compression).");
-            feedback.suggestions.push("Practice conscious facial relaxation techniques before answering.");
+        // Warmth Analysis (Time-Based)
+        const warmPct = (warmTime / totalTime) * 100;
+        if (warmPct < 5) {
+            feedback.details.push("Facial expression appeared mostly neutral.");
+            feedback.suggestions.push("Try to smile or nod occasionally to show engagement.");
         } else {
-            feedback.details.push("Facial expression remained composed and professional.");
+            feedback.details.push("Good use of facial expressions to convey warmth.");
         }
 
         return feedback;
@@ -423,7 +472,8 @@ const VideoPractice = ({ onBack }) => {
         // Update Visualization State (Throttled slightly by loop)
         setMicVolume(volume);
 
-        if (mode !== 'answering') return;
+        const currentMode = modeRef.current;
+        if (currentMode !== 'answering') return;
 
         // Thresholds - Increased to 20 to Filter Noise
         const SILENCE_THRESH = 20;
@@ -479,12 +529,27 @@ const VideoPractice = ({ onBack }) => {
         const smile = getScore('mouthSmileLeft') + getScore('mouthSmileRight');
         const isSmiling = smile > 0.3;  // Lowered threshold for better detection
 
-        // Update Answer Stats
-        if (mode === 'answering') {
+        // Update Answer Stats (Time-Based)
+        const currentMode = modeRef.current;
+        if (currentMode === 'answering') {
+            const now = performance.now();
+            const dt = now - answerStatsRef.current.lastFrameTime;
+            answerStatsRef.current.lastFrameTime = now;
+            answerStatsRef.current.totalDuration += dt;
+
+            // Eye Contact Time
+            if (isLookingAtCam) answerStatsRef.current.focusedDuration += dt;
+            else answerStatsRef.current.distractedDuration += dt;
+
+            // Head Stability Time
+            if (isStable || isNodding) answerStatsRef.current.steadyDuration += dt;
+            else answerStatsRef.current.movingDuration += dt;
+
+            // Facial Expression Time
+            if (isSmiling) answerStatsRef.current.warmDuration += dt;
+            else answerStatsRef.current.neutralDuration += dt;
+
             answerStatsRef.current.frames++;
-            if (isLookingAtCam) answerStatsRef.current.goodEyeContactFrames++;
-            if (isStable || isNodding) answerStatsRef.current.stableHeadFrames++;
-            // Note: No longer tracking tension frames
         }
 
         // Live Professional Presence Calculation (Simplified)
@@ -518,7 +583,7 @@ const VideoPractice = ({ onBack }) => {
             eyeContact: eye ? 'Focused' : 'Distracted',
             headStability: stable ? 'Steady' : 'Moving',
             tension: faceStatus,
-            status: mode === 'answering' ? 'Analyzing...' : 'Ready'
+            status: modeRef.current === 'answering' ? 'Analyzing...' : 'Ready'
         });
     };
 
@@ -657,24 +722,44 @@ const VideoPractice = ({ onBack }) => {
                                                     </ul>
                                                 </div>
 
-                                                {/* Metrics Bars */}
-                                                <div className="space-y-3">
+                                                {/* Metrics Bars with Time Data */}
+                                                <div className="space-y-4">
                                                     <div>
                                                         <div className="flex justify-between text-xs mb-1">
-                                                            <span className="text-gray-500">Eye Contact</span>
-                                                            <span className="font-medium text-gray-700">{getQualitativeLabel(item.eyeMetric)}</span>
+                                                            <span className="text-gray-500 font-medium">Eye Contact</span>
+                                                            <span className="font-bold text-gray-700">{item.timeStats?.focused}s Focused ({item.eyeMetric.toFixed(0)}%)</span>
                                                         </div>
-                                                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${item.eyeMetric}%` }}></div>
+                                                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-green-500 rounded-full" style={{ width: `${item.eyeMetric}%` }}></div>
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-400 mt-1 text-right">
+                                                            Distracted: {item.timeStats?.distracted}s
                                                         </div>
                                                     </div>
+
                                                     <div>
                                                         <div className="flex justify-between text-xs mb-1">
-                                                            <span className="text-gray-500">Head Stability</span>
-                                                            <span className="font-medium text-gray-700">{getQualitativeLabel(item.stabilityMetric)}</span>
+                                                            <span className="text-gray-500 font-medium">Head Stability</span>
+                                                            <span className="font-bold text-gray-700">{item.timeStats?.steady}s Steady ({item.stabilityMetric.toFixed(0)}%)</span>
                                                         </div>
-                                                        <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                                            <div className="h-full bg-purple-500 rounded-full" style={{ width: `${item.stabilityMetric}%` }}></div>
+                                                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${item.stabilityMetric}%` }}></div>
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-400 mt-1 text-right">
+                                                            Moving: {item.timeStats?.moving}s
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <div className="flex justify-between text-xs mb-1">
+                                                            <span className="text-gray-500 font-medium">Facial Warmth</span>
+                                                            <span className="font-bold text-gray-700">{item.timeStats?.warm}s Smiling</span>
+                                                        </div>
+                                                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                                                            <div
+                                                                className="h-full bg-pink-400 rounded-full"
+                                                                style={{ width: `${Math.min((item.timeStats?.warm / item.timeStats?.total) * 100, 100)}%` }}
+                                                            ></div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -722,7 +807,7 @@ const VideoPractice = ({ onBack }) => {
             {/* Header */}
             <div className="w-full max-w-5xl flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Interview Presence & Communication Practice</h1>
+                    <h1 className="text-2xl font-bold text-gray-800">Interview Presence Practice</h1>
                     <p className="text-gray-600">Professional non-verbal communication training. Microphone and Camera required.</p>
                 </div>
                 <button onClick={onBack} className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium">Exit</button>
@@ -782,92 +867,87 @@ const VideoPractice = ({ onBack }) => {
                     )}
                 </div>
 
-                {/* Right Panel: Live Feed */}
+                {/* Right Panel: Live Feed (Visual Coaching Only - No Scores) */}
                 <div className="space-y-4">
-
-                    {/* Confidence Meter */}
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <div className="flex justify-between items-end mb-2">
-                            <h4 className="text-sm font-bold text-gray-500 uppercase">Professional Presence</h4>
-                            <span className="text-3xl font-bold text-blue-600">{liveFeedback.confidence}</span>
-                        </div>
-                        <div className="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
-                            <div
-                                className={`h-full rounded-full transition-all duration-300 ease-out ${liveFeedback.confidence > 75 ? 'bg-green-500' : liveFeedback.confidence > 50 ? 'bg-blue-500' : 'bg-orange-400'
-                                    }`}
-                                style={{ width: `${liveFeedback.confidence}%` }}
-                            ></div>
-                        </div>
-                    </div>
-
-                    {/* Microphone Volume Visualizer */}
-                    <div className="bg-gray-100 p-3 rounded-lg border border-gray-200">
-                        <div className="flex justify-between items-center mb-1">
-                            <div className="text-xs font-bold text-gray-400 uppercase">Input Level</div>
-                            <div className="text-xs font-bold text-gray-600">{micVolume > 20 ? 'DETECTED' : 'SILENT'}</div>
-                        </div>
-                        <div className="w-full h-2 bg-gray-300 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-blue-500 transition-all duration-75"
-                                style={{ width: `${Math.min(micVolume, 100)}%` }}
-                            ></div>
-                        </div>
-                    </div>
-
-                    {/* Live Signals */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div className="text-xs font-bold text-gray-400 mb-1">EYE CONTACT</div>
-                            <div className={`font-semibold ${liveFeedback.eyeContact === 'Focused' ? 'text-green-600' :
-                                liveFeedback.eyeContact === 'Distracted' ? 'text-orange-500' :
-                                    'text-gray-500'
-                                }`}>
-                                {liveFeedback.eyeContact}
+                    {/* Eye Contact Status */}
+                    <div className={`p-4 rounded-xl border ${liveFeedback.eyeContact === 'Focused' ? 'bg-green-50 border-green-200' : 'bg-orange-50 border-orange-200'}`}>
+                        <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${liveFeedback.eyeContact === 'Focused' ? 'bg-green-500 animate-pulse' : 'bg-orange-500'}`}></div>
+                            <div>
+                                <p className="text-xs font-bold text-gray-500 uppercase">Eye Contact</p>
+                                <p className={`font-bold ${liveFeedback.eyeContact === 'Focused' ? 'text-green-700' : 'text-orange-600'}`}>
+                                    {liveFeedback.eyeContact}
+                                </p>
                             </div>
                         </div>
-                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div className="text-xs font-bold text-gray-400 mb-1">HEAD MOVEMENT</div>
-                            <div className={`font-semibold ${liveFeedback.headStability === 'Steady' ? 'text-green-600' :
-                                liveFeedback.headStability === 'Moving' ? 'text-blue-500' :
-                                    'text-gray-500'
-                                }`}>
-                                {liveFeedback.headStability}
+                    </div>
+
+                    {/* Head Stability Status */}
+                    <div className={`p-4 rounded-xl border ${liveFeedback.headStability === 'Steady' ? 'bg-blue-50 border-blue-200' : 'bg-yellow-50 border-yellow-200'}`}>
+                        <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${liveFeedback.headStability === 'Steady' ? 'bg-blue-500' : 'bg-yellow-500'}`}></div>
+                            <div>
+                                <p className="text-xs font-bold text-gray-500 uppercase">Head Movement</p>
+                                <p className={`font-bold ${liveFeedback.headStability === 'Steady' ? 'text-blue-700' : 'text-yellow-700'}`}>
+                                    {liveFeedback.headStability}
+                                </p>
                             </div>
-                        </div>
-                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div className="text-xs font-bold text-gray-400 mb-1">FACIAL EXPRESSION</div>
-                            <div className={`font-semibold text-sm ${liveFeedback.tension.includes('Warm') ? 'text-green-600' :
-                                    'text-gray-500'
-                                }`}>
-                                {liveFeedback.tension}
-                            </div>
-                        </div>
-                        <div className="bg-white p-3 rounded-lg border border-gray-100">
-                            <div className="text-xs font-bold text-gray-400 mb-1">STATUS</div>
-                            <div className="font-semibold text-blue-600">{liveFeedback.status}</div>
                         </div>
                     </div>
 
-                    {/* Controls */}
-                    <div className="pt-2">
-                        {mode === 'answering' ? (
-                            <button
-                                onClick={finishAnswer}
-                                className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-all"
-                            >
-                                ■ Stop Answering
-                            </button>
-                        ) : mode === 'feedback' ? (
-                            <button
-                                onClick={nextStep}
-                                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-all"
-                            >
-                                Next Question →
-                            </button>
-                        ) : <div className="h-14 flex items-center justify-center text-gray-400 bg-gray-100 rounded-xl rounded-dashed border border-gray-200">Waiting for start...</div>}
+                    {/* Facial Expression Status */}
+                    <div className="p-4 rounded-xl border bg-gray-50 border-gray-200">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${liveFeedback.tension && liveFeedback.tension.includes('Warm') ? 'bg-pink-500' : 'bg-gray-400'}`}></div>
+                            <div>
+                                <p className="text-xs font-bold text-gray-500 uppercase">Expression</p>
+                                <p className="font-bold text-gray-700">
+                                    {liveFeedback.tension}
+                                </p>
+                            </div>
+                        </div>
                     </div>
 
+                    <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mt-4">
+                        <p className="text-xs text-blue-800 text-center font-medium">
+                            💡 Tip: Relax and look at the camera.<br />Detailed analysis will appear at the end.
+                        </p>
+                    </div>
                 </div>
+            </div>
+
+            {/* Controls */}
+            <div className="pt-8 w-full max-w-2xl">
+                {mode === 'answering' ? (
+                    <button
+                        onClick={finishAnswer}
+                        className="w-full py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg transition-all animate-pulse"
+                    >
+                        ■ Stop Answer
+                    </button>
+                ) : mode === 'readyToAnswer' ? (
+                    <button
+                        onClick={startAnswering}
+                        className="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-105"
+                    >
+                        ▶ Start Answer
+                    </button>
+                ) : mode === 'feedback' ? (
+                    <button
+                        onClick={nextStep}
+                        className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg transition-all"
+                    >
+                        Next Question →
+                    </button>
+                ) : mode === 'question' ? (
+                    <div className="h-14 flex items-center justify-center text-blue-600 bg-blue-50 rounded-xl border border-blue-200 animate-pulse font-medium">
+                        Listen to the question...
+                    </div>
+                ) : (
+                    <div className="h-14 flex items-center justify-center text-gray-400 bg-gray-100 rounded-xl rounded-dashed border border-gray-200">
+                        Waiting for session start...
+                    </div>
+                )}
             </div>
         </div>
     );

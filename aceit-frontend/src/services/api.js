@@ -222,6 +222,20 @@ export const resumeAPI = {
     });
   },
   getJobRoles: () => api.get('/resume/job-roles'),
+
+  // Resume Creator endpoints
+  generateContent: (data) => api.post('/resume/generate-content', data),
+
+  download: (userData, generatedContent, templateType, styleOptions) => {
+    return api.post('/resume/download-resume', {
+      user_data: userData,
+      generated_content: generatedContent,
+      template_type: templateType,
+      style_options: styleOptions
+    }, {
+      responseType: 'blob'
+    });
+  }
 };
 
 export const progressAPI = {

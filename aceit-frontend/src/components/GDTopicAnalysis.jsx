@@ -19,7 +19,7 @@ const GDTopicAnalysis = () => {
         setResult(null);
 
         try {
-            const response = await axios.post(`${API_URL}/gd/generate`, { topic });
+            const response = await axios.post(`${API_URL}/gd-practice/generate`, { topic });
 
             if (response.data.status === 'error') {
                 setError(response.data.message);

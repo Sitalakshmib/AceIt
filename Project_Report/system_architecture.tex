@@ -1,0 +1,38 @@
+%!TeX root = main.tex
+\chapter{System Architecture}
+
+\section{High-Level Architecture}
+The \textbf{AceIt} platform follows a modern microservices-inspired architecture, separating the concerns of the user interface, business logic, and data storage. The core components interact seamlessly to deliver a responsive experience.
+
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{architecture_diagram.png}
+    \fbox{\parbox{10cm}{\centering \vspace{2cm} [Insert Architecture Diagram Here] \vspace{2cm}}}
+    \caption{System Architecture Diagram}
+    \label{fig:architecture}
+\end{figure}
+
+The architecture consists of three main layers:
+\begin{enumerate}
+    \item \textbf{Presentation Layer (Frontend)}: Built with React.js using Vite. It handles all user interactions, video rendering, and audio capture. It communicates with the backend via RESTful APIs.
+    \item \textbf{Application Layer (Backend)}: Powered by FastAPI (Python). It serves as the bridge between the frontend and the AI services. It manages authentication, orchestrates API calls to Google Gemini, processes resume parsing, and handles code execution logic.
+    \item \textbf{Data Layer}: Uses PostgreSQL for structured data storage (user profiles, interview history, coding progress) and integrates with external AI APIs (Google Gemini) for intelligence.
+\end{enumerate}
+
+\section{Data Flow}
+The data flow within the application is designed to be efficient and secure.
+\begin{itemize}
+    \item **User Input**: Text or audio input is captured by the Frontend.
+    \item **API Request**: The Frontend sends this data to the Backend API endpoints.
+    \item **Processing**: The Backend processes the request. For AI interactions, it constructs a prompt and calls the Gemini API. For coding, it may run validation logic.
+    \item **Response**: The processed result (AI feedback, code output, etc.) is returned to the Frontend for display.
+\end{itemize}
+
+\section{Module Design}
+The system is divided into distinct modules to ensure maintainability:
+\begin{itemize}
+    \item \textbf{Authentication Module}: Handles JWT-based secure access.
+    \item \textbf{Interview Service}: Manages interview sessions, context retention, and scoring.
+    \item \textbf{Coding Service}: Handles problem retrieval, code submission, and execution.
+    \item \textbf{Analytics Service}: Aggregates user data to generate performance reports.
+\end{itemize}

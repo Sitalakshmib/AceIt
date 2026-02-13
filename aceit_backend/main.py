@@ -49,6 +49,10 @@ app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
 app.include_router(gd_practice.router, prefix="/gd-practice", tags=["GD Practice"])
 app.include_router(video_presence.router, prefix="/video-presence", tags=["Video Presence"])
 
+# Import here to avoid circular dependencies if any
+from routes import interview_analytics
+app.include_router(interview_analytics.router, prefix="/interview", tags=["Interview Analytics"])
+
 @app.get("/")
 async def root():
     return {

@@ -6,14 +6,6 @@ import pdfplumber
 from PyPDF2 import PdfReader
 from io import BytesIO
 from services.llm_client import LLMClient
-from docx import Document
-from docx.shared import Pt, RGBColor, Inches
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from pydantic import BaseModel
-from typing import List, Optional
-import json
-import os
-from fastapi.responses import Response
 
 router = APIRouter()
 
@@ -590,228 +582,19 @@ async def analyze_resume(
     # Save progress
     progress_data.append({
         "user_id": user_id,
-        "module": "resume_analysis",
+        "module": "resume",
+        "ats_score": analysis["ats_analysis"]["ats_score"],
         "score": analysis["overall_score"],
-        "timestamp": datetime.utcnow(),
-        "job_role": job_role,
-        "analysis": analysis
+        "timestamp": datetime.utcnow().isoformat(),
+        "job_role": job_role
     })
+    
+    from database import save_progress
+    save_progress()
     
     return analysis
 
-
-# --- Resume Creator Models ---
-
-class ProfessionalProfile(BaseModel):
-    current_status: str
-    years_of_experience: int
-    career_goal: str
-    preferred_domain: str
-
-class Education(BaseModel):
-    degree: str
-    institution: str
-    year: str
-    gpa: str
-
-class Project(BaseModel):
-    title: str
-    description: str
-    technologies: str
-
-class Experience(BaseModel):
-    role: str
-    company: str
-    duration: str
-    responsibilities: str
-
-class PersonalInfo(BaseModel):
-    name: str
-    email: str
-    phone: str
-    linkedin: Optional[str] = ""
-    github: Optional[str] = ""
-
-class ResumeUserData(BaseModel):
-    personal_info: PersonalInfo
-    education: List[Education]
-    skills: List[str]
-    projects: List[Project]
-    experience: List[Experience]
-    certifications: List[str]
-    target_role: str
-    references: List[dict]
-    professional_profile: Optional[ProfessionalProfile] = None
-    template_type: str
-
-class ResumeDownloadRequest(BaseModel):
-    user_data: ResumeUserData
-    generated_content: dict
-    template_type: str
-    style_options: dict
-
-# --- Resume Creator Logic ---
-
-def generate_resume_content_with_ai(user_data: ResumeUserData) -> dict:
-    """Generate structured resume content using AI"""
-    if not llm_client:
-        raise Exception("LLM Client not available")
-    
-    prompt = f"""
-    You are a professional resume writer. Create content for a resume based on the following user data:
-    
-    Name: {user_data.personal_info.name}
-    Role: {user_data.target_role}
-    Experience Level: {user_data.professional_profile.current_status if user_data.professional_profile else 'Unknown'}
-    
-    Skills: {', '.join(user_data.skills)}
-    
-    Work Experience:
-    {json.dumps([e.dict() for e in user_data.experience], indent=2)}
-    
-    Projects:
-    {json.dumps([p.dict() for p in user_data.projects], indent=2)}
-    
-    Career Goal: {user_data.professional_profile.career_goal if user_data.professional_profile else ''}
-    
-    Please generate a professional summary and enhance the descriptions for experience and projects.
-    Return ONLY valid JSON in the following format:
-    {{
-        "professional_summary": "A strong, role-specific summary...",
-        "experience_enhancements": [
-            {{ "role": "...", "company": "...", "enhanced_responsibilities": ["bullet 1", "bullet 2"] }}
-        ],
-        "project_enhancements": [
-            {{ "title": "...", "enhanced_description": ["bullet 1", "bullet 2"] }}
-        ]
-    }}
-    """
-    
-    try:
-        response = llm_client.generate_response(prompt)
-        # Extract JSON from response
-        json_match = re.search(r'\{[\s\S]*\}', response)
-        if json_match:
-            return json.loads(json_match.group())
-        else:
-            return {"error": "Failed to parse AI response"}
-    except Exception as e:
-        print(f"AI Generation Error: {e}")
-        return {"error": str(e)}
-
-def create_word_resume(user_data: ResumeUserData, content: dict, template_type: str, style_options: dict) -> bytes:
-    """Create a Word document from resume data"""
-    doc = Document()
-    
-    # Styles
-    style = doc.styles['Normal']
-    font = style.font
-    font.name = style_options.get('font_family', 'Calibri')
-    font.size = Pt(11)
-    
-    # Header
-    header = doc.add_paragraph()
-    header.alignment = WD_ALIGN_PARAGRAPH.CENTER if style_options.get('header_alignment') == 'center' else WD_ALIGN_PARAGRAPH.LEFT
-    name_run = header.add_run(user_data.personal_info.name)
-    name_run.bold = True
-    name_run.font.size = Pt(24)
-    name_run.font.color.rgb = RGBColor(0, 0, 0)
-    
-    contact_info = []
-    if user_data.personal_info.email: contact_info.append(user_data.personal_info.email)
-    if user_data.personal_info.phone: contact_info.append(user_data.personal_info.phone)
-    if user_data.personal_info.linkedin: contact_info.append(user_data.personal_info.linkedin)
-    if user_data.personal_info.github: contact_info.append(user_data.personal_info.github)
-    
-    doc.add_paragraph(' | '.join(contact_info)).alignment = header.alignment
-    
-    doc.add_paragraph() # Spacer
-    
-    # Summary
-    doc.add_heading('Professional Summary', level=1)
-    summary = content.get('professional_summary', user_data.professional_profile.career_goal if user_data.professional_profile else '')
-    doc.add_paragraph(summary)
-    
-    # Skills
-    doc.add_heading('Technical Skills', level=1)
-    doc.add_paragraph(', '.join(user_data.skills))
-    
-    # Experience
-    if user_data.experience:
-        doc.add_heading('Professional Experience', level=1)
-        enhancements = {e.get('company'): e.get('enhanced_responsibilities', []) for e in content.get('experience_enhancements', [])}
-        
-        for exp in user_data.experience:
-            p = doc.add_paragraph()
-            runner = p.add_run(f"{exp.role} at {exp.company}")
-            runner.bold = True
-            p.add_run(f"\n{exp.duration}")
-            
-            bullets = enhancements.get(exp.company, [exp.responsibilities])
-            if isinstance(bullets, str): bullets = [bullets]
-            
-            for bullet in bullets:
-                doc.add_paragraph(bullet, style='List Bullet')
-    
-    # Projects
-    if user_data.projects:
-        doc.add_heading('Projects', level=1)
-        enhancements = {p.get('title'): p.get('enhanced_description', []) for p in content.get('project_enhancements', [])}
-        
-        for proj in user_data.projects:
-            p = doc.add_paragraph()
-            runner = p.add_run(proj.title)
-            runner.bold = True
-            if proj.technologies:
-                p.add_run(f" | {proj.technologies}")
-            
-            bullets = enhancements.get(proj.title, [proj.description])
-            if isinstance(bullets, str): bullets = [bullets]
-            
-            for bullet in bullets:
-                doc.add_paragraph(bullet, style='List Bullet')
-                
-    # Education
-    if user_data.education:
-        doc.add_heading('Education', level=1)
-        for edu in user_data.education:
-            p = doc.add_paragraph()
-            runner = p.add_run(f"{edu.degree}")
-            runner.bold = True
-            p.add_run(f"\n{edu.institution}, {edu.year}")
-            if edu.gpa:
-                p.add_run(f"\nGPA: {edu.gpa}")
-
-    # Save to BytesIO
-    file_stream = BytesIO()
-    doc.save(file_stream)
-    file_stream.seek(0)
-    return file_stream.getvalue()
-
-@router.post("/generate-content")
-async def generate_content(request: ResumeUserData):
-    """Generate resume content based on user data"""
-    content = generate_resume_content_with_ai(request)
-    return {"content": content}
-
-@router.post("/download-resume")
-async def download_resume(request: ResumeDownloadRequest):
-    """Generate and download resume as DOCX"""
-    try:
-        docx_bytes = create_word_resume(
-            request.user_data, 
-            request.generated_content, 
-            request.template_type, 
-            request.style_options
-        )
-        
-        filename = f"{request.user_data.personal_info.name.replace(' ', '_')}_Resume.docx"
-        
-        return Response(
-            content=docx_bytes,
-            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            headers={"Content-Disposition": f"attachment; filename={filename}"}
-        )
-    except Exception as e:
-        print(f"Download Error: {e}")
-        return {"error": str(e)}
+@router.get("/job-roles")
+async def get_job_roles():
+    """Get available job roles for analysis"""
+    return [{"id": key, "name": key.replace("_", " ").title()} for key in JOB_ROLE_SKILLS.keys()]
