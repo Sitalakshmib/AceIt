@@ -49,6 +49,8 @@ A robust coding environment supporting multiple languages and AI assistance.
     *   **Run**: Executes code against visible test cases for quick debugging.
     *   **Submit**: Validates against hidden edge cases to ensure solution robustness.
 *   **AI Tutor**: An integrated AI assistant (floating bot) that provides hints, logic explanation, and debugging help without giving away the direct solution.
+    *   **Progressive Hints**: Level 1 (Concept) → Level 3 (Pseudocode).
+    *   **Smart Debug**: Analyzes error logs to pinpoint logic failures.
 *   **Smart Filtering**: Filter problems by specific tags (e.g., Arrays, DP), difficulty, or "Bookmarked" status.
 
 ---
@@ -104,6 +106,46 @@ Ensures your resume gets past Applicant Tracking Systems (ATS).
     *   **Found Skills** vs **Missing/Recommended Skills**.
     *   **Critical Alerts**: Missing contact info, bad formatting, or empty sections.
 *   **AI Career Coach**: Provides "Actionable Next Steps" to improve the resume immediately.
+
+---
+
+
+---
+
+## 🤖 AI Architecture & Intelligence
+
+AceIt's intelligence is powered by a **Multi-Provider Hybrid AI Engine** that ensures 99.9% uptime and optimal latency. The system automatically routes requests based on complexity and availability.
+
+### **1. AI Coach (The "Brain")**
+A persistent, context-aware personality that guides users through their prep journey.
+*   **Context Awareness**: The Coach "knows" you. It pulls real-time data from the `UserAptitudeProgress` and `AIAnalyticsService` to understand:
+    *   **Current Confidence Level**: (e.g., "72% in Logical Reasoning").
+    *   **Pace Ratio**: (e.g., "0.8x" - You are faster than average).
+    *   **Weak Zones**: (e.g., "Struggling with Time & Work").
+*   **Voice Interaction**:
+    *   **Input**: Uses **OpenAI Whisper** for high-accuracy Speech-to-Text (STT).
+    *   **Output**: Uses **OpenAI TTS (Text-to-Speech)** to talk back to you in a natural, human-like voice.
+*   **Model Strategy**:
+    *   **Primary**: **Groq (Llama-3 70B)** for ultra-low latency conversational responses.
+    *   **Fallback**: **GPT-4o** takes over if Groq is unavailable or for complex reasoning tasks.
+
+### **2. AI Tutor (Coding Companion)**
+A dedicated coding assistant embedded in the IDE, powered by **Google Gemini Pro** and **Groq**. It follows strict pedagogical rules to *teach*, not just *solve*.
+*   **Progressive Hint System**:
+    *   **Level 1**: Strategy (e.g., "Try using a Two-Pointer approach").
+    *   **Level 2**: Algorithm (e.g., "Initialize pointers at start and end...").
+    *   **Level 3**: Pseudocode (logic structure without syntax).
+*   **Smart Debugger**:
+    *   Analyzes `Input` + `Expected Output` + `Actual Output` + `Error Message`.
+    *   Generates a "What to Fix" checklist (e.g., "You have an off-by-one error in your loop condition").
+*   **Code Reviewer**:
+    *   Evaluates **Time/Space Complexity** (Big O).
+    *   Suggests **Best Practices** (naming conventions, modularity).
+    *   Identifies **Edge Cases** you missed (e.g., "What if the array is empty?").
+
+### **3. Content Generation Engine**
+*   **Dynamic Questions**: Generates fresh Aptitude and Technical questions on the fly to prevent stale content.
+*   **Mock Interviews**: simulate distinct interview personas (Strict, Friendly, Technical) by modifying the `system_prompt` dynamically.
 
 ---
 
