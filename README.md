@@ -38,6 +38,25 @@ Post-test analysis provides actionable insights:
     *   Your Answer vs Correct Answer.
     *   Detailed Step-by-Step Explanations.
 
+#### **D. 🤖 AI Coach (The "Brain")**
+A persistent, context-aware personality that guides users through their prep journey.
+*   **Context Awareness**: The Coach "knows" you. It pulls real-time data from the `UserAptitudeProgress` and `AIAnalyticsService` to understand:
+    *   **Current Confidence Level**: (e.g., "72% in Logical Reasoning").
+    *   **Pace Ratio**: (e.g., "0.8x" - You are faster than average).
+    *   **Weak Zones**: (e.g., "Struggling with Time & Work").
+*   **Voice Interaction**:
+    *   **Input**: Uses **OpenAI Whisper** for high-accuracy Speech-to-Text (STT).
+    *   **Output**: Uses **OpenAI TTS (Text-to-Speech)** to talk back to you in a natural, human-like voice.
+*   **Model Strategy**:
+    *   **Primary**: **Groq (Llama-3)** for ultra-low latency conversational responses.
+    *   **Fallback**: **GPT-4o** takes over if Groq is unavailable or for complex reasoning tasks.
+
+#### **🔧 Under the Hood (Aptitude)**
+*   **Data Models**: Uses `UserAptitudeProgress` to track multidimensional difficulty metrics:
+    *   **Concept Depth**: Single vs Multi-concept problems.
+    *   **Cognitive Load**: Complexity of the problem statement.
+*   **Adaptive Logic**: The system maintains a localized history of the last 4 attempts per topic to calculate a moving average accuracy, triggering instantaneous difficulty adjustments.
+
 ---
 
 ### 2. 💻 Coding Arena
@@ -48,88 +67,9 @@ A robust coding environment supporting multiple languages and AI assistance.
 *   **Test Case Validation**:
     *   **Run**: Executes code against visible test cases for quick debugging.
     *   **Submit**: Validates against hidden edge cases to ensure solution robustness.
-*   **AI Tutor**: An integrated AI assistant (floating bot) that provides hints, logic explanation, and debugging help without giving away the direct solution.
-    *   **Progressive Hints**: Level 1 (Concept) → Level 3 (Pseudocode).
-    *   **Smart Debug**: Analyzes error logs to pinpoint logic failures.
 *   **Smart Filtering**: Filter problems by specific tags (e.g., Arrays, DP), difficulty, or "Bookmarked" status.
 
----
-
-### 3. 🗣️ Group Discussion (AI-Moderated)
-A unique module to practice structuring thoughts and articulating arguments.
-
-*   **AI Topic Generator**: Generates relevant, trending GD topics on demand.
-*   **Structured Practice**:
-    *   Timer-based session to simulate pressure.
-    *   Minimum word count enforcement (20+ chars) to encourage substantial responses.
-*   **4-Dimensional AI Scoring**:
-    *   **Clarity**: How easy is it to understand your points?
-    *   **Coherence**: Logical flow and structuring of arguments.
-    *   **Relevance**: Adherence to the core topic.
-    *   **Overall Score**: Weighted average of the above metrics.
-*   **Detailed Feedback**:
-    *   **Strengths & Weaknesses**: AI identifies specific strong points and areas for improvement.
-    *   **Topic Study Points**: Provides key facts and arguments you *could* have mentioned.
-
----
-
-### 4. 🤝 AI Mock Interviewer
-Simulates a real interview environment with audio-visual interaction.
-
-#### **Interview Modes:**
-*   **Technical**: Focuses on core concepts (Python, Java, SQL, etc.) or "Real-time Adaptive" (context-aware testing).
-*   **HR / Behavioral**: Tests soft skills, culture fit, and situational judgment.
-*   **Video Presence**: Uses camera feedback to analyze body language and confidence.
-
-#### **Key Features:**
-*   **Voice Interaction**:
-    *   **AI Speaks**: Text-to-Speech (TTS) engine reads out questions.
-    *   **You Speak**: Speech-to-Text (STT) transcribe your answers in real-time.
-*   **Live Camera Feed**: Mirrors your video to help you practice maintaining eye contact and professional posture.
-*   **Comprehensive Report**:
-    *   **Overall Score** & Performance Badge.
-    *   **Model Answers**: Compares your response with an "Ideal Response" to highlight gaps.
-    *   **Focus Areas**: Specific recommendations (e.g., "Improve detailed explanations for SQL joins").
-
----
-
-### 5. 📄 Resume Analyzer (ATS-Optimized)
-Ensures your resume gets past Applicant Tracking Systems (ATS).
-
-*   **PDF Parsing**: Extracts text from uploaded PDF resumes.
-*   **Target Role Mapping**: You specific the target role (e.g., "Frontend Developer"), and the AI analyzes relevance.
-*   **Scoring Engine**:
-    *   **Overall Score**: General quality rating.
-    *   **ATS Score**: Formatting, keyword density, and structure compatibility.
-    *   **Skills Match**: Compares your skills against standard requirements for the target role.
-*   **Gap Analysis**:
-    *   **Found Skills** vs **Missing/Recommended Skills**.
-    *   **Critical Alerts**: Missing contact info, bad formatting, or empty sections.
-*   **AI Career Coach**: Provides "Actionable Next Steps" to improve the resume immediately.
-
----
-
-
----
-
-## 🤖 AI Architecture & Intelligence
-
-AceIt's intelligence is powered by a **Multi-Provider Hybrid AI Engine** that ensures 99.9% uptime and optimal latency. The system automatically routes requests based on complexity and availability.
-
-### **1. AI Coach (The "Brain")**
-A persistent, context-aware personality that guides users through their prep journey.
-*   **Context Awareness**: The Coach "knows" you. It pulls real-time data from the `UserAptitudeProgress` and `AIAnalyticsService` to understand:
-    *   **Current Confidence Level**: (e.g., "72% in Logical Reasoning").
-    *   **Pace Ratio**: (e.g., "0.8x" - You are faster than average).
-    *   **Weak Zones**: (e.g., "Struggling with Time & Work").
-*   **Voice Interaction**:
-    *   **Input**: Uses **OpenAI Whisper** for high-accuracy Speech-to-Text (STT).
-    *   **Output**: Uses **OpenAI TTS (Text-to-Speech)** to talk back to you in a natural, human-like voice.
-*   **Model Strategy**:
-    *   **Primary**: **Groq (Llama-3 70B)** for ultra-low latency conversational responses.
-    *   **Fallback**: **GPT-4o** takes over if Groq is unavailable or for complex reasoning tasks.
-
-### **2. AI Tutor (Coding Companion)**
+#### **A. 🤖 AI Tutor (Coding Companion)**
 A dedicated coding assistant embedded in the IDE, powered by **Google Gemini Pro** and **Groq**. It follows strict pedagogical rules to *teach*, not just *solve*.
 *   **Progressive Hint System**:
     *   **Level 1**: Strategy (e.g., "Try using a Two-Pointer approach").
@@ -143,9 +83,76 @@ A dedicated coding assistant embedded in the IDE, powered by **Google Gemini Pro
     *   Suggests **Best Practices** (naming conventions, modularity).
     *   Identifies **Edge Cases** you missed (e.g., "What if the array is empty?").
 
-### **3. Content Generation Engine**
-*   **Dynamic Questions**: Generates fresh Aptitude and Technical questions on the fly to prevent stale content.
-*   **Mock Interviews**: simulate distinct interview personas (Strict, Friendly, Technical) by modifying the `system_prompt` dynamically.
+#### **🔧 Under the Hood (Coding)**
+*   **Hybrid Execution Engine**:
+    *   **Local Execution**: Python code runs in a secure, isolated local subprocess for maximum speed.
+    *   **Remote Execution**: Java, C++, and JavaScript use the **Piston API** for secure, sandboxed execution.
+*   **Security**: Implements strict 10-second timeouts (`EXECUTION_TIMEOUT`) and resource limits to prevent infinite loops or malicious code.
+*   **Test Runners**: Custom wrapper scripts for each language (e.g., `_wrap_java`, `_wrap_cpp`) invoke the user's function and compare outputs against JSON-defined test cases.
+
+---
+
+### 3. 🗣️ Group Discussion (AI-Moderated)
+A unique module to practice structuring thoughts and articulating arguments.
+
+*   **AI Topic Generator**: Generates relevant, trending GD topics on demand (50% Static Curated / 50% AI Generated).
+*   **Structured Practice**:
+    *   Timer-based session to simulate pressure.
+    *   Minimum word count enforcement (20+ chars).
+*   **Detailed Feedback**:
+    *   **Strengths & Weaknesses**: AI identifies specific strong points and areas for improvement.
+    *   **Topic Study Points**: AI generates literature-style statements (facts, stats, arguments) to help you study the topic deeper.
+
+#### **🔧 Under the Hood (GD)**
+*   **Scoring Logic**:
+    *   **Clarity (0-10)**: Analyzes language precision and readability.
+    *   **Coherence (0-10)**: Evaluates logical flow and argument structure.
+    *   **Relevance (0-10)**: Checks adherence to the core topic.
+*   **Prompt Engineering**: Uses sophisticated system prompts to ensure the AI evaluates *persuasion* and *logic*, not just grammar.
+
+---
+
+### 4. 🤝 AI Mock Interviewer
+Simulates a real interview environment with audio-visual interaction.
+
+#### **Interview Modes:**
+*   **Technical**: Focuses on core concepts (Python, Java, SQL, etc.) or "Real-time Adaptive" (context-aware testing).
+*   **HR / Behavioral**: Tests soft skills, culture fit, and situational judgment using STAR method evaluation.
+*   **Video Presence**: Uses camera feedback to analyze body language and confidence.
+
+#### **Key Features:**
+*   **Voice Interaction**: Full-duplex voice conversation using Whisper (Input) and OpenAI TTS/ElevenLabs (Output).
+*   **Live Camera Feed**: Mirrors your video to help you practice maintaining eye contact.
+*   **Comprehensive Report**:
+    *   **Overall Score** & Performance Badge.
+    *   **Model Answers**: Compares your response with an "Ideal Response" to highlight gaps.
+
+#### **🔧 Under the Hood (Interview)**
+*   **Dual Engine Architecture**:
+    *   **Text Engine**: Standard chat-based interface.
+    *   **Voice Engine (`SimVoiceInterviewer`)**: Handles audio buffers, transcription, and TTS generation.
+*   **State Management**: Maintains a continuous session state to contextually generate the *next* question based on the *previous* answer's quality.
+*   **Adaptive Question Bank**:
+    *   For **Real-time** mode, questions are generated dynamically based on the Resume and JD.
+    *   For **Topic-Specific** mode (e.g., Python), the system progressively increases difficulty from Basic → Intermediate → Advanced based on streak.
+
+---
+
+### 5. 📄 Resume Analyzer (ATS-Optimized)
+Ensures your resume gets past Applicant Tracking Systems (ATS).
+
+*   **PDF Parsing**: Extracts text from uploaded PDF resumes.
+*   **Target Role Mapping**: You specify the target role (e.g., "Frontend Developer"), and the AI analyzes relevance.
+*   **Gap Analysis**:
+    *   **Found Skills** vs **Missing/Recommended Skills**.
+    *   **Critical Alerts**: Missing contact info, bad formatting, or empty sections.
+*   **AI Career Coach**: Provides "Actionable Next Steps" to improve the resume immediately.
+
+#### **🔧 Under the Hood (Resume)**
+*   **Hybrid Analysis System**:
+    *   **Rule-Based (60%)**: Regex patterns validate structure (Email, Phone, LinkedIn), section headers, and keyword density.
+    *   **AI-Based (40%)**: **Google Gemini / LLM** analyzes the *quality* of content (impact, action verbs, quantification of achievements).
+*   **Parsing Strategy**: Uses `pdfplumber` for high-fidelity text extraction, falling back to `PyPDF2` if the PDF structure is complex.
 
 ---
 
@@ -154,7 +161,7 @@ A dedicated coding assistant embedded in the IDE, powered by **Google Gemini Pro
 *   **Frontend**: React.js, Tailwind CSS, Lucide Icons, Monaco Editor.
 *   **Backend**: FastAPI (Python), SQLAlchemy.
 *   **Database**: PostgreSQL / SQLite (Dev).
-*   **AI/ML**: Integration with LLMs (Groq/OpenAI) for real-time evaluation and content generation.
+*   **AI/ML**: Integration with LLMs (Groq, OpenAI, Gemini) for real-time evaluation and content generation.
 
 ---
 
