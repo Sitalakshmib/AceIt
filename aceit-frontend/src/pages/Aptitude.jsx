@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { analyticsAPI, mockTestAPI } from '../services/api';
 import PracticeMode from '../components/PracticeMode';
 import MockTestSection from './MockTest';
@@ -7,7 +8,8 @@ import AICoachChat from '../components/AICoachChat';
 import { BookOpen, Award, BarChart2, ArrowLeft, Target, Rocket, Brain } from 'lucide-react';
 
 const Aptitude = () => {
-  const [activeView, setActiveView] = useState('intro'); // 'intro', 'practice', 'mock-test', 'analytics'
+  const navigate = useNavigate();
+  const [activeView, setActiveView] = useState('intro'); // 'into', 'practice', 'mock-test', 'analytics'
 
   const handleNavigate = (view) => {
     setActiveView(view);
@@ -39,7 +41,16 @@ const Aptitude = () => {
   return (
     <div className="min-h-screen">
       {activeView === 'intro' ? (
-        <div className="p-8 max-w-7xl mx-auto animate-in fade-in duration-500">
+        <div className="p-8 max-w-7xl mx-auto animate-in fade-in duration-500 relative">
+          {/* Back to Dashboard Button */}
+          <button
+            onClick={() => navigate('/')}
+            className="absolute top-0 left-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group mt-4 ml-4 z-50"
+          >
+            <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+            Dashboard
+          </button>
+
           <div className="mb-12 text-center">
             <div className="inline-block p-3 bg-blue-50 rounded-2xl mb-4">
               <Target className="h-8 w-8 text-blue-600" />

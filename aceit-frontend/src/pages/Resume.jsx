@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { resumeAPI } from '../services/api';
 // Import jsPDF for PDF generation
 import jsPDF from 'jspdf';
@@ -7,12 +8,13 @@ import 'jspdf-autotable';
 import {
   UploadCloud, FileText, CheckCircle2, AlertTriangle, XCircle, Download,
   Loader2, Zap, Target, Award, BookOpen, Briefcase, Mail, Phone, Linkedin, Github,
-  ChevronRight, Star, TrendingUp, Cpu, Layout
+  ChevronRight, Star, TrendingUp, Cpu, Layout, ArrowLeft
 } from 'lucide-react';
 
 import ResumeCreator from '../components/Resume/ResumeCreator';
 
 const Resume = () => {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState('analyze'); // 'analyze' or 'create'
   const [resumeFile, setResumeFile] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -231,7 +233,16 @@ const Resume = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 md:p-12 font-sans">
+    <div className="min-h-screen bg-gray-50 p-6 md:p-12 font-sans relative">
+      {/* Back to Dashboard Button */}
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-8 left-8 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group z-50"
+      >
+        <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+        Dashboard
+      </button>
+
       <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
 
         {/* Header */}

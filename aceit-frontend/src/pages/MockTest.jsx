@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { mockTestAPI, aptitudeAPI } from '../services/api';
+import { ArrowLeft } from 'lucide-react';
 
 const MockTest = () => {
     const [view, setView] = useState('selection'); // 'selection', 'test', 'results', 'review'
@@ -172,8 +173,17 @@ const MockTest = () => {
     // Selection Screen
     if (view === 'selection') {
         return (
-            <div className="p-6 max-w-4xl mx-auto">
-                <div className="bg-white rounded-lg shadow-lg p-8">
+            <div className="p-6 max-w-4xl mx-auto relative">
+                {/* Back to Dashboard Button */}
+                <button
+                    onClick={() => navigate('/')}
+                    className="absolute top-8 left-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group z-50 mb-4"
+                >
+                    <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+                    Dashboard
+                </button>
+
+                <div className="bg-white rounded-lg shadow-lg p-8 mt-12">
                     <h1 className="text-3xl font-bold text-gray-800 mb-6 text-center">Mock Aptitude Test</h1>
 
                     {error && (

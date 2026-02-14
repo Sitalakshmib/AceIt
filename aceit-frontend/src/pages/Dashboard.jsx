@@ -162,9 +162,9 @@ const Dashboard = () => {
                   <div className="p-2 bg-purple-100 text-purple-600 rounded-lg mr-3">
                     <Clock className="h-5 w-5" />
                   </div>
-                  <span className="font-bold text-gray-700">Total Practice</span>
+                  <span className="font-bold text-gray-700">Total Minutes</span>
                 </div>
-                <span className="text-2xl font-black text-purple-600">{overall_summary.total_time_hours}h</span>
+                <span className="text-2xl font-black text-purple-600">{overall_summary.total_time_minutes}m</span>
               </div>
             </div>
           </div>

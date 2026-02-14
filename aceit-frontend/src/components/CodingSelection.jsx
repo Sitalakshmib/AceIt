@@ -1,14 +1,16 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Code2, Target, Filter, ArrowRight, Zap, Brain,
     Database, GitBranch, Hash, Network, Box, TrendingUp,
     Search, List, Layers, Activity, Workflow, Binary,
     ListTree, Share2, ArrowDownUp, Grid3x3, BookText,
-    GitMerge, Repeat, Calculator, Plus, Blocks, Bookmark, X
+    GitMerge, Repeat, Calculator, Plus, Blocks, Bookmark, X, ArrowLeft
 } from 'lucide-react';
 import ProgressStats from './ProgressStats';
 
 const CodingSelection = ({ problems, onStartCoding, bookmarkedProblems = [] }) => {
+    const navigate = useNavigate();
     const [selectedCategory, setSelectedCategory] = React.useState(null);
     const [selectedDifficulty, setSelectedDifficulty] = React.useState(null);
     const [showBookmarked, setShowBookmarked] = useState(false);
@@ -244,16 +246,25 @@ const CodingSelection = ({ problems, onStartCoding, bookmarkedProblems = [] }) =
     };
 
     return (
-        <div className="min-h-screen p-8">
+        <div className="min-h-screen p-8 relative">
             <div className="max-w-7xl mx-auto">
+                {/* Back to Dashboard Button */}
+                <button
+                    onClick={() => navigate('/')}
+                    className="absolute top-0 left-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group mt-4 ml-4 z-50"
+                >
+                    <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+                    Dashboard
+                </button>
+
                 {/* Header */}
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-gray-800 mb-3 flex items-center justify-center gap-3">
-                        <Code2 className="w-10 h-10 text-blue-600" />
-                        CodeSprint
-                    </h1>
-                    <p className="text-gray-600 text-lg max-w-3xl mx-auto">
-                        Level up with smart practice and real coding challenges.
+                <div className="text-center mb-12">
+                    <div className="inline-block p-3 bg-blue-50 rounded-2xl mb-4">
+                        <Code2 className="h-8 w-8 text-blue-600" />
+                    </div>
+                    <h1 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">CodeSprint Mastery</h1>
+                    <p className="text-lg text-gray-500 max-w-2xl mx-auto">
+                        Level up with smart practice and real coding challenges. Master algorithms, data structures, and more with our adaptive platform.
                     </p>
                 </div>
 
@@ -364,10 +375,10 @@ const CodingSelection = ({ problems, onStartCoding, bookmarkedProblems = [] }) =
                         {/* All Categories Option */}
                         <button
                             onClick={() => setSelectedCategory(null)}
-                            className={`p - 5 rounded - xl border - 2 transition - all duration - 200 ${selectedCategory === null
+                            className={`p-5 rounded-xl border-2 transition-all duration-200 ${selectedCategory === null
                                 ? 'bg-blue-600 border-blue-600 text-white shadow-lg scale-105'
                                 : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:shadow-md'
-                                } `}
+                                }`}
                         >
                             <div className="flex flex-col items-center gap-2">
                                 <Code2 className="w-7 h-7" />
@@ -386,12 +397,12 @@ const CodingSelection = ({ problems, onStartCoding, bookmarkedProblems = [] }) =
                                     key={category}
                                     onClick={() => setSelectedCategory(category)}
                                     disabled={count === 0}
-                                    className={`p - 5 rounded - xl border - 2 transition - all duration - 200 ${selectedCategory === category
+                                    className={`p-5 rounded-xl border-2 transition-all duration-200 ${selectedCategory === category
                                         ? 'bg-blue-600 border-blue-600 text-white shadow-lg scale-105'
                                         : count === 0
                                             ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
                                             : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:shadow-md'
-                                        } `}
+                                        }`}
                                 >
                                     <div className="flex flex-col items-center gap-2">
                                         <IconComponent className="w-7 h-7" />
@@ -414,10 +425,10 @@ const CodingSelection = ({ problems, onStartCoding, bookmarkedProblems = [] }) =
                         {/* All Difficulties Option */}
                         <button
                             onClick={() => setSelectedDifficulty(null)}
-                            className={`p - 6 rounded - xl border - 2 transition - all duration - 200 ${selectedDifficulty === null
+                            className={`p-6 rounded-xl border-2 transition-all duration-200 ${selectedDifficulty === null
                                 ? 'bg-blue-600 border-blue-600 text-white shadow-lg scale-105'
                                 : 'bg-white border-gray-200 text-gray-700 hover:border-blue-300 hover:shadow-md'
-                                } `}
+                                }`}
                         >
                             <div className="flex flex-col items-center gap-3">
                                 <Zap className="w-8 h-8" />
@@ -432,12 +443,12 @@ const CodingSelection = ({ problems, onStartCoding, bookmarkedProblems = [] }) =
                         <button
                             onClick={() => setSelectedDifficulty('Easy')}
                             disabled={difficultyCounts.Easy === 0}
-                            className={`p - 6 rounded - xl border - 2 transition - all duration - 200 ${selectedDifficulty === 'Easy'
+                            className={`p-6 rounded-xl border-2 transition-all duration-200 ${selectedDifficulty === 'Easy'
                                 ? 'bg-green-600 border-green-600 text-white shadow-lg scale-105'
                                 : difficultyCounts.Easy === 0
                                     ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
                                     : 'bg-white border-green-200 text-green-700 hover:border-green-400 hover:shadow-md'
-                                } `}
+                                }`}
                         >
                             <div className="flex flex-col items-center gap-3">
                                 <span className="text-3xl">🟢</span>
@@ -450,12 +461,12 @@ const CodingSelection = ({ problems, onStartCoding, bookmarkedProblems = [] }) =
                         <button
                             onClick={() => setSelectedDifficulty('Medium')}
                             disabled={difficultyCounts.Medium === 0}
-                            className={`p - 6 rounded - xl border - 2 transition - all duration - 200 ${selectedDifficulty === 'Medium'
+                            className={`p-6 rounded-xl border-2 transition-all duration-200 ${selectedDifficulty === 'Medium'
                                 ? 'bg-yellow-600 border-yellow-600 text-white shadow-lg scale-105'
                                 : difficultyCounts.Medium === 0
                                     ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
                                     : 'bg-white border-yellow-200 text-yellow-700 hover:border-yellow-400 hover:shadow-md'
-                                } `}
+                                }`}
                         >
                             <div className="flex flex-col items-center gap-3">
                                 <span className="text-3xl">🟡</span>
@@ -468,12 +479,12 @@ const CodingSelection = ({ problems, onStartCoding, bookmarkedProblems = [] }) =
                         <button
                             onClick={() => setSelectedDifficulty('Hard')}
                             disabled={difficultyCounts.Hard === 0}
-                            className={`p - 6 rounded - xl border - 2 transition - all duration - 200 ${selectedDifficulty === 'Hard'
+                            className={`p-6 rounded-xl border-2 transition-all duration-200 ${selectedDifficulty === 'Hard'
                                 ? 'bg-red-600 border-red-600 text-white shadow-lg scale-105'
                                 : difficultyCounts.Hard === 0
                                     ? 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
                                     : 'bg-white border-red-200 text-red-700 hover:border-red-400 hover:shadow-md'
-                                } `}
+                                }`}
                         >
                             <div className="flex flex-col items-center gap-3">
                                 <span className="text-3xl">🔴</span>

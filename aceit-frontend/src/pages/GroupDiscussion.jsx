@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import GDPractice from '../components/GDPractice';
 import GDTopicAnalysis from '../components/GDTopicAnalysis';
 import { Users, MessageSquare, Search, ArrowLeft, Rocket, Target } from 'lucide-react';
 
 const GroupDiscussion = () => {
+    const navigate = useNavigate();
     const [activeView, setActiveView] = useState('intro'); // 'intro', 'practice', 'analysis'
 
     const handleNavigate = (view) => {
@@ -32,9 +34,18 @@ const GroupDiscussion = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50 relative">
             {activeView === 'intro' ? (
                 <div className="p-8 max-w-7xl mx-auto animate-in fade-in duration-500">
+                    {/* Back to Dashboard Button */}
+                    <button
+                        onClick={() => navigate('/')}
+                        className="absolute top-8 left-8 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-purple-600 transition-all shadow-sm group z-50"
+                    >
+                        <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+                        Dashboard
+                    </button>
+
                     <div className="mb-12 text-center">
                         <div className="inline-block p-3 bg-purple-50 rounded-2xl mb-4">
                             <Users className="h-8 w-8 text-purple-600" />

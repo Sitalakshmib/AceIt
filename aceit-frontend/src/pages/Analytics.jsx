@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { analyticsAPI, API_BASE_URL } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
 import {
     Trophy, Target, Zap, Brain, TrendingUp, AlertCircle,
     CheckCircle2, HelpCircle, ArrowUpRight, Sparkles,
-    Mic, Send, X, Volume2, Square, Play, Pause, RotateCcw
+    Mic, Send, X, Volume2, Square, Play, Pause, RotateCcw, ArrowLeft
 } from 'lucide-react';
 
 import AICoachChat from '../components/AICoachChat';
 
 const Analytics = () => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [aiLoading, setAiLoading] = useState(false);
     const [error, setError] = useState('');
@@ -81,7 +83,15 @@ const Analytics = () => {
     }
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-700 relative">
+        <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 relative">
+            {/* Back to Dashboard Button */}
+            <button
+                onClick={() => navigate('/')}
+                className="absolute top-0 left-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group mt-4 ml-4 z-50"
+            >
+                <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+                Dashboard
+            </button>
             {/* AI Coach Floating Bot */}
             <AICoachChat summary={summary} />
 

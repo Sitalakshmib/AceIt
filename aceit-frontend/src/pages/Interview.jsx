@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../services/api';
 import VideoPractice from '../components/Interview/VideoPractice';
@@ -6,7 +7,7 @@ const aiAvatar = "/ai-avatar.png"; // Use public asset directly
 import {
   Users, Briefcase, Video, Mic, MessageSquare, Rocket, Target,
   Cpu, BookOpen, Clock, Activity, Award, ArrowRight, Zap, Play, Square,
-  CheckCircle2, AlertCircle, X, Volume2, MicOff, Camera, BarChart2
+  CheckCircle2, AlertCircle, X, Volume2, MicOff, Camera, BarChart2, ArrowLeft
 } from 'lucide-react';
 import InterviewAnalytics from '../components/Interview/InterviewAnalytics';
 
@@ -35,6 +36,7 @@ const MOTIVATIONAL_QUOTES = [
 ];
 
 const Interview = () => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [view, setView] = useState('setup'); // 'setup', 'chat', 'completed'
   const [sessionId, setSessionId] = useState(null);
@@ -362,7 +364,16 @@ const Interview = () => {
   // Setup View
   if (view === 'setup') {
     return (
-      <div className="min-h-screen bg-gray-50 p-6 md:p-12">
+      <div className="min-h-screen bg-gray-50 p-6 md:p-12 relative">
+        {/* Back to Dashboard Button */}
+        <button
+          onClick={() => navigate('/')}
+          className="absolute top-8 left-8 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-indigo-600 transition-all shadow-sm group z-50"
+        >
+          <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+          Dashboard
+        </button>
+
         <div className="max-w-7xl mx-auto animate-in fade-in duration-500">
 
           {/* Header Section */}

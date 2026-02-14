@@ -79,6 +79,36 @@ class UnifiedAnalyticsService:
         }
     
     @staticmethod
+    def _calculate_streak(dates: List[datetime]) -> int:
+        """Calculate consecutive days of activity"""
+        if not dates:
+            return 0
+        
+        # Extract unique dates and sort descending
+        active_dates = sorted(set(d.date() for d in dates if d), reverse=True)
+        if not active_dates:
+            return 0
+        
+        today = datetime.now().date()
+        yesterday = today - timedelta(days=1)
+        
+        # Check if user was active today or yesterday
+        if active_dates[0] not in [today, yesterday]:
+            return 0
+        
+        streak = 1
+        current_date = active_dates[0]
+        
+        for i in range(1, len(active_dates)):
+            if (current_date - active_dates[i]).days == 1:
+                streak += 1
+                current_date = active_dates[i]
+            else:
+                break
+        
+        return streak
+
+    @staticmethod
     def _get_aptitude_summary(db: Session, user_id: str) -> Dict:
         """Extract aptitude module summary from existing data"""
         try:
@@ -97,11 +127,20 @@ class UnifiedAnalyticsService:
             accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
             total_time_minutes = sum(p.total_time_spent_seconds or 0 for p in progress_records) // 60
             
+            # Get activity dates for streak
+            # 1. From QuestionAttempts
+            question_dates = db.query(QuestionAttempt.attempted_at)\
+                .filter(QuestionAttempt.user_id == user_id).all()
+            # 2. From MockTestAttempts
+            mock_dates = [a.completed_at for a in mock_attempts if a.completed_at]
+            
+            all_dates = [d[0] for d in question_dates if d[0]] + mock_dates
+            streak = UnifiedAnalyticsService._calculate_streak(all_dates)
+            
             # Get last practiced date
             last_practiced = None
-            if progress_records:
-                last_dates = [p.last_practiced for p in progress_records if p.last_practiced]
-                last_practiced = max(last_dates) if last_dates else None
+            if all_dates:
+                last_practiced = max(all_dates)
             
             # Identify weak topics (accuracy < 60%)
             weak_topics = [
@@ -117,6 +156,7 @@ class UnifiedAnalyticsService:
                 "average_score": round(sum(a.accuracy_percentage for a in mock_attempts) / len(mock_attempts), 1) if mock_attempts else 0,
                 "last_practiced": last_practiced.isoformat() if last_practiced else None,
                 "weak_topics": weak_topics[:3],
+                "streak": streak,
                 "has_data": len(progress_records) > 0 or len(mock_attempts) > 0
             }
         except Exception as e:
@@ -129,6 +169,7 @@ class UnifiedAnalyticsService:
                 "average_score": 0,
                 "last_practiced": None,
                 "weak_topics": [],
+                "streak": 0,
                 "has_data": False
             }
     
@@ -153,11 +194,14 @@ class UnifiedAnalyticsService:
             
             total_attempts = sum(p.attempts or 0 for p in progress_records)
             
+            # Get all activity dates for streak
+            activity_dates = [p.last_submission_date for p in progress_records if p.last_submission_date]
+            streak = UnifiedAnalyticsService._calculate_streak(activity_dates)
+            
             # Get last practiced date
             last_practiced = None
-            if progress_records:
-                last_dates = [p.last_submission_date for p in progress_records if p.last_submission_date]
-                last_practiced = max(last_dates) if last_dates else None
+            if activity_dates:
+                last_practiced = max(activity_dates)
             
             return {
                 "sessions_count": total_attempted,
@@ -168,6 +212,7 @@ class UnifiedAnalyticsService:
                 "progress_percentage": round(progress_percentage, 1),
                 "total_attempts": total_attempts,
                 "last_practiced": last_practiced.isoformat() if last_practiced else None,
+                "streak": streak,
                 "has_data": total_attempted > 0
             }
         except Exception as e:
@@ -181,6 +226,7 @@ class UnifiedAnalyticsService:
                 "progress_percentage": 0,
                 "total_attempts": 0,
                 "last_practiced": None,
+                "streak": 0,
                 "has_data": False
             }
     
@@ -215,6 +261,7 @@ class UnifiedAnalyticsService:
                     "average_score": 0,
                     "last_practiced": None,
                     "weak_areas": [],
+                    "streak": 0,
                     "has_data": False
                 }
             
@@ -246,18 +293,20 @@ class UnifiedAnalyticsService:
                 weak_areas.extend(session.get("weak_areas", []))
             weak_areas = list(set(weak_areas))[:3]  # Unique, top 3
             
-            # Get last practiced date (Safely handle both string and datetime)
-            last_practiced = None
-            start_times = [s.get("start_time") for s in user_sessions if s.get("start_time")]
-            if start_times:
-                latest = max(start_times)
-                # Ensure it's returned as an ISO string
-                if isinstance(latest, str):
-                    last_practiced = latest
-                elif hasattr(latest, "isoformat"):
-                    last_practiced = latest.isoformat()
-                else:
-                    last_practiced = str(latest)
+            # Get all activity dates for streak
+            activity_dates = []
+            for s in user_sessions:
+                start_time = s.get("start_time")
+                if start_time:
+                    if isinstance(start_time, str):
+                        try:
+                            activity_dates.append(datetime.fromisoformat(start_time))
+                        except: pass
+                    elif isinstance(start_time, datetime):
+                        activity_dates.append(start_time)
+            
+            streak = UnifiedAnalyticsService._calculate_streak(activity_dates)
+            last_practiced = max(activity_dates).isoformat() if activity_dates else None
             
             return {
                 "total_sessions": len(user_sessions),
@@ -270,6 +319,7 @@ class UnifiedAnalyticsService:
                 "average_score": overall_score,
                 "last_practiced": last_practiced,
                 "weak_areas": weak_areas,
+                "streak": streak,
                 "has_data": len(user_sessions) > 0
             }
         except Exception as e:
@@ -287,6 +337,7 @@ class UnifiedAnalyticsService:
                 "average_score": 0,
                 "last_practiced": None,
                 "weak_areas": [],
+                "streak": 0,
                 "has_data": False
             }
     
@@ -310,26 +361,12 @@ class UnifiedAnalyticsService:
         if interview_data["has_data"]:
             modules_used.append("Interviews")
         
-        # Calculate practice streak (based on last practiced dates)
-        # Check if user practiced today or yesterday
-        today = datetime.now().date()
-        yesterday = today - timedelta(days=1)
-        
-        last_dates = []
-        if aptitude_data["last_practiced"]:
-            last_dates.append(datetime.fromisoformat(aptitude_data["last_practiced"]).date())
-        if coding_data["last_practiced"]:
-            last_dates.append(datetime.fromisoformat(coding_data["last_practiced"]).date())
-        if interview_data["last_practiced"]:
-            last_dates.append(datetime.fromisoformat(interview_data["last_practiced"]).date())
-            
-        practice_streak = 0
-        if last_dates:
-            most_recent = max(last_dates)
-            if most_recent == today or most_recent == yesterday:
-                # Basic streak: if practiced recently, show at least 1
-                # In a real system, we'd count continuous days from DB
-                practice_streak = 1 if most_recent == yesterday else 2
+        # Calculate overall streak as the maximum of module streaks
+        practice_streak = max(
+            aptitude_data.get("streak", 0),
+            coding_data.get("streak", 0),
+            interview_data.get("streak", 0)
+        )
         
         # Overall improvement trend (simplified)
         trend = "stable"
@@ -363,6 +400,7 @@ class UnifiedAnalyticsService:
             "performance_score": aptitude_data["accuracy"],
             "last_practiced": aptitude_data["last_practiced"],
             "trend": "up" if aptitude_data["accuracy"] > 60 else "stable",
+            "streak": aptitude_data.get("streak", 0),
             "has_data": aptitude_data["has_data"]
         })
         
@@ -375,6 +413,7 @@ class UnifiedAnalyticsService:
             "progress_percentage": coding_data["progress_percentage"],
             "last_practiced": coding_data["last_practiced"],
             "trend": "up" if coding_data["success_rate"] > 50 else "stable",
+            "streak": coding_data.get("streak", 0),
             "has_data": coding_data["has_data"]
         })
         
@@ -386,6 +425,7 @@ class UnifiedAnalyticsService:
             "performance_score": interview_data["technical_score"],
             "last_practiced": interview_data["last_practiced"],
             "trend": "up" if interview_data["technical_score"] > 60 else "stable",
+            "streak": interview_data.get("streak", 0),
             "has_data": interview_data["technical_sessions"] > 0
         })
         
@@ -397,6 +437,7 @@ class UnifiedAnalyticsService:
             "performance_score": interview_data["hr_score"],
             "last_practiced": interview_data["last_practiced"],
             "trend": "stable",
+            "streak": interview_data.get("streak", 0),
             "has_data": interview_data["hr_sessions"] > 0
         })
         
@@ -408,6 +449,7 @@ class UnifiedAnalyticsService:
             "performance_score": interview_data["video_presence_score"],
             "last_practiced": interview_data["last_practiced"],
             "trend": "stable",
+            "streak": interview_data.get("streak", 0),
             "has_data": interview_data["video_presence_sessions"] > 0
         })
         

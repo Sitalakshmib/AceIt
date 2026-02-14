@@ -7,7 +7,7 @@ export const AuthProvider = ({ children }) => {
   // Load token and user from localStorage on init
   const storedToken = localStorage.getItem('aceit_access_token');
   const storedUser = localStorage.getItem('aceit_user');
-  
+
   const [user, setUser] = useState(storedUser ? JSON.parse(storedUser) : null);
   const [token, setToken] = useState(storedToken);
 
@@ -16,15 +16,15 @@ export const AuthProvider = ({ children }) => {
       console.log('Attempting login with:', { email, password: '***' });
       const response = await authAPI.login(email, password);
       console.log('Login response:', response.data);
-      
+
       const { user: userData, access_token } = response.data;
-      
+
       // Store both in state and localStorage
       setUser(userData);
       setToken(access_token);
       localStorage.setItem('aceit_access_token', access_token);
       localStorage.setItem('aceit_user', JSON.stringify(userData));
-      
+
       return { success: true };
     } catch (error) {
       console.error('Login failed:', error);

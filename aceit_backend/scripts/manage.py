@@ -139,6 +139,10 @@ def reset_password(args):
     try:
         user = session.query(User).filter(User.email == args.email).first()
         if user:
+            # Bcrypt has a 72-byte limit
+            if isinstance(args.password, str):
+                if len(args.password.encode('utf-8')) > 72:
+                    args.password = args.password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
             hashed = pwd_context.hash(args.password)
             user.password = hashed
             session.commit()

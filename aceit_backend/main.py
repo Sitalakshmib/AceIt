@@ -1,6 +1,18 @@
 from dotenv import load_dotenv
 load_dotenv()
 
+# ✅ Global Monkey-patch for passlib/bcrypt 72-byte limit crash
+# Intercepts bcrypt.hashpw to automatically truncate passwords to 72 bytes.
+import bcrypt
+original_hashpw = bcrypt.hashpw
+def patched_hashpw(password, salt):
+    if isinstance(password, str):
+        password = password.encode('utf-8')
+    if len(password) > 72:
+        password = password[:72]
+    return original_hashpw(password, salt)
+bcrypt.hashpw = patched_hashpw
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from routes import auth, aptitude, coding, progress, communication, interview, resume, stt, mock_tests, analytics, gd_practice, tutor, video_presence

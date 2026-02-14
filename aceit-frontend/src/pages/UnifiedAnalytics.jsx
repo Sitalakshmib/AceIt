@@ -115,7 +115,7 @@ const UnifiedAnalytics = () => {
                     </p>
                 </div>
                 <button
-                    onClick={() => navigate('/dashboard')}
+                    onClick={() => navigate('/')}
                     className="mt-4 md:mt-0 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
                 >
                     ← Back to Dashboard
@@ -241,8 +241,8 @@ const UnifiedAnalytics = () => {
                             <div className="w-full bg-gray-200 rounded-full h-3">
                                 <div
                                     className={`h-full rounded-full ${skill.score >= 70 ? 'bg-green-500' :
-                                            skill.score >= 50 ? 'bg-yellow-500' :
-                                                'bg-red-500'
+                                        skill.score >= 50 ? 'bg-yellow-500' :
+                                            'bg-red-500'
                                         }`}
                                     style={{ width: `${skill.score}%` }}
                                 ></div>

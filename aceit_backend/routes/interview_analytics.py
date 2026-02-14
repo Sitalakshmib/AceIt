@@ -162,6 +162,47 @@ def _get_iso_timestamp(timestamp):
         return timestamp.isoformat()
     return str(timestamp)
 
+
+def _calculate_streak(dates: List[datetime]) -> int:
+    """Calculate consecutive days of activity"""
+    if not dates:
+        return 0
+    
+    # Extract unique dates and sort descending
+    processed_dates = []
+    for d in dates:
+        if not d: continue
+        if isinstance(d, datetime):
+            processed_dates.append(d.date())
+        elif isinstance(d, str):
+            try:
+                processed_dates.append(datetime.fromisoformat(d).date())
+            except: pass
+            
+    active_dates = sorted(set(processed_dates), reverse=True)
+    if not active_dates:
+        return 0
+    
+    from datetime import timedelta
+    today = datetime.now().date()
+    yesterday = today - timedelta(days=1)
+    
+    # Check if user was active today or yesterday
+    if active_dates[0] not in [today, yesterday]:
+        return 0
+    
+    streak = 1
+    current_date = active_dates[0]
+    
+    for i in range(1, len(active_dates)):
+        if (current_date - active_dates[i]).days == 1:
+            streak += 1
+            current_date = active_dates[i]
+        else:
+            break
+            
+    return streak
+
 # ============================================================================
 # AGGREGATION FUNCTIONS
 # ============================================================================
@@ -434,11 +475,15 @@ def _calculate_overall_summary(
                 last_interview = None
 
     
+    # Calculate streak
+    streak = _calculate_streak([s.get("start_time") for s in all_sessions if s.get("start_time")])
+    
     return {
         "total_interviews": total_sessions,
         "combined_score": combined_score,
         "overall_trend": overall_trend,
         "last_interview": last_interview,
+        "streak": streak,
         "performance_rating": (
             "Excellent" if combined_score >= 85 else
             "Good" if combined_score >= 70 else

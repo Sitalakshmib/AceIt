@@ -163,58 +163,45 @@ const Navbar = () => {
                 </button>
               </div>
 
-              {/* Body */}
+              {/* Body - Practice Motivation */}
               <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
-                <div className="space-y-6">
+                <div className="space-y-4">
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 pl-2">Practice Insights</h3>
 
-                  {/* Account Section */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 pl-2">Account</h3>
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors border-b border-slate-100">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                            <User className="w-5 h-5" />
-                          </div>
-                          <span className="text-slate-700 font-medium">Personal Information</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                      </button>
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
-                            <Bell className="w-5 h-5" />
-                          </div>
-                          <span className="text-slate-700 font-medium">Notifications</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                      </button>
+                  <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                        <BrainCircuit className="w-5 h-5" />
+                      </div>
+                      <h4 className="font-bold text-blue-900 text-sm">Consistency is Key</h4>
                     </div>
+                    <p className="text-blue-800 text-xs leading-relaxed">
+                      Practicing for just 15 minutes every day can significantly improve your placement readiness!
+                    </p>
                   </div>
 
-                  {/* Settings Section */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 pl-2">Settings</h3>
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors border-b border-slate-100">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-slate-100 text-slate-600 rounded-lg">
-                            <Settings className="w-5 h-5" />
-                          </div>
-                          <span className="text-slate-700 font-medium">Preferences</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                      </button>
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-green-50 text-green-600 rounded-lg">
-                            <HelpCircle className="w-5 h-5" />
-                          </div>
-                          <span className="text-slate-700 font-medium">Help & Support</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                      </button>
+                  <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center text-white">
+                        <Code2 className="w-5 h-5" />
+                      </div>
+                      <h4 className="font-bold text-amber-900 text-sm">Coding Tip</h4>
                     </div>
+                    <p className="text-amber-800 text-xs leading-relaxed">
+                      Try solving at least one medium-level problem today to keep your logic sharp.
+                    </p>
+                  </div>
+
+                  <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white">
+                        <Video className="w-5 h-5" />
+                      </div>
+                      <h4 className="font-bold text-purple-900 text-sm">Mock Interview</h4>
+                    </div>
+                    <p className="text-purple-800 text-xs leading-relaxed">
+                      Record a mock interview session to analyze your body language and confidence level.
+                    </p>
                   </div>
 
                 </div>

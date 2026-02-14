@@ -193,7 +193,7 @@ const InterviewAnalytics = ({ userId, onBack, onStartPractice }) => {
                             <div className="flex items-center text-sm font-medium">
                                 {getTrendIcon(overall.overall_trend)}
                                 <span className={`ml-1 ${overall.overall_trend === 'Improving' ? 'text-green-600' :
-                                        overall.overall_trend === 'Needs Focus' ? 'text-red-600' : 'text-gray-600'
+                                    overall.overall_trend === 'Needs Focus' ? 'text-red-600' : 'text-gray-600'
                                     }`}>
                                     {overall.overall_trend}
                                 </span>
@@ -210,6 +210,15 @@ const InterviewAnalytics = ({ userId, onBack, onStartPractice }) => {
                                 <p className="text-xl font-bold text-gray-900">
                                     {(technical.has_data ? 1 : 0) + (hr.has_data ? 1 : 0) + (video_presence.has_data ? 1 : 0)}/3
                                 </p>
+                            </div>
+                            <div className="col-span-2 pt-2 border-t border-gray-50">
+                                <p className="text-xs text-gray-500 uppercase font-semibold">Interview Streak</p>
+                                <div className="flex items-center mt-1">
+                                    <div className="bg-indigo-50 p-1.5 rounded-lg mr-2 text-indigo-600">
+                                        <Zap className="h-5 w-5 fill-current" />
+                                    </div>
+                                    <p className="text-2xl font-black text-indigo-600">{overall.streak} Days</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -246,8 +255,8 @@ const InterviewAnalytics = ({ userId, onBack, onStartPractice }) => {
                                             onStartPractice(mappedType);
                                         }}
                                         className={`w-full py-2 px-3 rounded-lg text-sm font-semibold flex items-center justify-center transition-colors ${idx === 0
-                                                ? 'bg-white text-indigo-700 hover:bg-gray-50'
-                                                : 'bg-indigo-800/50 text-white hover:bg-indigo-800'
+                                            ? 'bg-white text-indigo-700 hover:bg-gray-50'
+                                            : 'bg-indigo-800/50 text-white hover:bg-indigo-800'
                                             }`}
                                     >
                                         {btn.label}
