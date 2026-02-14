@@ -185,25 +185,137 @@ A dual-purpose tool to **analyze** existing resumes against industry standards a
 
 ## 🛠️ Technical Stack
 
-*   **Frontend**: React.js, Tailwind CSS, Lucide Icons, Monaco Editor.
-*   **Backend**: FastAPI (Python), SQLAlchemy.
-*   **Database**: PostgreSQL / SQLite (Dev).
-*   **AI/ML**: Integration with LLMs (Groq, OpenAI, Gemini) for real-time evaluation and content generation.
+### **Frontend (Client-Side)**
+*   **Framework**: [React 19](https://react.dev/) + [Vite](https://vitejs.dev/) (High-performance build tool).
+*   **Styling**: [Tailwind CSS 4](https://tailwindcss.com/) (Utility-first design system).
+*   **State Management**: React Hooks & Context API.
+*   **Visualizations**: `Recharts`, `Chart.js`, `React-Chartjs-2` (Data-driven analytics).
+*   **AI Integration**: `@mediapipe/tasks-vision` (Client-side Computer Vision).
+*   **Code Editor**: Monaco Editor (VS Code core) for a professional coding experience.
+*   **Icons**: Lucide React.
+
+### **Backend (Server-Side)**
+*   **Framework**: [FastAPI](https://fastapi.tiangolo.com/) (High-performance, async Python web framework).
+*   **Language**: Python 3.11+.
+*   **Database**:
+    *   **Production**: PostgreSQL (Recommended).
+    *   **Development**: SQLite (`aceit_dev.db`).
+*   **ORM**: SQLAlchemy (Database abstraction).
+*   **Security**: OAuth2 with JWT (JSON Web Tokens) & `bcrypt` password hashing.
+
+### **🤖 AI & Machine Learning Pipeline**
+*   **Core Logic**: [Google Gemini Pro / Flash](https://deepmind.google/technologies/gemini/) (Primary Reasoning Engine).
+*   **Fallback / Specialized Models**: Groq (Llama-3) for ultra-low latency requirements.
+*   **Vision**: MediaPipe FaceLandmarker (Edge AI).
+*   **Voice Processing**:
+    *   **STT**: OpenAI Whisper (Speech-to-Text).
+    *   **TTS**: gTTS / ElevenLabs (Text-to-Speech).
+*   **Document Parsing**: `pdfplumber`, `PyPDF2`, `python-docx`.
+
+---
+
+## 📂 Project Structure
+
+```bash
+AceIt/
+├── aceit-frontend/          # React + Vite Frontend
+│   ├── src/
+│   │   ├── components/      # Reusable UI Components
+│   │   ├── contexts/        # Auth & Global State
+│   │   ├── services/        # API Client & Endpoints
+│   │   └── pages/           # Main Route Views (Aptitude, Interview, etc.)
+│   └── package.json         # Frontend Dependencies
+│
+├── aceit_backend/           # FastAPI Backend
+│   ├── services/            # Core Business Logic (AI, Scoring, Parsing)
+│   ├── routes/              # API Endpoints (Auth, Resume, Interview)
+│   ├── models/              # Database Schema (SQLAlchemy)
+│   ├── main.py              # Application Entry Point
+│   └── requirements.txt     # Python Dependencies
+│
+└── README.md                # Project Documentation
+```
+
+---
+
+## 💡 Key System Highlights
+
+### **1. Adaptive Difficulty Algorithm (Aptitude)**
+The system uses a **Sliding Window** approach to adjust question difficulty in real-time.
+```python
+def adjust_difficulty(user_history):
+    # Analyze last 4 attempts
+    recent_accuracy = sum(user_history[-4:]) / 4
+    
+    if recent_accuracy >= 0.75:
+        return "INCREASE_DIFFICULTY"  # Easy -> Medium -> Hard
+    elif recent_accuracy < 0.50:
+        return "DECREASE_DIFFICULTY"  # Hard -> Medium -> Easy
+    return "MAINTAIN_LEVEL"
+```
+
+### **2. Interview Session State Management**
+Maintains context across the interview to ensure logical follow-up questions.
+```json
+{
+  "session_id": "uuid-v4",
+  "mode": "technical_java",
+  "current_topic": "multithreading",
+  "difficulty": "medium",
+  "history": [
+    { "q": "Explain deadlock.", "performance": 0.85 },
+    { "q": "How to prevent it?", "performance": 0.90 }
+  ],
+  "next_action": "increase_complexity"
+}
+```
 
 ---
 
 ## 🚀 Getting Started
 
-1.  **Backend**:
-    ```bash
-    cd aceit_backend
-    uvicorn main:app --reload
-    ```
-2.  **Frontend**:
-    ```bash
-    cd aceit-frontend
-    npm run dev
-    ```
+### **Prerequisites**
+*   **Node.js**: v18+
+*   **Python**: v3.11+
+*   **Tesseract OCR** (Optional, for Resume Parsing)
+
+### **1. Clone the Repository**
+```bash
+git clone https://github.com/Sitalakshmib/AceIt.git
+cd AceIt
+```
+
+### **2. Backend Setup**
+Navigate to the backend directory and set up the Python environment.
+```bash
+cd aceit_backend
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Create .env file
+echo "GEMINI_API_KEY=your_key_here" >> .env
+echo "GROQ_API_KEY=your_key_here" >> .env
+echo "OPENAI_API_KEY=your_key_here" >> .env
+
+# Run the server
+uvicorn main:app --reload
+```
+*   *Server runs at: `http://localhost:8000`*
+*   *Swagger Docs: `http://localhost:8000/docs`*
+
+### **3. Frontend Setup**
+Navigate to the frontend directory and install dependencies.
+```bash
+cd ../aceit-frontend
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+```
+*   *App runs at: `http://localhost:5173`*
 
 ---
 *Built with ❤️ for Student Success.*
