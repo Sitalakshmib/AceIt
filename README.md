@@ -157,21 +157,29 @@ A comprehensive simulation engine that prepares you for every stage of the inter
 
 ---
 
-### 5. 📄 Resume Analyzer (ATS-Optimized)
-Ensures your resume gets past Applicant Tracking Systems (ATS).
+### 5. 📄 Resume Analyzer & Builder (ATS-Optimized)
+A dual-purpose tool to **analyze** existing resumes against industry standards and **build** new ones from scratch.
 
-*   **PDF Parsing**: Extracts text from uploaded PDF resumes.
-*   **Target Role Mapping**: You specify the target role (e.g., "Frontend Developer"), and the AI analyzes relevance.
-*   **Gap Analysis**:
-    *   **Found Skills** vs **Missing/Recommended Skills**.
-    *   **Critical Alerts**: Missing contact info, bad formatting, or empty sections.
-*   **AI Career Coach**: Provides "Actionable Next Steps" to improve the resume immediately.
+#### **Key Features:**
+*   **Deep PDF Parsing**: Extracts text from likely complex PDF layouts using a multi-stage approach (`pdfplumber` → `PyPDF2` fallback).
+*   **Target Role Mapping**: Select from 8+ preset profiles (e.g., Full Stack Dev, Data Scientist, Product Manager) to tailor the analysis.
+*   **Gap Analysis Engine**:
+    *   **Skills Match**: Compares your skills against a curated database of required technologies for the selected role.
+    *   **Critical Alerts**: Instantly flags missing contact info, broken links, or absent sections (Summary, Projects, etc.).
+*   **AI Career Coach**: Uses Gemini to provide subjective feedback—identifying "Impact Gaps" (e.g., "You listed responsibilities but didn't quantify results").
+*   **Resume Builder**: A wizard-style interface to create ATS-friendly, correctly formatted resumes by simply filling in your details.
 
 #### **🔧 Under the Hood (Resume)**
-*   **Hybrid Analysis System**:
-    *   **Rule-Based (60%)**: Regex patterns validate structure (Email, Phone, LinkedIn), section headers, and keyword density.
-    *   **AI-Based (40%)**: **Google Gemini / LLM** analyzes the *quality* of content (impact, action verbs, quantification of achievements).
-*   **Parsing Strategy**: Uses `pdfplumber` for high-fidelity text extraction, falling back to `PyPDF2` if the PDF structure is complex.
+*   **Hybrid Analysis System (60/40 Split)**:
+    *   **Rule-Based Engine (60%)**: A deterministic scoring system using Regex to validate:
+        *   **Contact Info (25 pts)**: Email, Phone, LinkedIn, GitHub/Portfolio.
+        *   **Structure (30 pts)**: Presence of essential sections.
+        *   **Formatting (20 pts)**: Checks for bullet point usage and Action Verb density.
+        *   **Content Quality (25 pts)**: Detects quantifiable metrics (%, $, numbers) and career timeline clarity.
+    *   **AI-Based Engine (40%)**: **Google Gemini** evaluates the *quality* of writing, tone, and impact, providing the "Overall Impression" and "Actionable Tips."
+*   **Scoring Algorithm**:
+    *   `Final Score = (ATS_Score * 0.6) + (Skills_Match_Score * 0.4)`
+*   **PDF Generation**: Uses `jsPDF` (Frontend) and `python-docx` (Backend) to generate professional, parsable documents.
 
 ---
 
