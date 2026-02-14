@@ -125,28 +125,35 @@ Simulates a real GD environment to test your articulation and thought process.
 ---
 
 ### 4. 🤝 AI Mock Interviewer
-Simulates a real interview environment with audio-visual interaction.
+A comprehensive simulation engine that prepares you for every stage of the interview process.
 
 #### **Interview Modes:**
-*   **Technical**: Focuses on core concepts (Python, Java, SQL, etc.) or "Real-time Adaptive" (context-aware testing).
-*   **HR / Behavioral**: Tests soft skills, culture fit, and situational judgment using STAR method evaluation.
-*   **Video Presence**: Uses camera feedback to analyze body language and confidence.
+*   **Technical (Adaptive)**: Real-time, context-aware questions based on your Resume and Job Description.
+*   **Topic-Specific Practice**: Focused drills on core technologies (Python, Java, SQL, .NET).
+    *   **Round 1**: Covers fundamental concepts.
+    *   **Round 2**: Adapts to your weak areas from Round 1 and increases difficulty.
+*   **Project-Based**: Deep-dive discussions on your specific projects (Architecture, Tech Stack choices, Challenges faced).
+*   **HR / Behavioral**: STAR method evaluation for soft skills, culture fit, and situational judgment.
+*   **Video Presence (AI Mirror)**: Analyzes your body language and speech delivery in real-time.
 
 #### **Key Features:**
-*   **Voice Interaction**: Full-duplex voice conversation using Whisper (Input) and OpenAI TTS/ElevenLabs (Output).
-*   **Live Camera Feed**: Mirrors your video to help you practice maintaining eye contact.
+*   **Voice Interaction**: Full-duplex voice conversation using **Whisper** (Speech-to-Text) and **OpenAI/ElevenLabs** (Text-to-Speech) for a natural flow.
+*   **Visual Analysis**: Real-time feedback on your non-verbal cues (Eye Contact, Head Stability, Smile/Warmth).
 *   **Comprehensive Report**:
     *   **Overall Score** & Performance Badge.
+    *   **Speech Clarity**: Detects filler words ("um," "ah") and hesitation.
     *   **Model Answers**: Compares your response with an "Ideal Response" to highlight gaps.
 
 #### **🔧 Under the Hood (Interview)**
 *   **Dual Engine Architecture**:
-    *   **Text Engine**: Standard chat-based interface.
-    *   **Voice Engine (`SimVoiceInterviewer`)**: Handles audio buffers, transcription, and TTS generation.
-*   **State Management**: Maintains a continuous session state to contextually generate the *next* question based on the *previous* answer's quality.
+    *   **Text Engine**: Standard chat-based interface with state management.
+    *   **Voice Engine (`SimVoiceInterviewer`)**: Handles audio buffers, transcription, and TTS generation in-memory (privacy-focused).
+*   **Hybrid Analysis (Video Presence)**:
+    *   **Frontend (Edge AI)**: Uses **MediaPipe FaceLandmarker** running directly in the browser (~20 FPS) to analyze facial cues without sending video to the server.
+    *   **Backend (Audio)**: Analyzes audio blobs for speech patterns, filler words, and confidence levels.
 *   **Adaptive Question Bank**:
-    *   For **Real-time** mode, questions are generated dynamically based on the Resume and JD.
-    *   For **Topic-Specific** mode (e.g., Python), the system progressively increases difficulty from Basic → Intermediate → Advanced based on streak.
+    *   **Dynamic Generation**: Questions are not hardcoded; they are generated on-the-fly using LLM prompts tailored to the user's resume and the specific interview context.
+    *   **State Management**: Maintains a session state in `data/interview_sessions.json` to track progress across rounds and provide periodic feedback every 2-3 questions.
 
 ---
 
