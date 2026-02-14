@@ -1,0 +1,9 @@
+
+--- 2026-02-14T08:12:28.054040 ---
+Traceback (most recent call last):
+  File "D:\AceIt\aceit_backend\routes\interview_analytics.py", line 65, in get_interview_analytics
+    technical_metrics = _aggregate_technical_interviews(technical_sessions)
+  File "D:\AceIt\aceit_backend\routes\interview_analytics.py", line 266, in _aggregate_technical_interviews
+    last_interview = _get_iso_timestamp(max(start_times))
+                                        ~~~^^^^^^^^^^^^^
+TypeError: '>' not supported between instances of 'datetime.datetime' and 'str'

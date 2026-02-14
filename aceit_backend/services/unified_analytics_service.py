@@ -67,6 +67,9 @@ class UnifiedAnalyticsService:
         recent_activity = UnifiedAnalyticsService._get_recent_activity(
             db, user_id, aptitude_data, coding_data, interview_data
         )
+
+        # Daily time breakdown for the last 14 days
+        daily_breakdown = UnifiedAnalyticsService._get_daily_time_breakdown(db, user_id)
         
         return {
             "user_id": user_id,
@@ -75,8 +78,84 @@ class UnifiedAnalyticsService:
             "skill_breakdown": skill_breakdown,
             "weak_areas": weak_areas,
             "recent_activity": recent_activity,
+            "daily_breakdown": daily_breakdown,
             "generated_at": datetime.utcnow().isoformat()
         }
+
+    @staticmethod
+    def _get_daily_time_breakdown(db: Session, user_id: str, days: int = 14) -> List[Dict]:
+        """Aggregate practice time per day across all modules"""
+        breakdown = {}
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        
+        # 1. Aptitude Practice (QuestionAttempt)
+        apt_attempts = db.query(
+            func.date(QuestionAttempt.attempted_at).label('date'),
+            func.sum(QuestionAttempt.time_spent_seconds).label('seconds')
+        ).filter(
+            QuestionAttempt.user_id == user_id,
+            QuestionAttempt.attempted_at >= cutoff
+        ).group_by(func.date(QuestionAttempt.attempted_at)).all()
+        
+        for row in apt_attempts:
+            d_str = row.date.isoformat()
+            breakdown[d_str] = breakdown.get(d_str, 0) + (row.seconds or 0)
+            
+        # 2. Mock Tests (MockTestAttempt)
+        mock_attempts = db.query(
+            func.date(MockTestAttempt.completed_at).label('date'),
+            func.sum(MockTestAttempt.time_taken_seconds).label('seconds')
+        ).filter(
+            MockTestAttempt.user_id == user_id,
+            MockTestAttempt.status == "completed",
+            MockTestAttempt.completed_at >= cutoff
+        ).group_by(func.date(MockTestAttempt.completed_at)).all()
+        
+        for row in mock_attempts:
+            d_str = row.date.isoformat()
+            breakdown[d_str] = breakdown.get(d_str, 0) + (row.seconds or 0)
+            
+        # 3. Interviews (InterviewSession)
+        # We'll need to calculate duration since some might not have time_taken
+        interview_sessions = db.query(InterviewSession).filter(
+            InterviewSession.user_id == user_id,
+            InterviewSession.completed_at >= cutoff,
+            InterviewSession.status == "completed"
+        ).all()
+        
+        for s in interview_sessions:
+            if s.started_at and s.completed_at:
+                duration = (s.completed_at - s.started_at).total_seconds()
+                d_str = s.completed_at.date().isoformat()
+                breakdown[d_str] = breakdown.get(d_str, 0) + max(0, duration)
+
+        # 4. Coding (Estimated)
+        # Since coding doesn't track time, we estimate 10 mins per submission/session day
+        coding_sessions = db.query(
+            func.date(UserCodingProgress.last_submission_date).label('date'),
+            func.count(UserCodingProgress.id).label('count')
+        ).filter(
+            UserCodingProgress.user_id == user_id,
+            UserCodingProgress.last_submission_date >= cutoff
+        ).group_by(func.date(UserCodingProgress.last_submission_date)).all()
+        
+        for row in coding_sessions:
+            d_str = row.date.isoformat()
+            # Estimate: 10 minutes per problem worked on that day
+            breakdown[d_str] = breakdown.get(d_str, 0) + (row.count * 600)
+
+        # Fill in missing days and format
+        result = []
+        for i in range(days):
+            d = (datetime.utcnow() - timedelta(days=i)).date()
+            d_str = d.isoformat()
+            result.append({
+                "date": d_str,
+                "minutes": round(breakdown.get(d_str, 0) / 60, 1),
+                "seconds": int(breakdown.get(d_str, 0))
+            })
+            
+        return sorted(result, key=lambda x: x["date"])
     
     @staticmethod
     def _calculate_streak(dates: List[datetime]) -> int:
@@ -350,7 +429,21 @@ class UnifiedAnalyticsService:
             interview_data["total_sessions"]
         )
         
-        total_time_minutes = aptitude_data["total_time_minutes"]
+        # Aggregate time from all sources
+        # 1. Aptitude (already in aptitude_data)
+        apt_time = aptitude_data.get("total_time_minutes", 0)
+        
+        # 2. Coding (Estimated for history: 10 mins per solved, 3 mins per attempt)
+        coding_solved = coding_data.get("problems_solved", 0)
+        coding_attempts = coding_data.get("total_attempts", 0)
+        coding_est_time = (coding_solved * 10) + (max(0, coding_attempts - coding_solved) * 3)
+        
+        # 3. Interviews
+        # We'll guess 15 mins per session if not explicitly tracked
+        interview_sessions = interview_data.get("total_sessions", 0)
+        interview_est_time = interview_sessions * 15
+        
+        total_time_minutes = apt_time + coding_est_time + interview_est_time
         
         # Calculate modules used
         modules_used = []

@@ -260,17 +260,17 @@ const ResumePreview = ({
                 {/* Skills */}
                 <div className={`mb-6 ${bodyAlignClass}`}>
                     <h2 className={`text-lg font-bold uppercase mb-2 ${headerAlignClass}`} style={{ ...headerStyle, color: styleOptions.font_color || '#1e3a8a' }}>Skills</h2>
-                    <p>{formData.skills.join(", ")}</p>
+                    <p>{formData?.skills?.join(", ") || 'No skills listed'}</p>
                 </div>
 
                 {/* Experience */}
                 <div className="mb-6">
                     <h2 className={`text-lg font-bold uppercase mb-2 ${headerAlignClass}`} style={{ ...headerStyle, color: styleOptions.font_color || '#1e3a8a' }}>Experience</h2>
-                    {generatedContent.experience.map((exp, i) => (
+                    {(generatedContent?.experience || []).map((exp, i) => (
                         <div key={i} className={`mb-4 ${bodyAlignClass}`}>
                             <div className="font-bold text-gray-800">{exp.role} | {exp.company}</div>
                             <ul className={`${listClass} mt-1 text-gray-700`}>
-                                {exp.bullets.map((bullet, j) => (
+                                {(exp.bullets || []).map((bullet, j) => (
                                     <li key={j} className="mb-1">
                                         <div
                                             className="outline-none focus:bg-blue-50 p-1 rounded"
@@ -290,11 +290,11 @@ const ResumePreview = ({
                 {/* Projects */}
                 <div className="mb-6">
                     <h2 className={`text-lg font-bold uppercase mb-2 ${headerAlignClass}`} style={{ ...headerStyle, color: styleOptions.font_color || '#1e3a8a' }}>Projects</h2>
-                    {generatedContent.projects.map((proj, i) => (
+                    {(generatedContent?.projects || []).map((proj, i) => (
                         <div key={i} className={`mb-4 ${bodyAlignClass}`}>
                             <div className="font-bold text-gray-800">{proj.title}</div>
                             <ul className={`${listClass} mt-1 text-gray-700`}>
-                                {proj.description.map((desc, j) => (
+                                {(proj.description || []).map((desc, j) => (
                                     <li key={j} className="mb-1">
                                         <div
                                             className="outline-none focus:bg-blue-50 p-1 rounded"
@@ -314,7 +314,7 @@ const ResumePreview = ({
                 {/* Education - Read Only from form for now */}
                 <div className={`mb-6 ${bodyAlignClass}`}>
                     <h2 className={`text-lg font-bold uppercase mb-2 ${headerAlignClass}`} style={{ ...headerStyle, color: styleOptions.font_color || '#1e3a8a' }}>Education</h2>
-                    {formData.education.map((edu, i) => (
+                    {(formData?.education || []).map((edu, i) => (
                         <div key={i} className="mb-2">
                             <div className="font-bold">{edu.institution}</div>
                             <div>{edu.degree} <span className="italic text-gray-500">({edu.year})</span></div>
@@ -323,7 +323,7 @@ const ResumePreview = ({
                 </div>
 
                 {/* References */}
-                {formData.references.length > 0 && (
+                {(formData?.references?.length || 0) > 0 && (
                     <div className={`mb-6 ${bodyAlignClass}`}>
                         <h2 className={`text-lg font-bold uppercase mb-2 ${headerAlignClass}`} style={{ ...headerStyle, color: styleOptions.font_color || '#1e3a8a' }}>References</h2>
                         {formData.references.map((ref, i) => (

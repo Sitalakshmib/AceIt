@@ -21,6 +21,7 @@ const Dashboard = () => {
   const [progressData, setProgressData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -157,14 +158,24 @@ const Dashboard = () => {
                 <span className="text-2xl font-black text-green-600">{overall_summary.practice_streak} Days</span>
               </div>
 
-              <div className="bg-purple-50 rounded-2xl p-4 flex items-center justify-between border border-purple-100">
+              <div
+                onClick={() => setShowBreakdown(true)}
+                className="bg-purple-50 rounded-2xl p-4 flex items-center justify-between border border-purple-100 cursor-pointer hover:bg-purple-100 transition-all group/time"
+              >
                 <div className="flex items-center">
-                  <div className="p-2 bg-purple-100 text-purple-600 rounded-lg mr-3">
+                  <div className="p-2 bg-purple-100 text-purple-600 rounded-lg mr-3 group-hover/time:scale-110 transition-transform">
                     <Clock className="h-5 w-5" />
                   </div>
-                  <span className="font-bold text-gray-700">Total Minutes</span>
+                  <span className="font-bold text-gray-700">Total Practice</span>
                 </div>
-                <span className="text-2xl font-black text-purple-600">{overall_summary.total_time_minutes}m</span>
+                <div className="text-right">
+                  <span className="text-2xl font-black text-purple-600">
+                    {overall_summary.total_time_minutes > 60
+                      ? `${Math.floor(overall_summary.total_time_minutes / 60)}h ${overall_summary.total_time_minutes % 60}m`
+                      : `${overall_summary.total_time_minutes}m`}
+                  </span>
+                  <p className="text-[10px] text-purple-400 font-bold uppercase tracking-tighter">Click to expand</p>
+                </div>
               </div>
             </div>
           </div>
@@ -298,6 +309,113 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* 4. DAILY BREAKDOWN MODAL */}
+      {showBreakdown && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="p-8 border-b flex justify-between items-center bg-gradient-to-r from-purple-50 to-indigo-50">
+              <div>
+                <h3 className="text-2xl font-black text-gray-900 leading-none">Practice Breakdown</h3>
+                <p className="text-gray-500 mt-2 font-medium">Your platform usage over the last 14 days</p>
+              </div>
+              <button
+                onClick={() => setShowBreakdown(false)}
+                className="p-3 bg-white text-gray-400 hover:text-gray-600 rounded-2xl shadow-sm border border-gray-100 transition-all hover:scale-105"
+              >
+                <span className="text-2xl font-light leading-none">×</span>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-8">
+              {/* Chart Section */}
+              <div className="bg-gray-50 rounded-[2rem] p-6 mb-8 border border-gray-100 h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={progressData.daily_breakdown || []}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280', fontWeight: 600 }}
+                      tickFormatter={(str) => new Date(str).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280', fontWeight: 600 }}
+                      label={{ value: 'Minutes', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#9ca3af', fontSize: 12, fontWeight: 700 } }}
+                    />
+                    <Tooltip
+                      cursor={{ fill: '#f3f4f6', radius: 8 }}
+                      contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value) => [`${value} minutes`, 'Practice Time']}
+                      labelFormatter={(label) => new Date(label).toLocaleDateString(undefined, { dateStyle: 'long' })}
+                    />
+                    <Bar
+                      dataKey="minutes"
+                      fill="#8b5cf6"
+                      radius={[6, 6, 0, 0]}
+                      barSize={32}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Detailed Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(progressData.daily_breakdown || []).slice().reverse().filter(d => d.minutes > 0).map((day, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-5 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                    <div className="flex items-center">
+                      <div className="p-3 bg-purple-50 text-purple-600 rounded-xl mr-4">
+                        <Calendar className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">
+                          {new Date(day.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                        </p>
+                        <p className="text-xs text-gray-500 font-medium tracking-tight">Daily Record</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-black text-purple-600">{day.minutes}m</p>
+                      <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest leading-none">Activity</p>
+                    </div>
+                  </div>
+                ))}
+                {(progressData.daily_breakdown || []).filter(d => d.minutes > 0).length === 0 && (
+                  <div className="col-span-full py-12 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                    <Activity className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500 font-bold">No practice activity recorded in the last 14 days.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-8 border-t bg-gray-50/50 flex justify-end items-center gap-4">
+              <p className="text-sm text-gray-500 font-medium mr-auto">
+                <Star className="h-4 w-4 inline mr-1 text-yellow-500 fill-yellow-500" />
+                Keep practicing to maintain your streak!
+              </p>
+              <button
+                onClick={() => setShowBreakdown(false)}
+                className="px-8 py-3 bg-white border border-gray-200 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 transition-all shadow-sm"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => { setShowBreakdown(false); navigate('/aptitude'); }}
+                className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 hover:scale-[1.02] transition-all"
+              >
+                Practice More
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

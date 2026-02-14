@@ -10,7 +10,7 @@ from docx import Document
 from docx.shared import Pt, RGBColor, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Union
 import json
 import os
 from fastapi.responses import Response
@@ -612,18 +612,18 @@ class Education(BaseModel):
     degree: str
     institution: str
     year: str
-    gpa: str
+    gpa: Optional[str] = ""
 
 class Project(BaseModel):
     title: str
-    description: str
+    description: Union[str, List[str]]  # Can be string or list
     technologies: str
 
 class Experience(BaseModel):
     role: str
     company: str
     duration: str
-    responsibilities: str
+    responsibilities: Union[str, List[str]]  # Can be string or list
 
 class PersonalInfo(BaseModel):
     name: str
@@ -677,12 +677,12 @@ def generate_resume_content_with_ai(user_data: ResumeUserData) -> dict:
     Please generate a professional summary and enhance the descriptions for experience and projects.
     Return ONLY valid JSON in the following format:
     {{
-        "professional_summary": "A strong, role-specific summary...",
-        "experience_enhancements": [
-            {{ "role": "...", "company": "...", "enhanced_responsibilities": ["bullet 1", "bullet 2"] }}
+        "summary": "A strong, role-specific summary...",
+        "experience": [
+            {{ "role": "...", "company": "...", "bullets": ["bullet 1", "bullet 2"] }}
         ],
-        "project_enhancements": [
-            {{ "title": "...", "enhanced_description": ["bullet 1", "bullet 2"] }}
+        "projects": [
+            {{ "title": "...", "description": ["bullet 1", "bullet 2"] }}
         ]
     }}
     """
@@ -729,7 +729,7 @@ def create_word_resume(user_data: ResumeUserData, content: dict, template_type: 
     
     # Summary
     doc.add_heading('Professional Summary', level=1)
-    summary = content.get('professional_summary', user_data.professional_profile.career_goal if user_data.professional_profile else '')
+    summary = content.get('summary', user_data.professional_profile.career_goal if user_data.professional_profile else '')
     doc.add_paragraph(summary)
     
     # Skills
@@ -739,7 +739,7 @@ def create_word_resume(user_data: ResumeUserData, content: dict, template_type: 
     # Experience
     if user_data.experience:
         doc.add_heading('Professional Experience', level=1)
-        enhancements = {e.get('company'): e.get('enhanced_responsibilities', []) for e in content.get('experience_enhancements', [])}
+        enhancements = {e.get('company'): e.get('bullets', []) for e in content.get('experience', [])}
         
         for exp in user_data.experience:
             p = doc.add_paragraph()
@@ -756,7 +756,7 @@ def create_word_resume(user_data: ResumeUserData, content: dict, template_type: 
     # Projects
     if user_data.projects:
         doc.add_heading('Projects', level=1)
-        enhancements = {p.get('title'): p.get('enhanced_description', []) for p in content.get('project_enhancements', [])}
+        enhancements = {p.get('title'): p.get('description', []) for p in content.get('projects', [])}
         
         for proj in user_data.projects:
             p = doc.add_paragraph()
@@ -798,6 +798,10 @@ def generate_content(request: ResumeUserData):
 def download_resume(request: ResumeDownloadRequest):
     """Generate and download resume as DOCX"""
     try:
+        print(f"[DEBUG] Received download request")
+        print(f"[DEBUG] user_data type: {type(request.user_data)}")
+        print(f"[DEBUG] template_type: {request.template_type}")
+        
         docx_bytes = create_word_resume(
             request.user_data, 
             request.generated_content, 
@@ -813,5 +817,7 @@ def download_resume(request: ResumeDownloadRequest):
             headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
     except Exception as e:
-        print(f"Download Error: {e}")
+        print(f"[ERROR] Download Error: {e}")
+        import traceback
+        traceback.print_exc()
         return {"error": str(e)}
