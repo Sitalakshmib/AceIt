@@ -1,3 +1,0 @@
-aceit-frontend/src/pages/Dashboard.jsx
-aceit-frontend/src/pages/coding.jsx
-aceit_backend/progress.json
