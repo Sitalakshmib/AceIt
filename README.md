@@ -93,22 +93,31 @@ A dedicated coding assistant embedded in the IDE, powered by **Google Gemini Pro
 ---
 
 ### 3. 🗣️ Group Discussion (AI-Moderated)
-A unique module to practice structuring thoughts and articulating arguments.
+A specialized module designed to help students master the art of structuring thoughts and articulating arguments under time pressure.
 
-*   **AI Topic Generator**: Generates relevant, trending GD topics on demand (50% Static Curated / 50% AI Generated).
-*   **Structured Practice**:
-    *   Timer-based session to simulate pressure.
-    *   Minimum word count enforcement (20+ chars).
-*   **Detailed Feedback**:
-    *   **Strengths & Weaknesses**: AI identifies specific strong points and areas for improvement.
-    *   **Topic Study Points**: AI generates literature-style statements (facts, stats, arguments) to help you study the topic deeper.
+#### **A. Smart Topic Generation**
+The system uses a **Hybrid Topic Engine** to ensure variety:
+*   **Dynamic AI Generation (50%)**: Uses **Groq (Llama-3)** to generate fresh, trending topics based on current affairs (e.g., "Impact of Generative AI on Creative Jobs").
+*   **Curated Repository (50%)**: Selects from valid, high-frequency topics used in top corporate interviews (e.g., "Gig Economy: Boon or Bane?").
+
+#### **B. Real-time Practice Environment**
+*   **Live Timer**: Tracks your thinking and typing time to help you gauge your speed.
+*   **Constraint Checks**: Enforces a minimum response length (20 chars) to prevent low-effort submissions.
+*   **Word Count**: Real-time counter to help you meet length requirements.
+
+#### **C. 4-Dimensional AI Evaluation**
+Unlike simple grammar checkers, our AI acts as a **Corporate Evaluator**, scoring you on:
+1.  **Clarity (0-10)**: How precise and understandable is your language?
+2.  **Coherence (0-10)**: Do your arguments flow logically from one to another?
+3.  **Relevance (0-10)**: Did you stick to the core topic or deviate?
+4.  **Feedback Quality**:
+    *   **Strengths**: Highlights specific strong arguments you made.
+    *   **Areas for Improvement**: Points out logical fallacies or weak structuring.
+    *   **📚 Topic Study Points**: The AI generates **5-6 high-quality, literature-style arguments** (facts, statistics, valid counter-points) that you *should* have used. This turns every practice session into a learning opportunity.
 
 #### **🔧 Under the Hood (GD)**
-*   **Scoring Logic**:
-    *   **Clarity (0-10)**: Analyzes language precision and readability.
-    *   **Coherence (0-10)**: Evaluates logical flow and argument structure.
-    *   **Relevance (0-10)**: Checks adherence to the core topic.
-*   **Prompt Engineering**: Uses sophisticated system prompts to ensure the AI evaluates *persuasion* and *logic*, not just grammar.
+*   **Prompt Engineering**: The backend uses a specialized system prompt that instructs the LLM to ignore spelling mistakes and focus on *persuasiveness* and *logical structure*, simulating a real moderator.
+*   **Structured JSON Output**: The AI returns a strict JSON object containing separate arrays for `strengths`, `weaknesses`, and `topic_points` for clean frontend rendering.
 
 ---
 
