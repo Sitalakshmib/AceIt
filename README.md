@@ -1,129 +1,133 @@
-# AceIt - AI-Powered Placement Preparation Platform
+# 🚀 AceIt - Ultimate Placement Preparation Platform
 
-**AceIt** is a comprehensive, AI-driven platform designed to prepare students for recruitment processes. It covers every stage of placement: **Aptitude, Coding, Group Discussion, Technical Interviews, and Resume Building**.
-
-The system leverages advanced analytics, adaptive learning algorithms (Sliding Window & Round Robin), and Generative AI (Gemini) to provide personalized feedback and real-time coaching.
+**AceIt** is a comprehensive, AI-powered placement preparation platform designed to help students master every aspect of the recruitment process. From aptitude tests to coding challenges, group discussions, and mock interviews, AceIt provides a holistic, adaptive, and data-driven learning experience.
 
 ---
 
-## 🚀 Key Modules & Features
+## 🌟 Core Modules & Features
 
-### 1. 🧠 Aptitude Training Module
-*Master quantitative, logical, and verbal reasoning with an adaptive learning engine.*
+### 1. 🧠 Aptitude Mastery (Adaptive & Intelligent)
+The Aptitude module is built on a sophisticated **Adaptive Learning Engine** that personalizes the experience based on user performance.
 
-#### **Practice Mode (Adaptive Learning)**
-- **Intelligent Question Selection**:
-  - **Round Robin Algorithm**: Ensures diversity in question selection across different sub-topics, preventing repetitive patterns.
-  - **Sliding Window Approach**: The "Adaptive Engine" uses a sliding window of your last **4 attempts** to dynamically adjust difficulty (Easy → Medium → Hard). If you consistently answer correct, the window shifts to harder problems.
-- **IndiaBIX-Style Interface**: One question at a time with instant validation and detailed explanations.
-- **Categorized Learning**: Topics are structured hierarchically (Category → Topic → Question).
+#### **A. Practice Mode**
+Designed for pure learning without the pressure of a timer.
+*   **Adaptive Difficulty**: Uses a **Sliding Window Algorithm** (tracking the last 4 attempts) to dynamically adjust difficulty:
+    *   **Level Up**: Accuracy ≥ 75% moves you to the next difficulty (Easy → Medium → Hard).
+    *   **Level Down**: Accuracy < 50% drops the difficulty to ensure foundational understanding.
+*   **Instant Feedback**: Detailed explanations are shown immediately after submitting an answer.
+*   **Smart Question Serving**: Ensures no question repetition for a specific user and topic.
+*   **Topic Selection**: Granular filtering by Category (e.g., Quantitative Aptitude) and Sub-topic (e.g., Time & Work).
 
-#### **Mock Test System**
-- **Three Test Types**:
-  1.  **Full-Length Test**: 30 Questions | 30 Minutes | Mixed Topics.
-  2.  **Section-Wise Test**: 30 Questions | 30 Minutes | Specific Category (e.g., Logical Reasoning).
-  3.  **Topic-Wise Test**: 20 Questions | 20 Minutes | Specific Topic (e.g., Probability).
-- **Test Characteristics**:
-  - **Randomized Options**: Answer choices are shuffled at runtime to prevent muscle memory.
-  - **Auto-Submission**: Tests automatically submit when the timer expires.
-- **Detailed Analytics**:
-  - **Performance Metrics**: Score, Accuracy %, Average Time per Question.
-  - **Rating System**: Classifies performance as *Good* (≥75%), *Average* (50-75%), or *Poor* (<50%).
-  - **Topic Performance**: Breakdown of accuracy per topic to identify specific weak areas.
-- **Comprehensive Review**:
-  - View "Your Answer" vs. "Correct Answer".
-  - Detailed step-by-step explanations for every question.
+#### **B. Mock Tests (Examination Simulation)**
+Simulates real-world exam conditions with three distinct configurations:
+1.  **Full-Length Test**: 30 Questions | 30 Minutes | Mixed Syllabus.
+2.  **Section-Wise Test**: 30 Questions | 30 Minutes | Specific Category (e.g., Logical Reasoning).
+3.  **Topic-Wise Test**: 20 Questions | 20 Minutes | Targeted Topic Practice.
 
-#### **AI Aptitude Coach**
-- **User Tier Classification**: Classifies users as *Developing, Competent, or Advanced* based on accuracy and speed.
-- **Error Pattern Analysis**: Detects if your mistakes are due to:
-  - *Conceptual Errors*
-  - *Careless Mistakes*
-  - *Overthinking*
-  - *Time Pressure*
-- **Strength & Weakness Identification**: Automatically highlights your top 3 strong topics and bottom 3 weak areas.
+**Test Features:**
+*   **Live Timer & Progress**: Real-time tracking of time remaining and questions attempted.
+*   **Question Palette**: Quick navigation to specific questions.
+*   **Auto-Submit**: Automatically submits the test when the timer hits zero.
+
+#### **C. Deep Analytics**
+Post-test analysis provides actionable insights:
+*   **Performance Metrics**: Score, Accuracy (%), and Average Time per Question.
+*   **Performance Rating**: Categorizes performance as **Excellent, Good, Average, or Poor**.
+*   **Topic Breakdown**: Detailed accuracy percentages for every topic attempted in the test.
+*   **Comprehensive Review**: Question-by-question review with:
+    *   Your Answer vs Correct Answer.
+    *   Detailed Step-by-Step Explanations.
 
 ---
 
-### 2. 💻 Coding Arena (CodeSprint)
-*A robust competitive programming environment with real-time compilation.*
+### 2. 💻 Coding Arena
+A robust coding environment supporting multiple languages and AI assistance.
 
-#### **Core Features**
-- **Dual Execution Modes**:
-  - **Run Code**: Executes against **3 visible sample test cases** for quick debugging.
-  - **Submit Code**: Validates against **all test cases (including hidden/edge cases)** for final verification.
-- **Problem Repository**:
-  - Hybrid database: Fetches from local optimized DB or falls back to internal problem bank.
-  - Categorized by Difficulty (Easy, Medium, Hard) and Tags (e.g., Arrays, DP, Sliding Window).
-- **Bookmarks**: Save interesting or difficult problems for later review.
-
-#### **Progress Analytics**
-- **Heatmap & Streak**: Visualizes daily activity (similar to GitHub/LeetCode) and tracks current/max daily streaks.
-- **Solved Counters**: Tracks total solved count broken down by difficulty (Easy/Medium/Hard).
-- **Recent Activity Log**: Detailed history of all submission attempts and their outcomes.
+*   **Multi-Language Support**: Python, Java, C++, C, and R.
+*   **Monaco Editor**: Professional-grade code editor with syntax highlighting and auto-completion.
+*   **Test Case Validation**:
+    *   **Run**: Executes code against visible test cases for quick debugging.
+    *   **Submit**: Validates against hidden edge cases to ensure solution robustness.
+*   **AI Tutor**: An integrated AI assistant (floating bot) that provides hints, logic explanation, and debugging help without giving away the direct solution.
+*   **Smart Filtering**: Filter problems by specific tags (e.g., Arrays, DP), difficulty, or "Bookmarked" status.
 
 ---
 
-### 3. 🗣️ Group Discussion (GD) Prep
-*AI-simulated round-table discussion analysis.*
+### 3. 🗣️ Group Discussion (AI-Moderated)
+A unique module to practice structuring thoughts and articulating arguments.
 
-#### **Simulated Environment**
-- **Smart Topic Generator**: Generates trending and relevant GD topics (Abstract, Current Affairs, Management).
-- **Real-time Rules**: Enforces minimum content length (20+ chars) to encourage meaningful contributions.
-
-#### **AI Feedback Engine**
-- **Scoring Metrics (0-10)**:
-  - **Clarity**: How clear and understandable your argument is.
-  - **Coherence**: Flow and logical structure of your points.
-  - **Relevance**: Adherence to the specific topic.
-- **Qualitative Analysis**:
-  - **Strengths**: What you did well (e.g., "Good use of examples").
-  - **Weaknesses**: Areas to improve (e.g., "Avoid repetition").
-- **Knowledge Enhancement**: The AI proactively provides **"Relevant Points to Study"**, giving you key facts and arguments you *could* have used for that specific topic.
-
----
-
-### 4. 🎙️ AI Technical Interviewer
-*Voice-enabled mock interviews with a virtual hiring manager.*
-
-#### **Interview Modes**
-- **Technical**: Deep dive into specific tech stacks (Python, Java, DBMS).
-- **HR**: Behavioral questions (Strengths, Weaknesses, Situational).
-- **Project-Based**: Questions tailored specifically to your project description.
-
-#### **Analysis & Feedback**
-- **Question-by-Question Review**:
-  - Scores every answer (0-100).
-  - Categorizes answers into *Strengths* (Score > 75) and *Needs Improvement* (Score < 60).
-- **Model Answers**: For any answer scoring low, the AI generates an **Ideal Response**, teaching you exactly how a top candidate would answer that specific question.
-- **Overall Performance**: Aggregated score and final verdict (Excellent, Good, Fair, Needs Improvement).
+*   **AI Topic Generator**: Generates relevant, trending GD topics on demand.
+*   **Structured Practice**:
+    *   Timer-based session to simulate pressure.
+    *   Minimum word count enforcement (20+ chars) to encourage substantial responses.
+*   **4-Dimensional AI Scoring**:
+    *   **Clarity**: How easy is it to understand your points?
+    *   **Coherence**: Logical flow and structuring of arguments.
+    *   **Relevance**: Adherence to the core topic.
+    *   **Overall Score**: Weighted average of the above metrics.
+*   **Detailed Feedback**:
+    *   **Strengths & Weaknesses**: AI identifies specific strong points and areas for improvement.
+    *   **Topic Study Points**: Provides key facts and arguments you *could* have mentioned.
 
 ---
 
-### 5. 📄 Smart Resume Analyzer & Builder
-*ATS-Optimized resume creation and auditing.*
+### 4. 🤝 AI Mock Interviewer
+Simulates a real interview environment with audio-visual interaction.
 
-#### **AI Resume Analyzer**
-- **ATS Scoring Engine (0-100)**:
-  - **Contact Info Check**: Verifies Email, Phone, LinkedIn, GitHub.
-  - **Section Audit**: Checks for presence of Summary, Experience, Projects, Skills.
-  - **Formatting Score**: Analyzes bullet point usage and action verbs.
-  - **Content Quality**: Detects quantifiable achievements (numbers, percentages).
-- **Skills Gap Analysis**: Matches your resume keywords against specific Job Roles (e.g., *Full Stack Developer*) to find missing critical skills.
-- **AI Career Coach**: Generates a strategic summary of "Top Strengths" and "Focus Areas" with actionable tips to increase interview callbacks.
+#### **Interview Modes:**
+*   **Technical**: Focuses on core concepts (Python, Java, SQL, etc.) or "Real-time Adaptive" (context-aware testing).
+*   **HR / Behavioral**: Tests soft skills, culture fit, and situational judgment.
+*   **Video Presence**: Uses camera feedback to analyze body language and confidence.
 
-#### **Resume Builder**
-- **AI-Enhanced Content**: Input your raw details, and the AI rewrites your descriptions to be more professional and impactful.
-- **One-Click Export**: Generates a perfectly formatted, ATS-friendly **DOCX** file.
+#### **Key Features:**
+*   **Voice Interaction**:
+    *   **AI Speaks**: Text-to-Speech (TTS) engine reads out questions.
+    *   **You Speak**: Speech-to-Text (STT) transcribe your answers in real-time.
+*   **Live Camera Feed**: Mirrors your video to help you practice maintaining eye contact and professional posture.
+*   **Comprehensive Report**:
+    *   **Overall Score** & Performance Badge.
+    *   **Model Answers**: Compares your response with an "Ideal Response" to highlight gaps.
+    *   **Focus Areas**: Specific recommendations (e.g., "Improve detailed explanations for SQL joins").
+
+---
+
+### 5. 📄 Resume Analyzer (ATS-Optimized)
+Ensures your resume gets past Applicant Tracking Systems (ATS).
+
+*   **PDF Parsing**: Extracts text from uploaded PDF resumes.
+*   **Target Role Mapping**: You specific the target role (e.g., "Frontend Developer"), and the AI analyzes relevance.
+*   **Scoring Engine**:
+    *   **Overall Score**: General quality rating.
+    *   **ATS Score**: Formatting, keyword density, and structure compatibility.
+    *   **Skills Match**: Compares your skills against standard requirements for the target role.
+*   **Gap Analysis**:
+    *   **Found Skills** vs **Missing/Recommended Skills**.
+    *   **Critical Alerts**: Missing contact info, bad formatting, or empty sections.
+*   **AI Career Coach**: Provides "Actionable Next Steps" to improve the resume immediately.
 
 ---
 
-## 🛠️ Tech Stack
-- **Frontend**: React.js, Tailwind CSS, Lucide React (Icons), Recharts (Analytics).
-- **Backend**: FastAPI (Python), SQLAlchemy (ORM).
-- **Database**: PostgreSQL (NeonDB).
-- **AI/ML**: Google Gemini Pro (GenAI), Scikit-Learn (Adaptive Algorithms).
-- **Tools**: PyPDF2/PDFPlumber (Resume Parsing), SpeechRecognition (Interview).
+## 🛠️ Technical Stack
+
+*   **Frontend**: React.js, Tailwind CSS, Lucide Icons, Monaco Editor.
+*   **Backend**: FastAPI (Python), SQLAlchemy.
+*   **Database**: PostgreSQL / SQLite (Dev).
+*   **AI/ML**: Integration with LLMs (Groq/OpenAI) for real-time evaluation and content generation.
 
 ---
-*Built with ❤️ for AceIt.*
+
+## 🚀 Getting Started
+
+1.  **Backend**:
+    ```bash
+    cd aceit_backend
+    uvicorn main:app --reload
+    ```
+2.  **Frontend**:
+    ```bash
+    cd aceit-frontend
+    npm run dev
+    ```
+
+---
+*Built with ❤️ for Student Success.*
