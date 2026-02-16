@@ -48,6 +48,15 @@ export const authAPI = {
   register: async (userData) => {
     const res = await api.post('/auth/register', userData);
     return res;
+  },
+  googleLogin: async (credential) => {
+    const res = await api.post('/auth/google/verify', { credential });
+    const { access_token, user } = res.data;
+    if (access_token) {
+      localStorage.setItem('aceit_access_token', access_token);
+      localStorage.setItem('aceit_user', JSON.stringify(user));
+    }
+    return res;
   }
 };
 

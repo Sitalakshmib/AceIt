@@ -21,3 +21,17 @@ Thumbs.db
 aceit-backend/.env
 aceit-backend/__pycache__/
 aceit_backend/__pycache__/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Python cache
+__pycache__/
+*.pyc
