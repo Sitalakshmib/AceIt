@@ -134,8 +134,9 @@ const Aptitude = () => {
         </div>
       )}
 
-      {/* AI Coach Overlay - Available on Intro and Practice pages. Hidden in mock-test to prevent cheating. */}
-      {(activeView === 'intro' || activeView === 'practice') && <AICoachChat compact={activeView === 'practice'} />}
+      {/* AI Coach Overlay - Available on Aptitude Dashboard (intro) and Performance Analytics. Hidden in practice and mock-test. */}
+      {activeView === 'intro' && <AICoachChat compact={true} blinkBadge={true} imageSize="h-[200px]" />}
+      {activeView === 'analytics' && <AICoachChat compact={false} blinkBadge={false} />}
     </div>
   );
 };
