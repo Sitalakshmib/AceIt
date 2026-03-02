@@ -3,9 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Environment variables
+# Environment variables (real secrets — never commit)
 .env
 .env.*
+!.env.example
 
 # Binaries and large builds
 ffmpeg-8.0.1-essentials_build/
