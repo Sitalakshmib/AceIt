@@ -45,8 +45,7 @@ const Aptitude = () => {
           {/* Back to Dashboard Button */}
           <button
             onClick={() => navigate('/')}
-            className="absolute top-0 left-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group mt-4 ml-4 z-40"
-
+            className="absolute top-0 left-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group mt-4 ml-4 z-50"
           >
             <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
             Dashboard
@@ -135,8 +134,9 @@ const Aptitude = () => {
         </div>
       )}
 
-      {/* AI Coach Overlay - Available on Intro and Practice pages. Hidden in mock-test to prevent cheating. */}
-      {(activeView === 'intro' || activeView === 'practice') && <AICoachChat compact={activeView === 'practice'} />}
+      {/* AI Coach Overlay - Available on Aptitude Dashboard (intro) and Performance Analytics. Hidden in practice and mock-test. */}
+      {activeView === 'intro' && <AICoachChat compact={true} blinkBadge={true} imageSize="h-[200px]" />}
+      {activeView === 'analytics' && <AICoachChat compact={false} blinkBadge={false} />}
     </div>
   );
 };
