@@ -149,8 +149,8 @@ def preprocess_text(text: str) -> str:
     # Convert to lowercase
     text = text.lower()
     
-    # Remove special characters but keep spaces and basic punctuation
-    text = re.sub(r'[^\w\s.,;:!?()-]', ' ', text)
+    # Remove special characters but keep spaces, basic punctuation, and contact/structure symbols
+    text = re.sub(r'[^\w\s.,;:!?()\-@/+\*•#]', ' ', text)
     
     # Remove extra whitespace
     text = re.sub(r'\s+', ' ', text)
@@ -587,15 +587,43 @@ def analyze_resume(
     analysis["ai_analysis"] = ai_result["ai_feedback"]
     analysis["ai_error"] = ai_result["error"]
     
-    # Save progress
-    progress_data.append({
-        "user_id": user_id,
-        "module": "resume_analysis",
-        "score": analysis["overall_score"],
-        "timestamp": datetime.utcnow(),
-        "job_role": job_role,
-        "analysis": analysis
-    })
+    # --- Save to Neon DB (primary) ---
+    try:
+        from models.gd_resume_sql import ResumeAnalysis
+        from database_postgres import get_db
+        db_gen = get_db()
+        db = next(db_gen)
+        try:
+            skills = analysis.get("skills_analysis", {})
+            ats = analysis.get("ats_analysis", {})
+            record = ResumeAnalysis(
+                user_id=user_id,
+                job_role=job_role,
+                overall_score=float(analysis["overall_score"]),
+                ats_score=float(ats.get("ats_score", 0)),
+                skills_match_score=float(skills.get("match_score", 0)),
+                matched_skills=skills.get("matched_skills", []),
+                missing_skills=skills.get("missing_skills", []),
+                suggestions=analysis.get("suggestions", []),
+                ats_analysis=ats,
+                ai_analysis=analysis.get("ai_analysis"),
+            )
+            db.add(record)
+            db.commit()
+            print(f"[Resume] Saved analysis for user {user_id}, score={analysis['overall_score']}")
+        finally:
+            db.close()
+    except Exception as db_err:
+        print(f"[Resume] DB save failed (non-critical): {db_err}")
+        # Fallback: keep in-memory list
+        progress_data.append({
+            "user_id": user_id,
+            "module": "resume_analysis",
+            "score": analysis["overall_score"],
+            "timestamp": datetime.utcnow(),
+            "job_role": job_role,
+            "analysis": analysis
+        })
     
     return analysis
 
