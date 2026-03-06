@@ -4,6 +4,8 @@ from services.gd_service import GDService
 from typing import Optional
 import os
 import requests
+from sqlalchemy.orm import Session
+from database_postgres import get_db
 
 router = APIRouter()
 
@@ -19,6 +21,7 @@ class GDSubmitRequest(BaseModel):
     topic: str
     user_input: str
     time_taken: int
+    user_id: Optional[str] = "anonymous"   # persist to Neon DB
 
 import random
 
@@ -241,6 +244,35 @@ TOPIC_POINTS:
                 "Stay updated with current events and recent developments related to this topic. Reference recent policy changes, technological innovations, or market trends that demonstrate your awareness of contemporary issues and show you're well-informed."
             ]
         
+        # --- Save to Neon DB ---
+        try:
+            from models.gd_resume_sql import GDSession
+            db_gen = get_db()
+            db = next(db_gen)
+            try:
+                avg_score = round((clarity_score + coherence_score + relevance_score) / 3, 2)
+                gd_record = GDSession(
+                    user_id=request.user_id,
+                    topic=request.topic,
+                    user_input=request.user_input,
+                    time_taken_seconds=request.time_taken,
+                    clarity_score=float(clarity_score),
+                    coherence_score=float(coherence_score),
+                    relevance_score=float(relevance_score),
+                    overall_score=avg_score,
+                    feedback=feedback_text,
+                    strengths=strengths if strengths else [],
+                    improvements=improvements if improvements else [],
+                    topic_points=topic_points if topic_points else [],
+                )
+                db.add(gd_record)
+                db.commit()
+                print(f"[GD] Saved session for user {request.user_id}, score={avg_score}")
+            finally:
+                db.close()
+        except Exception as db_err:
+            print(f"[GD] DB save failed (non-critical): {db_err}")
+
         return {
             "clarity_score": clarity_score,
             "coherence_score": coherence_score,

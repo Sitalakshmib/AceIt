@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { LayoutDashboard, BrainCircuit, Code2, Video, FileText, LogOut, Menu, X, User, Settings, ChevronRight, Bell, HelpCircle, Users } from 'lucide-react';
+import { LayoutDashboard, BrainCircuit, Code2, Video, FileText, LogOut, Menu, X, User, Settings, ChevronRight, Bell, HelpCircle, Users, Shield, Lock } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -28,6 +28,18 @@ const Navbar = () => {
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  const settingsItems = [
+    { icon: Bell, color: 'blue', label: 'Notifications', sub: 'Manage alerts & reminders' },
+    { icon: Settings, color: 'indigo', label: 'Preferences', sub: 'Theme, language & display' },
+    { icon: HelpCircle, color: 'teal', label: 'Help & Support', sub: 'FAQs and contact us' },
+  ];
+
+  const privacyItems = [
+    { icon: Shield, color: 'green', label: 'Data Privacy', sub: 'How we store your data' },
+    { icon: Lock, color: 'orange', label: 'Account Security', sub: 'Password & 2FA settings' },
+    { icon: FileText, color: 'slate', label: 'Terms of Service', sub: 'Read our terms' },
+  ];
 
   return (
     <>
@@ -163,9 +175,11 @@ const Navbar = () => {
                 </button>
               </div>
 
-              {/* Body - Practice Motivation */}
+              {/* Body */}
               <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
                 <div className="space-y-4">
+
+                  {/* Practice Insights */}
                   <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 pl-2">Practice Insights</h3>
 
                   <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 shadow-sm">
@@ -202,6 +216,60 @@ const Navbar = () => {
                     <p className="text-purple-800 text-xs leading-relaxed">
                       Record a mock interview session to analyze your body language and confidence level.
                     </p>
+                  </div>
+
+                  {/* ── Settings ── */}
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 pl-2 pt-4">Settings</h3>
+                  <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+                    {settingsItems.map(({ icon: Icon, color, label, sub }, i) => (
+                      <div
+                        key={label}
+                        onClick={() => {
+                          const path = label === 'Notifications' ? '/settings/notifications' :
+                            label === 'Preferences' ? '/settings/preferences' : '/settings/help';
+                          navigate(path);
+                          setIsProfileOpen(false);
+                        }}
+                        className={`flex items-center space-x-3 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer ${i < settingsItems.length - 1 ? 'border-b border-slate-100' : ''
+                          }`}
+                      >
+                        <div className={`w-8 h-8 bg-${color}-100 rounded-lg flex items-center justify-center flex-shrink-0`}>
+                          <Icon className={`w-4 h-4 text-${color}-600`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800">{label}</p>
+                          <p className="text-xs text-slate-400 truncate">{sub}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* ── Privacy & Data ── */}
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 pl-2 pt-2">Privacy &amp; Data</h3>
+                  <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+                    {privacyItems.map(({ icon: Icon, color, label, sub }, i) => (
+                      <div
+                        key={label}
+                        onClick={() => {
+                          const path = label === 'Data Privacy' ? '/settings/privacy' :
+                            label === 'Account Security' ? '/settings/security' : '/settings/terms';
+                          navigate(path);
+                          setIsProfileOpen(false);
+                        }}
+                        className={`flex items-center space-x-3 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer ${i < privacyItems.length - 1 ? 'border-b border-slate-100' : ''
+                          }`}
+                      >
+                        <div className={`w-8 h-8 bg-${color}-100 rounded-lg flex items-center justify-center flex-shrink-0`}>
+                          <Icon className={`w-4 h-4 text-${color}-600`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800">{label}</p>
+                          <p className="text-xs text-slate-400 truncate">{sub}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                      </div>
+                    ))}
                   </div>
 
                 </div>

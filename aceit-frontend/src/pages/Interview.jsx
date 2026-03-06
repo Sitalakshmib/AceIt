@@ -65,6 +65,8 @@ const Interview = () => {
   const [showEndConfirmation, setShowEndConfirmation] = useState(false);
   const [showTimeoutModal, setShowTimeoutModal] = useState(false);
   const [timeoutQuote, setTimeoutQuote] = useState('');
+  const messagesEndRef = useRef(null);
+
 
   // Results State (must be at top level, not inside conditional)
   const [results, setResults] = useState(null);
@@ -176,6 +178,14 @@ const Interview = () => {
       }
     }
   }, [messages]);
+
+  // Scroll to bottom when messages change or loading state changes
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isLoading]);
+
 
   // Fetch results when view changes to 'completed'
   useEffect(() => {
@@ -1040,7 +1050,7 @@ const Interview = () => {
               </div>
             </div>
           )}
-          <div ref={(el) => el && el.scrollIntoView({ behavior: 'smooth' })}></div>
+          <div ref={messagesEndRef}></div>
         </div>
       </div>
 
