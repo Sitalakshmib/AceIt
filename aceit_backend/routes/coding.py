@@ -44,7 +44,7 @@ def get_db_problem_by_id(db: Session, problem_id: str):
 
 
 @router.get("/problems")
-async def get_coding_problems_route():
+def get_coding_problems_route():
     """
     Get all coding problems.
     Fetches from Neon PostgreSQL database, falls back to local_problems.py if DB is unavailable.
@@ -170,7 +170,7 @@ async def get_coding_problems_route():
 
 # Get a specific coding problem by ID
 @router.get("/problems/{problem_id}")
-async def get_coding_problem_route(problem_id: str):
+def get_coding_problem_route(problem_id: str):
     """
     Get a specific coding problem by its ID
     """
@@ -244,7 +244,7 @@ async def get_coding_problem_route(problem_id: str):
 
 # Submit code for evaluation
 @router.post("/submit")
-async def submit_code(payload: dict):
+def submit_code(payload: dict):
     """
     Execute code for a problem (HackerRank-style).
     Supports two actions:
@@ -446,7 +446,7 @@ async def submit_code(payload: dict):
 
 
 @router.get("/user-progress")
-async def get_user_progress(user_id: str = None):
+def get_user_progress(user_id: str = None):
     """
     Get user's coding progress including solved problems.
     Returns list of solved problem IDs.
@@ -484,7 +484,7 @@ async def get_user_progress(user_id: str = None):
 
 
 @router.get("/problems/{problem_id}/solution")
-async def get_solution(problem_id: str):
+def get_solution(problem_id: str):
     # Check cache first
     if problem_id in problem_cache:
         return {"solution": problem_cache[problem_id].get("solution", "No solution available")}
@@ -503,7 +503,7 @@ async def get_solution(problem_id: str):
 
 # Bookmark endpoints
 @router.post("/bookmarks")
-async def add_bookmark(payload: dict):
+def add_bookmark(payload: dict):
     """Add a problem to user's bookmarks"""
     from sqlalchemy import text
     
@@ -541,7 +541,7 @@ async def add_bookmark(payload: dict):
 
 
 @router.delete("/bookmarks/{problem_id}")
-async def remove_bookmark(problem_id: str, user_id: str):
+def remove_bookmark(problem_id: str, user_id: str):
     """Remove a problem from user's bookmarks"""
     from sqlalchemy import text
     
@@ -568,7 +568,7 @@ async def remove_bookmark(problem_id: str, user_id: str):
 
 
 @router.get("/bookmarks")
-async def get_bookmarks(user_id: str):
+def get_bookmarks(user_id: str):
     """Get all bookmarked problems for a user"""
     from sqlalchemy import text
     
@@ -602,7 +602,7 @@ async def get_bookmarks(user_id: str):
 
 
 @router.get("/progress/stats")
-async def get_progress_stats(user_id: str):
+def get_progress_stats(user_id: str):
     """
     Get comprehensive progress statistics for a user.
     Simplified version that actually works.

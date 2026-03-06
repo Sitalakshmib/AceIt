@@ -15,7 +15,7 @@ router = APIRouter()
 
 
 @router.post("/generate")
-async def generate_mock_test(payload: dict, db: Session = Depends(get_db)):
+def generate_mock_test(payload: dict, db: Session = Depends(get_db)):
     """
     Generate a new mock test
     
@@ -55,7 +55,7 @@ async def generate_mock_test(payload: dict, db: Session = Depends(get_db)):
 
 
 @router.get("/{test_id}")
-async def get_mock_test(test_id: str, db: Session = Depends(get_db)):
+def get_mock_test(test_id: str, db: Session = Depends(get_db)):
     """Get mock test details"""
     test = db.query(MockTest).filter(MockTest.id == test_id).first()
     if not test:
@@ -74,7 +74,7 @@ async def get_mock_test(test_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/{test_id}/start")
-async def start_mock_test(test_id: str, payload: dict, db: Session = Depends(get_db)):
+def start_mock_test(test_id: str, payload: dict, db: Session = Depends(get_db)):
     """
     Start a mock test attempt
     
@@ -140,7 +140,7 @@ async def start_mock_test(test_id: str, payload: dict, db: Session = Depends(get
 
 
 @router.post("/{test_id}/submit-answer")
-async def submit_mock_answer(test_id: str, payload: dict, db: Session = Depends(get_db)):
+def submit_mock_answer(test_id: str, payload: dict, db: Session = Depends(get_db)):
     """
     Submit answer during mock test
     
@@ -169,7 +169,7 @@ async def submit_mock_answer(test_id: str, payload: dict, db: Session = Depends(
 
 
 @router.post("/{test_id}/complete")
-async def complete_mock_test(test_id: str, payload: dict, db: Session = Depends(get_db)):
+def complete_mock_test(test_id: str, payload: dict, db: Session = Depends(get_db)):
     """
     Complete and score mock test
     
@@ -190,7 +190,7 @@ async def complete_mock_test(test_id: str, payload: dict, db: Session = Depends(
 
 
 @router.get("/{test_id}/results/{attempt_id}")
-async def get_test_results(test_id: str, attempt_id: str, db: Session = Depends(get_db)):
+def get_test_results(test_id: str, attempt_id: str, db: Session = Depends(get_db)):
     """Get detailed results for a completed mock test"""
     try:
         results = MockTestService.get_test_results(db, attempt_id)
@@ -202,7 +202,7 @@ async def get_test_results(test_id: str, attempt_id: str, db: Session = Depends(
 
 
 @router.get("/user/{user_id}/attempts")
-async def get_user_attempts(user_id: str, db: Session = Depends(get_db)):
+def get_user_attempts(user_id: str, db: Session = Depends(get_db)):
     """Get all mock test attempts for a user"""
     attempts = db.query(MockTestAttempt)\
         .filter(MockTestAttempt.user_id == user_id)\

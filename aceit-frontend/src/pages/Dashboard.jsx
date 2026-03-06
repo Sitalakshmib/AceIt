@@ -8,7 +8,8 @@ import {
 import {
   TrendingUp, Target, Clock, Award, Brain, Users,
   Calendar, Zap, Star, AlertCircle, Trophy,
-  BarChart3, PieChart as PieChartIcon, Activity
+  BarChart3, PieChart as PieChartIcon, Activity, LayoutDashboard,
+  Code, Cpu, Camera
 } from 'lucide-react';
 
 import { analyticsAPI } from '../services/api';
@@ -20,27 +21,22 @@ const Dashboard = () => {
   const [progressData, setProgressData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   useEffect(() => {
     const fetchDashboard = async () => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
-
       try {
         setLoading(true);
-        const response = await analyticsAPI.getDashboard();
-        // Handle wrapped response { status: "success", data: ... }
+        // Unified API handles userId internally (session fallback)
+        const response = await analyticsAPI.getUnifiedAnalytics();
         if (response.data && response.data.data) {
           setProgressData(response.data.data);
         } else {
           setProgressData(response.data);
         }
       } catch (err) {
-        console.error('Failed to fetch dashboard data:', err);
-        setError('Failed to load dashboard. Showing limited info.');
-        // Fallback or empty state handled by progressData being null
+        console.error('Failed to fetch unified dashboard data:', err);
+        setError('Failed to load dashboard.');
       } finally {
         setLoading(false);
       }
@@ -51,11 +47,10 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">Welcome back, {user?.email || 'User'}!</h1>
-        <div className="text-center py-20">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
-          <p className="mt-4 text-gray-600">Loading your personalized dashboard...</p>
+      <div className="p-8 min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+          <div className="text-xl font-bold text-gray-800">Loading your performance...</div>
         </div>
       </div>
     );
@@ -63,348 +58,364 @@ const Dashboard = () => {
 
   if (!progressData) {
     return (
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">Welcome to AceIt!</h1>
-        <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-          <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Brain className="h-12 w-12 text-blue-600" />
-          </div>
-          <h2 className="text-2xl font-bold mb-4">Start Your Learning Journey</h2>
-          <p className="text-gray-600 mb-8">No progress data yet. Start practicing to track your improvement!</p>
-          <button
-            onClick={() => navigate('/aptitude')}
-            className="bg-blue-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-blue-700"
-          >
-            Begin First Lesson
+      <div className="p-8 min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white rounded-[2rem] shadow-xl p-12 text-center max-w-lg">
+          <AlertCircle className="h-12 w-12 text-orange-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-black mb-4">No Analytics Yet</h2>
+          <p className="text-gray-600 mb-8">Start practicing to see your performance breakdown here!</p>
+          <button onClick={() => navigate('/aptitude')} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold">
+            Start Learning
           </button>
         </div>
       </div>
     );
   }
 
-  // Color palettes
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
-  const SKILL_COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#06B6D4'];
+  const { overall_summary, module_performance, recent_activity } = progressData;
 
-  // Prepare weekly activity data for chart
-  const weeklyData = progressData.weekly_activity.map(day => ({
-    day: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
-    aptitude: day.aptitude,
-    coding: day.coding,
-    score: day.score
-  }));
+  // Calculate Overall Score (Average of Aptitude, Coding, and Technical/HR/Video Interviews)
+  // Higher weight for modules that actually have data
+  const scoringModules = module_performance.filter(m => m.has_data);
+  const averageScore = scoringModules.length > 0
+    ? Math.round(scoringModules.reduce((acc, m) => acc + m.performance_score, 0) / scoringModules.length)
+    : 0;
 
-  // Prepare skill data for chart
-  const skillData = progressData.skill_distribution;
+  const getModuleIcon = (name) => {
+    switch (name) {
+      case 'Aptitude': return <Brain className="h-6 w-6" />;
+      case 'Coding': return <Code className="h-6 w-6" />;
+      case 'Technical Interview': return <Cpu className="h-6 w-6" />;
+      case 'HR Interview': return <Users className="h-6 w-6" />;
+      case 'Video Presence': return <Camera className="h-6 w-6" />;
+      default: return <BarChart3 className="h-6 w-6" />;
+    }
+  };
 
-  // Stats cards
-  const stats = [
-    {
-      title: 'Overall Score',
-      value: `${progressData.overall_score}%`,
-      color: 'bg-gradient-to-r from-blue-500 to-cyan-500',
-      icon: <TrendingUp className="h-6 w-6" />,
-      description: 'Your overall performance'
-    },
-    {
-      title: 'Daily Streak',
-      value: `${progressData.daily_streak} days`,
-      color: 'bg-gradient-to-r from-green-500 to-emerald-500',
-      icon: <Zap className="h-6 w-6" />,
-      description: 'Consecutive practice days'
-    },
-    {
-      title: 'Total Practice',
-      value: `${Math.round(progressData.total_time_spent / 60)}h`,
-      color: 'bg-gradient-to-r from-purple-500 to-pink-500',
-      icon: <Clock className="h-6 w-6" />,
-      description: 'Time spent learning'
-    },
-    {
-      title: 'Accuracy',
-      value: `${progressData.aptitude.accuracy}%`,
-      color: 'bg-gradient-to-r from-orange-500 to-red-500',
-      icon: <Award className="h-6 w-6" />,
-      description: 'Average success rate'
-    },
-  ];
-
-  const moduleStats = [
-    {
-      title: 'Aptitude',
-      score: progressData.aptitude.average_score,
-      total: progressData.aptitude.tests_taken,
-      color: 'bg-blue-100 text-blue-600',
-      icon: '🧠',
-      path: '/aptitude'
-    },
-    {
-      title: 'Coding',
-      score: progressData.coding.average_success_rate,
-      total: progressData.coding.problems_attempted,
-      color: 'bg-green-100 text-green-600',
-      icon: '💻',
-      path: '/coding'
-    },
-    {
-      title: 'Interviews',
-      score: 65,
-      total: 3,
-      color: 'bg-purple-100 text-purple-600',
-      icon: '🎤',
-      path: '/interview'
-    },
-  ];
+  const getModuleColor = (name) => {
+    switch (name) {
+      case 'Aptitude': return 'from-blue-500 to-indigo-600';
+      case 'Coding': return 'from-purple-500 to-pink-600';
+      case 'Technical Interview': return 'from-orange-500 to-red-600';
+      case 'HR Interview': return 'from-emerald-500 to-teal-600';
+      case 'Video Presence': return 'from-cyan-500 to-blue-600';
+      default: return 'from-gray-500 to-slate-600';
+    }
+  };
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.username || user?.email || 'Learner'}</h1>
-          <p className="text-gray-600 mt-2">
-            Your personalized learning dashboard
-            {progressData.overall_score === 0 && (
-              <span className="ml-2 text-sm bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                Start Practicing!
-              </span>
-            )}
-          </p>
-        </div>
-        <div className="mt-4 md:mt-0 flex items-center space-x-2">
-          <div className="text-sm text-gray-500">
-            Last updated: {new Date().toLocaleDateString()}
-          </div>
-        </div>
-      </div>
+    <div className="p-8 min-h-screen bg-gray-50">
+      {/* 1. OVERALL PERFORMANCE HEADER */}
+      <div className="max-w-7xl mx-auto mb-10">
+        <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 p-8 md:p-10 border border-gray-100 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-bl-full opacity-60"></div>
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-2xl shadow-lg p-6 hover:scale-105 transition-transform duration-200 cursor-pointer border border-transparent hover:border-blue-100">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-gray-500 text-sm font-medium">{stat.title}</p>
-                <p className="text-3xl font-bold mt-2 text-slate-800">{stat.value}</p>
-                <p className="text-gray-400 text-sm mt-1">{stat.description}</p>
+          <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+            {/* User Intro */}
+            <div className="text-center md:text-left">
+              <div className="inline-block p-4 bg-blue-100 text-blue-600 rounded-2xl mb-4">
+                <LayoutDashboard className="h-8 w-8" />
               </div>
-              <div className={`p-3 rounded-xl ${index === 0 ? 'bg-blue-50 text-blue-600' :
-                index === 1 ? 'bg-green-50 text-green-600' :
-                  index === 2 ? 'bg-purple-50 text-purple-600' :
-                    'bg-orange-50 text-orange-600'
-                }`}>
-                {stat.icon}
+              <h1 className="text-3xl md:text-4xl font-black text-gray-900 leading-tight">
+                Hey, {user?.username || 'Learner'}!
+              </h1>
+              <p className="text-gray-500 mt-2 font-medium">Ready to master your skills today?</p>
+            </div>
+
+            {/* Overall Analytics Circle */}
+            <div className="flex justify-center">
+              <div className="relative w-40 h-40">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle
+                    cx="80" cy="80" r="70"
+                    stroke="currentColor" strokeWidth="12" fill="transparent"
+                    className="text-gray-100"
+                  />
+                  <circle
+                    cx="80" cy="80" r="70"
+                    stroke="currentColor" strokeWidth="12" fill="transparent"
+                    strokeDasharray={440}
+                    strokeDashoffset={440 - (440 * averageScore) / 100}
+                    strokeLinecap="round"
+                    className="text-blue-600 transition-all duration-1000 ease-out"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-3xl font-black text-gray-900">{averageScore}%</span>
+                  <span className="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Overall</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Summary Stats */}
+            <div className="flex flex-col gap-4">
+              <div className="bg-green-50 rounded-2xl p-4 flex items-center justify-between border border-green-100">
+                <div className="flex items-center">
+                  <div className="p-2 bg-green-100 text-green-600 rounded-lg mr-3">
+                    <Zap className="h-5 w-5" />
+                  </div>
+                  <span className="font-bold text-gray-700">Current Streak</span>
+                </div>
+                <span className="text-2xl font-black text-green-600">{overall_summary.practice_streak} Days</span>
+              </div>
+
+              <div
+                onClick={() => setShowBreakdown(true)}
+                className="bg-purple-50 rounded-2xl p-4 flex items-center justify-between border border-purple-100 cursor-pointer hover:bg-purple-100 transition-all group/time"
+              >
+                <div className="flex items-center">
+                  <div className="p-2 bg-purple-100 text-purple-600 rounded-lg mr-3 group-hover/time:scale-110 transition-transform">
+                    <Clock className="h-5 w-5" />
+                  </div>
+                  <span className="font-bold text-gray-700">Total Practice</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-2xl font-black text-purple-600">
+                    {overall_summary.total_time_minutes > 60
+                      ? `${Math.floor(overall_summary.total_time_minutes / 60)}h ${overall_summary.total_time_minutes % 60}m`
+                      : `${overall_summary.total_time_minutes}m`}
+                  </span>
+                  <p className="text-[10px] text-purple-400 font-bold uppercase tracking-tighter">Click to expand</p>
+                </div>
               </div>
             </div>
           </div>
-        ))}
-      </div>
-
-      {/* GD Practice Widget (New Feature) */}
-      <GDPracticeWidget />
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        {/* Weekly Activity Chart */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="flex items-center mb-6">
-            <Activity className="h-5 w-5 text-blue-500 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Weekly Activity</h3>
-          </div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis dataKey="day" stroke="#666" />
-                <YAxis stroke="#666" />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="aptitude" fill="#3B82F6" name="Aptitude Qs" />
-                <Bar dataKey="coding" fill="#10B981" name="Coding Problems" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Skill Distribution Chart */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="flex items-center mb-6">
-            <PieChartIcon className="h-5 w-5 text-green-500 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Skill Distribution</h3>
-          </div>
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={skillData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, score }) => `${name}: ${score}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="score"
-                >
-                  {skillData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={SKILL_COLORS[index % SKILL_COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [`${value}%`, 'Score']} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
         </div>
       </div>
 
-      {/* Module Performance & Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-        {/* Module Performance */}
-        <div className="bg-slate-800/80 backdrop-blur rounded-2xl shadow-xl p-6 lg:col-span-2 border border-slate-700">
-          <div className="flex items-center mb-6">
-            <BarChart3 className="h-5 w-5 text-purple-400 mr-2" />
-            <h3 className="text-lg font-semibold text-white">Module Performance</h3>
-          </div>
-          <div className="space-y-4">
-            {moduleStats.map((module, index) => (
-              <div
-                key={index}
-                onClick={() => navigate(module.path)}
-                className="flex items-center justify-between p-4 rounded-xl hover:bg-gray-50 cursor-pointer transition-colors border border-gray-100"
-              >
-                <div className="flex items-center">
-                  <span className="text-2xl mr-4">{module.icon}</span>
-                  <div>
-                    <h4 className="font-medium text-gray-900">{module.title}</h4>
-                    <div className="flex items-center mt-1">
-                      <div className="w-48 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${module.score}%`,
-                            backgroundColor: module.color.includes('blue') ? '#3b82f6' :
-                              module.color.includes('green') ? '#22c55e' : '#a855f7'
-                          }}
-                        ></div>
-                      </div>
-                      <span className="ml-3 text-sm font-medium">{module.score}%</span>
-                    </div>
-                  </div>
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-2xl font-black text-gray-900 mb-8 flex items-center">
+          <Trophy className="h-6 w-6 text-yellow-500 mr-3" />
+          Performance Breakdown
+        </h2>
+
+        {/* 2. MODULE BREAKDOWN GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          {module_performance.filter(m => ['Aptitude', 'Coding', 'Technical Interview', 'HR Interview', 'Video Presence'].includes(m.module)).map((module, index) => (
+            <div
+              key={index}
+              className={`bg-white rounded-[2.5rem] shadow-xl shadow-gray-100 border border-gray-100 p-8 flex flex-col h-full hover:scale-[1.02] transition-all duration-300 relative overflow-hidden ${!module.has_data ? 'opacity-70' : ''}`}
+            >
+              {/* Module Header */}
+              <div className="flex justify-between items-start mb-6">
+                <div className={`p-4 rounded-2xl bg-gradient-to-br ${getModuleColor(module.module)} text-white shadow-lg`}>
+                  {getModuleIcon(module.module)}
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold">{module.total}</div>
-                  <div className="text-sm text-gray-500">attempts</div>
+                  <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full ${module.performance_level === 'Good' ? 'bg-green-100 text-green-600' :
+                    module.performance_level === 'Moderate' ? 'bg-orange-100 text-orange-600' :
+                      'bg-gray-100 text-gray-400'
+                    }`}>
+                    {module.performance_level}
+                  </span>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Recent Activity */}
-        <div className="bg-white rounded-2xl shadow-lg p-6">
-          <div className="flex items-center mb-6">
-            <Calendar className="h-5 w-5 text-orange-500 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Recent Activity</h3>
-          </div>
-          <div className="space-y-4">
-            {progressData.recent_activity.length > 0 ? (
-              progressData.recent_activity.map((activity, index) => (
-                <div key={index} className="flex items-start p-3 rounded-lg bg-gray-50">
-                  <div className="flex-shrink-0 mt-1">
-                    {activity.type === 'aptitude_test' && (
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Brain className="h-4 w-4 text-blue-600" />
-                      </div>
-                    )}
-                    {activity.type === 'coding_problem' && (
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <Target className="h-4 w-4 text-green-600" />
-                      </div>
-                    )}
-                    {activity.type === 'mock_interview' && (
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                        <Users className="h-4 w-4 text-purple-600" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="ml-3">
-                    <p className="font-medium text-gray-900">
-                      {activity.type === 'coding_problem' ? activity.problem :
-                        activity.type === 'aptitude_test' ? 'Aptitude Test' : 'Mock Interview'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Score: {activity.score}%
-                      {activity.success !== undefined && (
-                        <span className={`ml-2 px-1 rounded text-xs ${activity.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                          {activity.success ? '✓' : '✗'}
-                        </span>
-                      )}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">{activity.date}</p>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <AlertCircle className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No recent activity</p>
-                <p className="text-sm text-gray-400 mt-1">Start practicing to see your progress</p>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+              <h3 className="text-xl font-black text-gray-900 mb-2">{module.module}</h3>
+              <p className="text-sm text-gray-500 mb-6 font-medium">
+                {module.sessions} sessions completed
+              </p>
 
-      {/* Recommendations */}
-      <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-        <div className="flex items-center mb-6">
-          <Star className="h-5 w-5 text-indigo-500 mr-2" />
-          <h3 className="text-lg font-semibold text-gray-900">Personalized Recommendations</h3>
-        </div>
-        <div className="space-y-4">
-          {progressData.recommendations.map((recommendation, index) => (
-            <div key={index} className="flex items-start p-3 rounded-lg bg-indigo-50">
-              <div className="flex-shrink-0 mt-1">
-                <div className="w-6 h-6 bg-indigo-100 rounded-full flex items-center justify-center">
-                  <span className="text-indigo-600 text-sm font-bold">{index + 1}</span>
+              {/* Progress Section */}
+              <div className="mt-auto">
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-sm font-bold text-gray-400">
+                    {module.module === 'Coding' ? 'Progress' : 'Success Rate'}
+                  </span>
+                  <span className="text-2xl font-black text-gray-900">
+                    {Math.round(module.module === 'Coding' && module.progress_percentage !== undefined
+                      ? module.progress_percentage
+                      : module.performance_score)}%
+                  </span>
+                </div>
+                <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full bg-gradient-to-r ${getModuleColor(module.module)} transition-all duration-1000`}
+                    style={{
+                      width: `${module.module === 'Coding' && module.progress_percentage !== undefined
+                        ? module.progress_percentage
+                        : module.performance_score}%`
+                    }}
+                  ></div>
                 </div>
               </div>
-              <p className="ml-3 text-sm text-gray-700">{recommendation}</p>
+
+              {/* Action Button */}
+              <button
+                onClick={() => navigate(`/${module.module.toLowerCase().replace(' interview', '').replace(' presence', '')}`)}
+                className="mt-8 flex items-center justify-center w-full py-4 rounded-2xl font-bold border-2 border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50 transition-all"
+              >
+                Go to Module
+              </button>
             </div>
           ))}
         </div>
+
+        {/* 3. RECENT ACTIVITY & TRENDS */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Activity Timeline */}
+          <div className="lg:col-span-2 bg-white rounded-[2.5rem] shadow-xl shadow-gray-100 p-10 border border-gray-100">
+            <h3 className="text-2xl font-black text-gray-900 mb-8 flex items-center">
+              <Calendar className="h-6 w-6 text-blue-600 mr-3" />
+              Recent Activity
+            </h3>
+
+            <div className="space-y-6">
+              {recent_activity.length > 0 ? recent_activity.map((activity, idx) => (
+                <div key={idx} className="flex items-center p-5 rounded-3xl bg-gray-50/50 border border-gray-100/50 hover:bg-white hover:shadow-lg transition-all">
+                  <div className={`p-4 rounded-2xl mr-5 ${activity.module === 'Aptitude' ? 'bg-blue-100 text-blue-600' :
+                    activity.module === 'Coding' ? 'bg-green-100 text-green-600' :
+                      'bg-purple-100 text-purple-600'
+                    }`}>
+                    {getModuleIcon(activity.module)}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-gray-900">{activity.type}</h4>
+                    <p className="text-sm text-gray-500">{new Date(activity.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-lg font-black text-gray-900">{activity.result}</span>
+                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-1">Status</p>
+                  </div>
+                </div>
+              )) : (
+                <div className="text-center py-10 text-gray-400">
+                  No recent activity found.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Tips Section */}
+          <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2.5rem] shadow-xl p-10 text-white relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full"></div>
+            <div className="relative z-10 flex flex-col h-full">
+              <div className="p-3 bg-white/20 rounded-xl w-fit mb-6">
+                <Brain className="h-6 w-6" />
+              </div>
+              <h3 className="text-2xl font-black mb-4">Daily Tip</h3>
+              <p className="text-blue-50 text-lg leading-relaxed mb-10">
+                "{progressData.weak_areas?.[0]?.suggestion || "Focus on consistency to see rapid improvement in your mock interview scores."}"
+              </p>
+
+              <div className="mt-auto pt-8 border-t border-white/10">
+                <button
+                  onClick={() => navigate('/aptitude')}
+                  className="w-full bg-white text-blue-600 py-4 rounded-2xl font-black shadow-lg hover:scale-105 transition-all"
+                >
+                  Quick Practice
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Quick Action Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <button
-          onClick={() => navigate('/aptitude')}
-          className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
-        >
-          <Brain className="h-5 w-5 mr-2" />
-          Practice Aptitude
-        </button>
-        <button
-          onClick={() => navigate('/coding')}
-          className="bg-gradient-to-r from-green-600 to-emerald-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
-        >
-          <Target className="h-5 w-5 mr-2" />
-          Solve Problems
-        </button>
-        <button
-          onClick={() => navigate('/interview')}
-          className="bg-gradient-to-r from-purple-600 to-purple-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
-        >
-          <Users className="h-5 w-5 mr-2" />
-          Mock Interview
-        </button>
-        <button
-          onClick={() => navigate('/resume')}
-          className="bg-gradient-to-r from-indigo-600 to-indigo-700 text-white py-3 px-4 rounded-xl font-medium hover:shadow-lg transition-all flex items-center justify-center"
-        >
-          <Award className="h-5 w-5 mr-2" />
-          Analyze Resume
-        </button>
-      </div>
+      {/* 4. DAILY BREAKDOWN MODAL */}
+      {showBreakdown && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+            {/* Modal Header */}
+            <div className="p-8 border-b flex justify-between items-center bg-gradient-to-r from-purple-50 to-indigo-50">
+              <div>
+                <h3 className="text-2xl font-black text-gray-900 leading-none">Practice Breakdown</h3>
+                <p className="text-gray-500 mt-2 font-medium">Your platform usage over the last 14 days</p>
+              </div>
+              <button
+                onClick={() => setShowBreakdown(false)}
+                className="p-3 bg-white text-gray-400 hover:text-gray-600 rounded-2xl shadow-sm border border-gray-100 transition-all hover:scale-105"
+              >
+                <span className="text-2xl font-light leading-none">×</span>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="flex-1 overflow-y-auto p-8">
+              {/* Chart Section */}
+              <div className="bg-gray-50 rounded-[2rem] p-6 mb-8 border border-gray-100 h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={progressData.daily_breakdown || []}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="date"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280', fontWeight: 600 }}
+                      tickFormatter={(str) => new Date(str).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#6b7280', fontWeight: 600 }}
+                      label={{ value: 'Minutes', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#9ca3af', fontSize: 12, fontWeight: 700 } }}
+                    />
+                    <Tooltip
+                      cursor={{ fill: '#f3f4f6', radius: 8 }}
+                      contentStyle={{ borderRadius: '1rem', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                      formatter={(value) => [`${value} minutes`, 'Practice Time']}
+                      labelFormatter={(label) => new Date(label).toLocaleDateString(undefined, { dateStyle: 'long' })}
+                    />
+                    <Bar
+                      dataKey="minutes"
+                      fill="#8b5cf6"
+                      radius={[6, 6, 0, 0]}
+                      barSize={32}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Detailed Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {(progressData.daily_breakdown || []).slice().reverse().filter(d => d.minutes > 0).map((day, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-5 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                    <div className="flex items-center">
+                      <div className="p-3 bg-purple-50 text-purple-600 rounded-xl mr-4">
+                        <Calendar className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-900">
+                          {new Date(day.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
+                        </p>
+                        <p className="text-xs text-gray-500 font-medium tracking-tight">Daily Record</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-black text-purple-600">{day.minutes}m</p>
+                      <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest leading-none">Activity</p>
+                    </div>
+                  </div>
+                ))}
+                {(progressData.daily_breakdown || []).filter(d => d.minutes > 0).length === 0 && (
+                  <div className="col-span-full py-12 text-center bg-gray-50 rounded-3xl border border-dashed border-gray-200">
+                    <Activity className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500 font-bold">No practice activity recorded in the last 14 days.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-8 border-t bg-gray-50/50 flex justify-end items-center gap-4">
+              <p className="text-sm text-gray-500 font-medium mr-auto">
+                <Star className="h-4 w-4 inline mr-1 text-yellow-500 fill-yellow-500" />
+                Keep practicing to maintain your streak!
+              </p>
+              <button
+                onClick={() => setShowBreakdown(false)}
+                className="px-8 py-3 bg-white border border-gray-200 text-gray-700 rounded-2xl font-bold hover:bg-gray-50 transition-all shadow-sm"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => { setShowBreakdown(false); navigate('/aptitude'); }}
+                className="px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 hover:scale-[1.02] transition-all"
+              >
+                Practice More
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

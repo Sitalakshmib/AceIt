@@ -6,7 +6,7 @@ from services.stt_service import transcribe_audio_file
 router = APIRouter()
 
 @router.post("/transcribe")
-async def transcribe_audio(file: UploadFile = File(...)):
+def transcribe_audio(file: UploadFile = File(...)):
     """
     Receives an audio file (wav/mp3), saves it temporarily, 
     and returns textual transcription using OpenAI Whisper.

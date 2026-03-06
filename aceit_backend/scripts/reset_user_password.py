@@ -19,6 +19,11 @@ def reset_password(email, new_password):
             print(f"User found: {user.email}")
             print(f"Old Hash: '{user.password}'")
             
+            # Bcrypt has a 72-byte limit
+            if isinstance(new_password, str):
+                if len(new_password.encode('utf-8')) > 72:
+                    new_password = new_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
+            
             hashed_password = pwd_context.hash(new_password)
             user.password = hashed_password
             

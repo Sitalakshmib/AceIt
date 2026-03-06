@@ -13,11 +13,11 @@ COMMUNICATION_QUESTIONS = [
 ]
 
 @router.get("/questions")
-async def get_communication_questions():
+def get_communication_questions():
     return COMMUNICATION_QUESTIONS
 
 @router.post("/evaluate-speech")
-async def evaluate_speech(
+def evaluate_speech(
     question: str = Form(...),
     user_id: str = Form(...),
     response_text: str = Form(...)

@@ -2,7 +2,7 @@ import requests
 import json
 import time
 
-BASE_URL = "http://localhost:8001/coding"
+BASE_URL = "http://localhost:8003/coding"
 
 def test_get_problems():
     print("\n1. Testing GET /problems...")
@@ -40,20 +40,22 @@ def test_submit_correct_solution():
     print("\n2. Testing Submit CORRECT Solution (Two Sum)...")
     
     code = """
-def solution(nums, target):
-    seen = {}
-    for i, num in enumerate(nums):
-        complement = target - num
-        if complement in seen:
-            return [seen[complement], i]
-        seen[num] = i
-    return []
+class Solution:
+    def twoSum(self, nums: List[int], target: int) -> List[int]:
+        seen = {}
+        for i, num in enumerate(nums):
+            complement = target - num
+            if complement in seen:
+                return [seen[complement], i]
+            seen[num] = i
+        return []
 """
     payload = {
         "problemId": "premium-1",
         "code": code,
         "language": "python",
-        "user_id": "test_user"
+        "user_id": "test_user",
+        "action": "submit"
     }
     
     try:
@@ -81,8 +83,9 @@ def test_submit_incorrect_solution():
     print("\n3. Testing Submit INCORRECT Solution...")
     
     code = """
-def solution(nums, target):
-    return [0, 0] # Always wrong
+class Solution:
+    def twoSum(self, nums: List[int], target: int) -> List[int]:
+        return [0, 0] # Always wrong
 """
     payload = {
         "problemId": "premium-1",

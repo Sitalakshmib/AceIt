@@ -5,11 +5,101 @@ from datetime import datetime
 from services.llm_client import LLMClient
 from services.voice_service import voice_service
 from services.topic_prompts import TOPIC_PROMPTS
+from database_postgres import SessionLocal
 
 class SimVoiceInterviewer:
     def __init__(self):
         self.llm = LLMClient()
         self.sessions = {} # In-memory store
+        self.SESSIONS_FILE = "data/interview_sessions.json"
+        self._load_sessions()
+        
+    def _load_sessions(self):
+        """Load sessions from Neon DB (primary), fall back to JSON file if DB unavailable."""
+        import os
+        # --- Primary: Load from Neon DB ---
+        try:
+            from services.interview_session_service import load_all_sessions
+            db = SessionLocal()
+            try:
+                db_sessions = load_all_sessions(db)
+                if db_sessions:
+                    self.sessions = db_sessions
+                    print(f"[SimVoice] Loaded {len(self.sessions)} sessions from Neon DB")
+                    return
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[SimVoice] DB load failed, falling back to JSON: {e}")
+
+        # --- Fallback: Load from JSON file ---
+        if os.path.exists(self.SESSIONS_FILE):
+            try:
+                with open(self.SESSIONS_FILE, 'r') as f:
+                    self.sessions = json.load(f)
+                print(f"[SimVoice] Loaded {len(self.sessions)} sessions from {self.SESSIONS_FILE} (fallback)")
+            except Exception as e:
+                print(f"[ERROR] Failed to load sessions from JSON: {e}")
+                self.sessions = {}
+        else:
+            print("[SimVoice] No existing sessions found. Starting fresh.")
+
+    def _save_sessions(self):
+        """Save sessions to Neon DB (primary) and JSON file (backup)."""
+        import os
+
+        # --- Primary: Save to Neon DB ---
+        try:
+            from services.interview_session_service import upsert_session
+            db = SessionLocal()
+            try:
+                for session in self.sessions.values():
+                    upsert_session(db, session)
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[SimVoice] DB save failed: {e}")
+
+        # --- Backup: Save to JSON file ---
+        try:
+            os.makedirs(os.path.dirname(self.SESSIONS_FILE), exist_ok=True)
+            serializable_sessions = {}
+            for s_id, session in self.sessions.items():
+                s_copy = session.copy()
+                if isinstance(s_copy.get("start_time"), datetime):
+                    s_copy["start_time"] = s_copy["start_time"].isoformat()
+                serializable_sessions[s_id] = s_copy
+            with open(self.SESSIONS_FILE, 'w') as f:
+                json.dump(serializable_sessions, f, indent=2)
+        except Exception as e:
+            print(f"[SimVoice] JSON backup save failed: {e}")
+
+    def add_external_session(self, session_data):
+        """Allow other modules (like Video Presence) to save sessions"""
+        if "id" not in session_data:
+            session_data["id"] = str(uuid.uuid4())
+
+        # Ensure timestamp is string for storage consistency
+        if isinstance(session_data.get("start_time"), datetime):
+            session_data["start_time"] = session_data["start_time"].isoformat()
+
+        self.sessions[session_data["id"]] = session_data
+
+        # Save to Neon DB immediately (single-session upsert)
+        try:
+            from services.interview_session_service import upsert_session
+            db = SessionLocal()
+            try:
+                upsert_session(db, session_data)
+            finally:
+                db.close()
+        except Exception as e:
+            print(f"[SimVoice] DB upsert for external session failed: {e}")
+
+        # Also update JSON backup
+        self._save_sessions()
+        return session_data["id"]
+
         
     def start_interview(self, user_id: str, resume: str = "", jd: str = "", interview_type: str = "technical", topic: str = "realtime", project_text: str = ""):
         """
@@ -47,6 +137,8 @@ class SimVoiceInterviewer:
             "qa_pairs": []  # Track question-answer pairs with scores
         }
         self.sessions[session_id] = session
+        self._save_sessions()
+
         
         # 3. First Question (Intro or Direct Technical Start)
         topic = session.get("topic", "realtime")
@@ -113,6 +205,7 @@ class SimVoiceInterviewer:
         # 2. Update Session
         session['q_bank'] = new_q_bank
         session['current_q_index'] = 0
+
         session['round'] = 2
         session['status'] = 'active'
         
@@ -122,6 +215,10 @@ class SimVoiceInterviewer:
         # Update History
         self._add_history(session_id, "assistant", next_q_text)
         session["current_q_index"] += 1
+        
+        # Save changes
+        self._save_sessions()
+
         
         # Generate Audio
         audio_url = voice_service.synthesize(next_q_text)
@@ -169,6 +266,9 @@ class SimVoiceInterviewer:
         
         print(f"[SimVoice] User Said: {user_text}")
         self._add_history(session_id, "user", user_text)
+        
+        # Save progress so far
+        self._save_sessions()
         
         # 2. Increment answer count
         session["answer_count"] += 1

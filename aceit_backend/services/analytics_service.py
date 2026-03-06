@@ -5,7 +5,7 @@ Generates comprehensive user analytics, performance metrics, and personalized
 recommendations based on practice and mock test performance.
 """
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from models.aptitude_sql import UserAptitudeProgress, AptitudeQuestion
 from models.analytics_sql import QuestionAttempt, UserAnalytics
@@ -22,16 +22,21 @@ class AnalyticsService:
         """
         Generate comprehensive user analytics dashboard in the format expected by the frontend
         """
+        print(f"[DEBUG] Step 1: Getting Aptitude Progress for {user_id}")
         # 1. Get Aptitude Progress
         progress_records = db.query(UserAptitudeProgress)\
             .filter(UserAptitudeProgress.user_id == user_id).all()
+        print(f"[DEBUG] Got {len(progress_records)} progress records")
         
         # 2. Get Mock Test Attempts
+        print("[DEBUG] Step 2: Getting Mock Test Attempts")
         mock_attempts = db.query(MockTestAttempt)\
             .filter(MockTestAttempt.user_id == user_id)\
             .filter(MockTestAttempt.status == "completed").all()
+        print(f"[DEBUG] Got {len(mock_attempts)} mock attempts")
 
         # 3. Calculate Overall Stats
+        print("[DEBUG] Step 3: Calculating Overall Stats")
         total_attempted = sum(p.questions_attempted or 0 for p in progress_records)
         total_correct = sum(p.questions_correct or 0 for p in progress_records)
         accuracy = (total_correct / total_attempted * 100) if total_attempted > 0 else 0
@@ -41,6 +46,7 @@ class AnalyticsService:
         streak = max([p.streak or 0 for p in progress_records], default=0)
 
         # 4. Aptitude Details
+        print("[DEBUG] Step 4: Aptitude Details")
         aptitude_data = {
             "tests_taken": len(mock_attempts),
             "average_score": round(sum(a.accuracy_percentage for a in mock_attempts) / len(mock_attempts), 1) if mock_attempts else 0,
@@ -135,6 +141,69 @@ class AnalyticsService:
         }
     
     @staticmethod
+    def calculate_section_stats(records, is_mock=False):
+        """
+        Helper to calculate stats for a set of attempts/responses
+        """
+        total_attempts = len(records)
+        correct_attempts = sum(1 for r in records if r.is_correct)
+        accuracy = (correct_attempts / total_attempts * 100) if total_attempts > 0 else 0
+        
+        # Breakdown
+        category_stats = {}
+        topic_stats = {}
+        
+        for r in records:
+            # For QuestionAttempt, category/topic are on the object
+            # For MockTestResponse, we need to access via 'question' relationship (should be eager loaded)
+            
+            cat = None
+            top = None
+            
+            if is_mock:
+                # r is MockTestResponse. It has 'question' relationship.
+                if r.question:
+                    cat = r.question.category
+                    top = r.question.topic
+            else:
+                # r is QuestionAttempt. It has 'category' and 'topic' columns.
+                cat = r.category
+                top = r.topic
+                
+            if not cat: cat = "Unknown"
+            if not top: top = "Unknown"
+            
+            # Category Update
+            if cat not in category_stats:
+                category_stats[cat] = {"correct": 0, "total": 0}
+            category_stats[cat]["total"] += 1
+            if r.is_correct:
+                category_stats[cat]["correct"] += 1
+                
+            # Topic Update
+            if top not in topic_stats:
+                topic_stats[top] = {"correct": 0, "total": 0}
+            topic_stats[top]["total"] += 1
+            if r.is_correct:
+                topic_stats[top]["correct"] += 1
+
+        # Calculate Accuracies
+        for c in category_stats:
+            t = category_stats[c]["total"]
+            category_stats[c]["accuracy"] = (category_stats[c]["correct"] / t * 100) if t > 0 else 0
+            
+        for t in topic_stats:
+            tot = topic_stats[t]["total"]
+            topic_stats[t]["accuracy"] = (topic_stats[t]["correct"] / tot * 100) if tot > 0 else 0
+            
+        return {
+            "total_questions": total_attempts,
+            "accuracy": round(accuracy, 1),
+            "category_breakdown": category_stats,
+            "topic_breakdown": topic_stats
+        }
+
+    @staticmethod
     def generate_recommendations(
         weak_topics: List[str],
         category_stats: Dict,
@@ -228,17 +297,14 @@ class AnalyticsService:
             if attempt.is_correct:
                 daily_stats[date]["correct"] += 1
             
-            # Get question category
-            question = db.query(AptitudeQuestion).filter(
-                AptitudeQuestion.id == attempt.question_id
-            ).first()
-            if question:
-                cat = question.category
-                if cat not in daily_stats[date]["categories"]:
-                    daily_stats[date]["categories"][cat] = {"attempted": 0, "correct": 0}
-                daily_stats[date]["categories"][cat]["attempted"] += 1
-                if attempt.is_correct:
-                    daily_stats[date]["categories"][cat]["correct"] += 1
+            # OPTIMIZATION: Use stored category directly, do NOT query AptitudeQuestion
+            cat = attempt.category or "Unknown"
+            
+            if cat not in daily_stats[date]["categories"]:
+                daily_stats[date]["categories"][cat] = {"attempted": 0, "correct": 0}
+            daily_stats[date]["categories"][cat]["attempted"] += 1
+            if attempt.is_correct:
+                daily_stats[date]["categories"][cat]["correct"] += 1
         
         # Format for response
         daily_progress = []

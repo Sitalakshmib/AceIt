@@ -28,12 +28,17 @@ def hash_password(password: str) -> str:
     return pwd_context.hash(password)
 
 def verify_password(plain_password, hashed_password):
+    # Bcrypt has a maximum password length of 72 bytes
+    # Truncate if necessary to prevent ValueError
+    if isinstance(plain_password, str):
+        if len(plain_password.encode('utf-8')) > 72:
+            plain_password = plain_password.encode('utf-8')[:72].decode('utf-8', errors='ignore')
     return pwd_context.verify(plain_password, hashed_password)
 
 
 # User registration endpoint
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(user: UserSchema, db: Session = Depends(get_db)):
+def register(user: UserSchema, db: Session = Depends(get_db)):
     print(f"Registration attempt for email: {user.email}")
     
     # Check if email already exists
@@ -57,7 +62,7 @@ async def register(user: UserSchema, db: Session = Depends(get_db)):
 
 # User login endpoint  
 @router.post("/login")
-async def login(user: UserLogin, db: Session = Depends(get_db)):
+def login(user: UserLogin, db: Session = Depends(get_db)):
     print(f"Login attempt for email: {user.email}")
     
     # Find user by email
@@ -88,7 +93,7 @@ async def login(user: UserLogin, db: Session = Depends(get_db)):
 
 # Get user details by ID endpoint
 @router.get("/user/{user_id}", response_model=UserResponse)
-async def get_user_details(user_id: str, db: Session = Depends(get_db)):
+def get_user_details(user_id: str, db: Session = Depends(get_db)):
     """Get user details by user ID"""
     print(f"Fetching details for user ID: {user_id}")
     
@@ -108,7 +113,7 @@ async def get_user_details(user_id: str, db: Session = Depends(get_db)):
 
 # Get all users endpoint (for admin purposes)
 @router.get("/users")
-async def get_all_users(db: Session = Depends(get_db)):
+def get_all_users(db: Session = Depends(get_db)):
     """Get all registered users (without passwords)"""
     users = db.query(User).all()
     

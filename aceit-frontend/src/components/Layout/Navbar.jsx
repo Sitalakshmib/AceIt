@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { LayoutDashboard, BrainCircuit, Code2, Video, FileText, LogOut, Menu, X, User, Settings, ChevronRight, Bell, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, BrainCircuit, Code2, Video, FileText, LogOut, Menu, X, User, Settings, ChevronRight, Bell, HelpCircle, Users, Shield, Lock } from 'lucide-react';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -15,6 +15,7 @@ const Navbar = () => {
     { path: '/', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/aptitude', label: 'Aptitude', icon: BrainCircuit },
     { path: '/coding', label: 'Coding', icon: Code2 },
+    { path: '/group-discussion', label: 'Group Discussion', icon: Users },
     { path: '/interview', label: 'Mock Interview', icon: Video },
     { path: '/resume', label: 'Resume Analyzer', icon: FileText },
   ];
@@ -27,6 +28,18 @@ const Navbar = () => {
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+
+  const settingsItems = [
+    { icon: Bell, color: 'blue', label: 'Notifications', sub: 'Manage alerts & reminders' },
+    { icon: Settings, color: 'indigo', label: 'Preferences', sub: 'Theme, language & display' },
+    { icon: HelpCircle, color: 'teal', label: 'Help & Support', sub: 'FAQs and contact us' },
+  ];
+
+  const privacyItems = [
+    { icon: Shield, color: 'green', label: 'Data Privacy', sub: 'How we store your data' },
+    { icon: Lock, color: 'orange', label: 'Account Security', sub: 'Password & 2FA settings' },
+    { icon: FileText, color: 'slate', label: 'Terms of Service', sub: 'Read our terms' },
+  ];
 
   return (
     <>
@@ -164,56 +177,99 @@ const Navbar = () => {
 
               {/* Body */}
               <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
-                <div className="space-y-6">
+                <div className="space-y-4">
 
-                  {/* Account Section */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 pl-2">Account</h3>
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors border-b border-slate-100">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                            <User className="w-5 h-5" />
-                          </div>
-                          <span className="text-slate-700 font-medium">Personal Information</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                      </button>
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
-                            <Bell className="w-5 h-5" />
-                          </div>
-                          <span className="text-slate-700 font-medium">Notifications</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                      </button>
+                  {/* Practice Insights */}
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 pl-2">Practice Insights</h3>
+
+                  <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white">
+                        <BrainCircuit className="w-5 h-5" />
+                      </div>
+                      <h4 className="font-bold text-blue-900 text-sm">Consistency is Key</h4>
                     </div>
+                    <p className="text-blue-800 text-xs leading-relaxed">
+                      Practicing for just 15 minutes every day can significantly improve your placement readiness!
+                    </p>
                   </div>
 
-                  {/* Settings Section */}
-                  <div>
-                    <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 pl-2">Settings</h3>
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors border-b border-slate-100">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-slate-100 text-slate-600 rounded-lg">
-                            <Settings className="w-5 h-5" />
-                          </div>
-                          <span className="text-slate-700 font-medium">Preferences</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                      </button>
-                      <button className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-green-50 text-green-600 rounded-lg">
-                            <HelpCircle className="w-5 h-5" />
-                          </div>
-                          <span className="text-slate-700 font-medium">Help & Support</span>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400" />
-                      </button>
+                  <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center text-white">
+                        <Code2 className="w-5 h-5" />
+                      </div>
+                      <h4 className="font-bold text-amber-900 text-sm">Coding Tip</h4>
                     </div>
+                    <p className="text-amber-800 text-xs leading-relaxed">
+                      Try solving at least one medium-level problem today to keep your logic sharp.
+                    </p>
+                  </div>
+
+                  <div className="bg-purple-50 border border-purple-100 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center space-x-3 mb-2">
+                      <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center text-white">
+                        <Video className="w-5 h-5" />
+                      </div>
+                      <h4 className="font-bold text-purple-900 text-sm">Mock Interview</h4>
+                    </div>
+                    <p className="text-purple-800 text-xs leading-relaxed">
+                      Record a mock interview session to analyze your body language and confidence level.
+                    </p>
+                  </div>
+
+                  {/* ── Settings ── */}
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 pl-2 pt-4">Settings</h3>
+                  <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+                    {settingsItems.map(({ icon: Icon, color, label, sub }, i) => (
+                      <div
+                        key={label}
+                        onClick={() => {
+                          const path = label === 'Notifications' ? '/settings/notifications' :
+                            label === 'Preferences' ? '/settings/preferences' : '/settings/help';
+                          navigate(path);
+                          setIsProfileOpen(false);
+                        }}
+                        className={`flex items-center space-x-3 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer ${i < settingsItems.length - 1 ? 'border-b border-slate-100' : ''
+                          }`}
+                      >
+                        <div className={`w-8 h-8 bg-${color}-100 rounded-lg flex items-center justify-center flex-shrink-0`}>
+                          <Icon className={`w-4 h-4 text-${color}-600`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800">{label}</p>
+                          <p className="text-xs text-slate-400 truncate">{sub}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* ── Privacy & Data ── */}
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 pl-2 pt-2">Privacy &amp; Data</h3>
+                  <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+                    {privacyItems.map(({ icon: Icon, color, label, sub }, i) => (
+                      <div
+                        key={label}
+                        onClick={() => {
+                          const path = label === 'Data Privacy' ? '/settings/privacy' :
+                            label === 'Account Security' ? '/settings/security' : '/settings/terms';
+                          navigate(path);
+                          setIsProfileOpen(false);
+                        }}
+                        className={`flex items-center space-x-3 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer ${i < privacyItems.length - 1 ? 'border-b border-slate-100' : ''
+                          }`}
+                      >
+                        <div className={`w-8 h-8 bg-${color}-100 rounded-lg flex items-center justify-center flex-shrink-0`}>
+                          <Icon className={`w-4 h-4 text-${color}-600`} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-800">{label}</p>
+                          <p className="text-xs text-slate-400 truncate">{sub}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
+                      </div>
+                    ))}
                   </div>
 
                 </div>

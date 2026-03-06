@@ -77,7 +77,7 @@ What would you like help with?`,
                 addMessage('assistant', '❌ Sorry, I couldn\'t generate a hint. Please try again.', 'error');
             }
         } catch (error) {
-            addMessage('assistant', `❌ Error: ${error.message}. Check backend connection.`, 'error');
+            addMessage('assistant', `❌ Error: ${error.message}. Make sure the backend is running and AI keys are configured.`, 'error');
         } finally {
             setIsLoading(false);
         }

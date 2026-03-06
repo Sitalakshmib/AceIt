@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { analyticsAPI, API_BASE_URL } from '../services/api';
 import { Mic, Send, X, Square, Play, Pause, RotateCcw } from 'lucide-react';
 
-const AICoachChat = ({ summary, compact = false }) => {
+const AICoachChat = ({ summary, compact = false, blinkBadge = false, imageSize = null }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [sessionId, setSessionId] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -211,23 +211,35 @@ const AICoachChat = ({ summary, compact = false }) => {
         return (
             <button
                 onClick={() => setIsOpen(true)}
-                className="fixed bottom-6 right-6 z-50 hover:scale-110 transition-transform duration-300 group"
+                className="fixed bottom-6 right-6 z-[999] hover:scale-110 transition-transform duration-300 group"
                 title="Chat with AI Coach"
             >
                 <div className="relative">
                     <img
                         src="/ai-coach-transparent.png"
                         alt="AI Coach"
-                        className={`${compact ? 'h-32' : 'h-60'} w-auto drop-shadow-2xl hover:scale-110 transition-transform duration-300 filter`}
+                        className={`${imageSize ? imageSize : compact ? 'h-32' : 'h-60'} w-auto drop-shadow-2xl hover:scale-110 transition-transform duration-300 filter`}
                     />
 
                     {/* Floating Badge - Always visible */}
-                    <div className="absolute top-1/2 right-full -translate-y-1/2 mr-4 bg-white text-gray-800 text-xs font-bold px-4 py-2 rounded-xl shadow-lg border border-blue-100 flex flex-col items-center gap-0.5 animate-bounce w-max">
+                    <div
+                        className="absolute top-1/2 right-full -translate-y-1/2 mr-4 bg-white text-gray-800 text-xs font-bold px-4 py-2 rounded-xl shadow-lg border border-blue-100 flex flex-col items-center gap-0.5 w-max"
+                        style={blinkBadge ? { animation: 'coachBadgeFloat 1.5s ease-in-out infinite' } : {}}
+                    >
                         <span className="text-[10px] text-blue-500 uppercase tracking-wider">Hi! I'm your AI Coach</span>
                         <span className="whitespace-nowrap">Ask doubts & Learn with me!</span>
 
                         {/* Triangle pointer */}
                         <div className="absolute top-1/2 -right-2 -translate-y-1/2 w-0 h-0 border-t-[6px] border-t-transparent border-l-[8px] border-l-white border-b-[6px] border-b-transparent"></div>
+                        {/* Float keyframe injected inline */}
+                        {blinkBadge && (
+                            <style>{`
+                                @keyframes coachBadgeFloat {
+                                    0%, 100% { transform: translateY(0px); }
+                                    50% { transform: translateY(-6px); }
+                                }
+                            `}</style>
+                        )}
                     </div>
                 </div>
             </button>
@@ -235,7 +247,7 @@ const AICoachChat = ({ summary, compact = false }) => {
     }
 
     return (
-        <div className="fixed bottom-8 right-8 w-96 h-[500px] bg-white rounded-3xl shadow-2xl z-50 flex flex-col border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-10 fade-in">
+        <div className="fixed bottom-8 right-8 w-96 h-[500px] bg-white rounded-3xl shadow-2xl z-[999] flex flex-col border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-10 fade-in">
             {/* Hidden Audio Player */}
             <audio ref={audioPlayerRef} className="hidden" controls />
 

@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "description": "Orchestrates AceIt Backend and Frontend",
     "scripts": {
-        "backend": "cd aceit_backend && venv\\Scripts\\python -m uvicorn main:app --reload --port 8000",
+        "backend": "cd aceit_backend && venv\\Scripts\\python -m uvicorn main:app --reload --port 8000 --host 0.0.0.0",
         "frontend": "cd aceit-frontend && npm run dev",
         "dev:full": "concurrently \"npm run backend\" \"npm run frontend\""
     },

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
@@ -152,6 +152,10 @@ export const analyticsAPI = {
     const userId = getCurrentUserId();
     return api.get(`/analytics/overall-summary?user_id=${userId}&_t=${Date.now()}`);
   },
+  getUnifiedAnalytics: () => {
+    const userId = getCurrentUserId();
+    return api.get(`/analytics/unified/${userId}`);
+  },
   startCoach: () => {
     const userId = getCurrentUserId();
     const formData = new FormData();
@@ -242,6 +246,20 @@ export const resumeAPI = {
     });
   },
   getJobRoles: () => api.get('/resume/job-roles'),
+
+  // Resume Creator endpoints
+  generateContent: (data) => api.post('/resume/generate-content', data),
+
+  download: (userData, generatedContent, templateType, styleOptions) => {
+    return api.post('/resume/download-resume', {
+      user_data: userData,
+      generated_content: generatedContent,
+      template_type: templateType,
+      style_options: styleOptions
+    }, {
+      responseType: 'blob'
+    });
+  }
 };
 
 export const progressAPI = {

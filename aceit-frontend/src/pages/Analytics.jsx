@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { analyticsAPI, API_BASE_URL } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
 import {
     Trophy, Target, Zap, Brain, TrendingUp, AlertCircle,
     CheckCircle2, HelpCircle, ArrowUpRight, Sparkles,
-    Mic, Send, X, Volume2, Square, Play, Pause, RotateCcw
+    Mic, Send, X, Volume2, Square, Play, Pause, RotateCcw, ArrowLeft
 } from 'lucide-react';
 
 import AICoachChat from '../components/AICoachChat';
 
 const Analytics = () => {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [aiLoading, setAiLoading] = useState(false);
     const [error, setError] = useState('');
@@ -81,7 +83,16 @@ const Analytics = () => {
     }
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-700 relative">
+        <div className="p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 relative">
+            {/* Back to Dashboard Button */}
+            <button
+                onClick={() => navigate('/')}
+                className="absolute top-0 left-0 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-blue-600 transition-all shadow-sm group mt-4 ml-4 z-40"
+
+            >
+                <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
+                Dashboard
+            </button>
             {/* AI Coach Floating Bot */}
             <AICoachChat summary={summary} />
 
@@ -188,15 +199,7 @@ const Analytics = () => {
                             </div>
                         ) : aiAdvice ? (
                             <div className="space-y-6">
-                                <div className="bg-white/60 backdrop-blur-md p-5 rounded-2xl border border-white/50">
-                                    <h4 className="font-bold text-lg mb-2 flex items-center tracking-tight text-gray-900">
-                                        <ArrowUpRight className="h-5 w-5 mr-2 text-pink-500" />
-                                        {aiAdvice.headline}
-                                    </h4>
-                                    <p className="text-gray-600 text-sm leading-relaxed">
-                                        {aiAdvice.analysis}
-                                    </p>
-                                </div>
+
 
                                 <div>
                                     <h5 className="text-xs font-bold uppercase tracking-widest text-pink-500 mb-3 ml-1">Today's Focus Plan</h5>
@@ -270,24 +273,26 @@ const Analytics = () => {
             </div>
 
             {/* 4. Empty State Fallback */}
-            {dailyData.length === 0 && (
-                <div className="bg-gray-50 border border-dashed border-gray-300 rounded-3xl p-12 text-center">
-                    <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
-                        <Target className="h-10 w-10 text-gray-300" />
+            {
+                dailyData.length === 0 && (
+                    <div className="bg-gray-50 border border-dashed border-gray-300 rounded-3xl p-12 text-center">
+                        <div className="bg-white w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-sm">
+                            <Target className="h-10 w-10 text-gray-300" />
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">No Mock Analytics Yet</h3>
+                        <p className="text-gray-500 max-w-sm mx-auto mb-8">
+                            Take your first full-length or topic test to see daily progress and AI insights.
+                        </p>
+                        <button
+                            className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
+                            onClick={() => window.location.reload()}
+                        >
+                            Refresh Dashboard
+                        </button>
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">No Mock Analytics Yet</h3>
-                    <p className="text-gray-500 max-w-sm mx-auto mb-8">
-                        Take your first full-length or topic test to see daily progress and AI insights.
-                    </p>
-                    <button
-                        className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200"
-                        onClick={() => window.location.reload()}
-                    >
-                        Refresh Dashboard
-                    </button>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 

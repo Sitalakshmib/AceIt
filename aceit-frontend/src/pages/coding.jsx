@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { codingAPI } from '../services/api';
 import AITutor from '../components/AITutor';
 import CodingSelection from '../components/CodingSelection';
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 
 const Coding = () => {
+  const navigate = useNavigate();
   const [code, setCode] = useState(`// Write your solution here
 function solveProblem(input) {
   // Your code here
@@ -366,7 +368,8 @@ function solveProblem(input) {
   }
 
   return (
-    <div className="p-6 min-h-screen flex flex-col bg-gray-50">
+    <div className="p-6 min-h-screen flex flex-col bg-gray-50 relative">
+
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
           <Code2 className="w-8 h-8 text-blue-600" />

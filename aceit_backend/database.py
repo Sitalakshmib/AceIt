@@ -101,6 +101,7 @@ def load_massive_database():
     print(f"   - Interview Questions: {len(interview_questions)}")
     print(f"   - TOTAL: {len(questions_data)} questions")
 
+
 # Database functions
 def get_aptitude_questions():
     return [q for q in questions_data if 'options' in q and 'question' in q]
@@ -183,9 +184,6 @@ def get_next_difficulty(user_id, topic):
             return "easy"  # Stay at easy
     
     return "easy"  # Default to easy
-
-# Load massive database
-load_massive_database()
 
 # Export collections
 users_collection = users_data

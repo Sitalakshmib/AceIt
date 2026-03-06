@@ -1,0 +1,928 @@
+"""
+Unified Analytics Service
+
+Aggregates practice activity and performance data across all modules:
+- Aptitude Training
+- Coding Practice
+- Interview Modules (Technical, HR, Video Presence, GD Practice)
+
+This service ONLY reads existing data and does NOT modify any module logic.
+"""
+
+from sqlalchemy.orm import Session
+from sqlalchemy import func
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional
+from models.aptitude_sql import UserAptitudeProgress
+from models.analytics_sql import QuestionAttempt
+from models.mock_test_sql import MockTestAttempt
+from models.user_coding_progress import UserCodingProgress
+from models.coding_problem_sql import CodingProblem
+from models.interview_models import InterviewSession
+from models.gd_resume_sql import GDSession, ResumeAnalysis
+
+
+class UnifiedAnalyticsService:
+    """Aggregate analytics across all practice modules"""
+    
+    @staticmethod
+    def get_unified_analytics(db: Session, user_id: str) -> Dict:
+        """
+        Generate unified analytics dashboard aggregating all modules.
+        
+        Args:
+            db: Database session
+            user_id: User ID
+            
+        Returns:
+            Dictionary with unified analytics data
+        """
+        print(f"[UnifiedAnalytics] Generating analytics for user: {user_id}")
+        
+        # Get data from each module
+        aptitude_data = UnifiedAnalyticsService._get_aptitude_summary(db, user_id)
+        coding_data = UnifiedAnalyticsService._get_coding_summary(db, user_id)
+        interview_data = UnifiedAnalyticsService._get_interview_summary(user_id, db=db)
+        gd_data = UnifiedAnalyticsService._get_gd_summary(db, user_id)
+        resume_data = UnifiedAnalyticsService._get_resume_summary(db, user_id)
+        
+        # Calculate overall summary
+        overall_summary = UnifiedAnalyticsService._calculate_overall_summary(
+            aptitude_data, coding_data, interview_data, gd_data, resume_data
+        )
+        
+        # Module-wise performance
+        module_performance = UnifiedAnalyticsService._get_module_performance(
+            aptitude_data, coding_data, interview_data, gd_data, resume_data
+        )
+        
+        # Skill breakdown (aggregated)
+        skill_breakdown = UnifiedAnalyticsService._aggregate_skill_breakdown(
+            aptitude_data, coding_data, interview_data, gd_data
+        )
+        
+        # Weak areas and recommendations
+        weak_areas = UnifiedAnalyticsService._identify_weak_areas(
+            aptitude_data, coding_data, interview_data, gd_data
+        )
+        
+        # Recent activity timeline
+        recent_activity = UnifiedAnalyticsService._get_recent_activity(
+            db, user_id, aptitude_data, coding_data, interview_data, gd_data, resume_data
+        )
+
+        # Daily time breakdown for the last 14 days
+        daily_breakdown = UnifiedAnalyticsService._get_daily_time_breakdown(db, user_id)
+        
+        return {
+            "user_id": user_id,
+            "overall_summary": overall_summary,
+            "module_performance": module_performance,
+            "skill_breakdown": skill_breakdown,
+            "weak_areas": weak_areas,
+            "recent_activity": recent_activity,
+            "daily_breakdown": daily_breakdown,
+            "gd_summary": gd_data,
+            "resume_summary": resume_data,
+            "generated_at": datetime.utcnow().isoformat()
+        }
+
+    @staticmethod
+    def _get_daily_time_breakdown(db: Session, user_id: str, days: int = 14) -> List[Dict]:
+        """Aggregate practice time per day across all modules"""
+        breakdown = {}
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        
+        # 1. Aptitude Practice (QuestionAttempt)
+        apt_attempts = db.query(
+            func.date(QuestionAttempt.attempted_at).label('date'),
+            func.sum(QuestionAttempt.time_spent_seconds).label('seconds')
+        ).filter(
+            QuestionAttempt.user_id == user_id,
+            QuestionAttempt.attempted_at >= cutoff
+        ).group_by(func.date(QuestionAttempt.attempted_at)).all()
+        
+        for row in apt_attempts:
+            d_str = row.date.isoformat()
+            breakdown[d_str] = breakdown.get(d_str, 0) + (row.seconds or 0)
+            
+        # 2. Mock Tests (MockTestAttempt)
+        mock_attempts = db.query(
+            func.date(MockTestAttempt.completed_at).label('date'),
+            func.sum(MockTestAttempt.time_taken_seconds).label('seconds')
+        ).filter(
+            MockTestAttempt.user_id == user_id,
+            MockTestAttempt.status == "completed",
+            MockTestAttempt.completed_at >= cutoff
+        ).group_by(func.date(MockTestAttempt.completed_at)).all()
+        
+        for row in mock_attempts:
+            d_str = row.date.isoformat()
+            breakdown[d_str] = breakdown.get(d_str, 0) + (row.seconds or 0)
+            
+        # 3. Interviews (InterviewSession)
+        # We'll need to calculate duration since some might not have time_taken
+        interview_sessions = db.query(InterviewSession).filter(
+            InterviewSession.user_id == user_id,
+            InterviewSession.completed_at >= cutoff,
+            InterviewSession.status == "completed"
+        ).all()
+        
+        for s in interview_sessions:
+            if s.started_at and s.completed_at:
+                duration = (s.completed_at - s.started_at).total_seconds()
+                d_str = s.completed_at.date().isoformat()
+                breakdown[d_str] = breakdown.get(d_str, 0) + max(0, duration)
+
+        # 4. Coding (Estimated)
+        # Since coding doesn't track time, we estimate 10 mins per submission/session day
+        coding_sessions = db.query(
+            func.date(UserCodingProgress.last_submission_date).label('date'),
+            func.count(UserCodingProgress.id).label('count')
+        ).filter(
+            UserCodingProgress.user_id == user_id,
+            UserCodingProgress.last_submission_date >= cutoff
+        ).group_by(func.date(UserCodingProgress.last_submission_date)).all()
+        
+        for row in coding_sessions:
+            d_str = row.date.isoformat()
+            # Estimate: 10 minutes per problem worked on that day
+            breakdown[d_str] = breakdown.get(d_str, 0) + (row.count * 600)
+
+        # 5. GD Practice (GDSession)
+        gd_sessions = db.query(
+            func.date(GDSession.practiced_at).label('date'),
+            func.sum(GDSession.time_taken_seconds).label('seconds')
+        ).filter(
+            GDSession.user_id == user_id,
+            GDSession.practiced_at >= cutoff
+        ).group_by(func.date(GDSession.practiced_at)).all()
+
+        for row in gd_sessions:
+            d_str = row.date.isoformat()
+            breakdown[d_str] = breakdown.get(d_str, 0) + (row.seconds or 0)
+
+        # Fill in missing days and format
+        result = []
+        for i in range(days):
+            d = (datetime.utcnow() - timedelta(days=i)).date()
+            d_str = d.isoformat()
+            result.append({
+                "date": d_str,
+                "minutes": round(breakdown.get(d_str, 0) / 60, 1),
+                "seconds": int(breakdown.get(d_str, 0))
+            })
+            
+        return sorted(result, key=lambda x: x["date"])
+    
+    @staticmethod
+    def _calculate_streak(dates: List[datetime]) -> int:
+        """Calculate consecutive days of activity"""
+        if not dates:
+            return 0
+        
+        # Extract unique dates and sort descending
+        active_dates = sorted(set(d.date() for d in dates if d), reverse=True)
+        if not active_dates:
+            return 0
+        
+        today = datetime.now().date()
+        yesterday = today - timedelta(days=1)
+        
+        # Check if user was active today or yesterday
+        if active_dates[0] not in [today, yesterday]:
+            return 0
+        
+        streak = 1
+        current_date = active_dates[0]
+        
+        for i in range(1, len(active_dates)):
+            if (current_date - active_dates[i]).days == 1:
+                streak += 1
+                current_date = active_dates[i]
+            else:
+                break
+        
+        return streak
+
+    @staticmethod
+    def _get_aptitude_summary(db: Session, user_id: str) -> Dict:
+        """Extract aptitude module summary from existing data"""
+        try:
+            # Get progress records
+            progress_records = db.query(UserAptitudeProgress)\
+                .filter(UserAptitudeProgress.user_id == user_id).all()
+            
+            # Get mock test attempts
+            mock_attempts = db.query(MockTestAttempt)\
+                .filter(MockTestAttempt.user_id == user_id)\
+                .filter(MockTestAttempt.status == "completed").all()
+            
+            # Calculate stats
+            total_questions = sum(p.questions_attempted or 0 for p in progress_records)
+            total_correct = sum(p.questions_correct or 0 for p in progress_records)
+            accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
+            total_time_minutes = sum(p.total_time_spent_seconds or 0 for p in progress_records) // 60
+            
+            # Get activity dates for streak
+            # 1. From QuestionAttempts
+            question_dates = db.query(QuestionAttempt.attempted_at)\
+                .filter(QuestionAttempt.user_id == user_id).all()
+            # 2. From MockTestAttempts
+            mock_dates = [a.completed_at for a in mock_attempts if a.completed_at]
+            
+            all_dates = [d[0] for d in question_dates if d[0]] + mock_dates
+            streak = UnifiedAnalyticsService._calculate_streak(all_dates)
+            
+            # Get last practiced date
+            last_practiced = None
+            if all_dates:
+                last_practiced = max(all_dates)
+            
+            # Identify weak topics (accuracy < 60%)
+            weak_topics = [
+                p.topic for p in progress_records 
+                if p.overall_accuracy < 60 and p.questions_attempted >= 5
+            ]
+            
+            return {
+                "sessions_count": len(mock_attempts),
+                "total_questions": total_questions,
+                "accuracy": round(accuracy, 1),
+                "total_time_minutes": total_time_minutes,
+                "average_score": round(sum(a.accuracy_percentage for a in mock_attempts) / len(mock_attempts), 1) if mock_attempts else 0,
+                "last_practiced": last_practiced.isoformat() if last_practiced else None,
+                "weak_topics": weak_topics[:3],
+                "streak": streak,
+                "has_data": len(progress_records) > 0 or len(mock_attempts) > 0
+            }
+        except Exception as e:
+            print(f"[UnifiedAnalytics] Error getting aptitude summary: {e}")
+            return {
+                "sessions_count": 0,
+                "total_questions": 0,
+                "accuracy": 0,
+                "total_time_minutes": 0,
+                "average_score": 0,
+                "last_practiced": None,
+                "weak_topics": [],
+                "streak": 0,
+                "has_data": False
+            }
+    
+    @staticmethod
+    def _get_coding_summary(db: Session, user_id: str) -> Dict:
+        """Extract coding module summary from existing data"""
+        try:
+            # Get all coding progress records
+            progress_records = db.query(UserCodingProgress)\
+                .filter(UserCodingProgress.user_id == user_id).all()
+            
+            # Get total problems in database
+            total_db_problems = db.query(CodingProblem).count()
+            
+            # Calculate stats
+            total_attempted = len(progress_records)
+            total_solved = sum(1 for p in progress_records if p.is_solved)
+            success_rate = (total_solved / total_attempted * 100) if total_attempted > 0 else 0
+            
+            # Progress percentage based on total database problems
+            progress_percentage = (total_solved / total_db_problems * 100) if total_db_problems > 0 else 0
+            
+            total_attempts = sum(p.attempts or 0 for p in progress_records)
+            
+            # Get all activity dates for streak
+            activity_dates = [p.last_submission_date for p in progress_records if p.last_submission_date]
+            streak = UnifiedAnalyticsService._calculate_streak(activity_dates)
+            
+            # Get last practiced date
+            last_practiced = None
+            if activity_dates:
+                last_practiced = max(activity_dates)
+            
+            return {
+                "sessions_count": total_attempted,
+                "problems_attempted": total_attempted,
+                "problems_solved": total_solved,
+                "total_problems": total_db_problems,
+                "success_rate": round(success_rate, 1),
+                "progress_percentage": round(progress_percentage, 1),
+                "total_attempts": total_attempts,
+                "last_practiced": last_practiced.isoformat() if last_practiced else None,
+                "streak": streak,
+                "has_data": total_attempted > 0
+            }
+        except Exception as e:
+            print(f"[UnifiedAnalytics] Error getting coding summary: {e}")
+            return {
+                "sessions_count": 0,
+                "problems_attempted": 0,
+                "problems_solved": 0,
+                "total_problems": 0,
+                "success_rate": 0,
+                "progress_percentage": 0,
+                "total_attempts": 0,
+                "last_practiced": None,
+                "streak": 0,
+                "has_data": False
+            }
+    
+    @staticmethod
+    def _get_interview_summary(user_id: str, db: Session = None) -> Dict:
+        """
+        Extract interview module summary from Neon DB.
+        
+        Reads directly from InterviewSession table so analytics remain accurate
+        even after a server restart (no longer depends on in-memory engine state).
+        Falls back to in-memory engine if DB query fails.
+        """
+        try:
+            from models.interview_models import InterviewSession as InterviewSessionModel
+
+            # --- Primary: Read from Neon DB ---
+            if db is not None:
+                rows = db.query(InterviewSessionModel).filter(
+                    InterviewSessionModel.user_id == user_id
+                ).all()
+
+                if rows:
+                    def _row_avg(rows_list):
+                        scores = []
+                        for r in rows_list:
+                            if r.scores:
+                                scores.extend([float(s) for s in r.scores])
+                            elif r.indicators and r.indicators.get("overall_score"):
+                                scores.append(float(r.indicators["overall_score"]))
+                        return round(sum(scores) / len(scores), 1) if scores else 0
+
+                    technical_rows = [r for r in rows if r.interview_type == "technical"]
+                    hr_rows = [r for r in rows if r.interview_type == "hr"]
+                    video_rows = [r for r in rows if r.interview_type == "video-practice"]
+
+                    # Collect weak areas
+                    weak_areas = []
+                    for r in rows:
+                        if r.weak_areas:
+                            weak_areas.extend(r.weak_areas)
+                    weak_areas = list(set(weak_areas))[:3]
+
+                    # Activity dates for streak
+                    activity_dates = [r.started_at for r in rows if r.started_at]
+                    streak = UnifiedAnalyticsService._calculate_streak(activity_dates)
+                    last_practiced = max(activity_dates).isoformat() if activity_dates else None
+
+                    return {
+                        "total_sessions": len(rows),
+                        "technical_sessions": len(technical_rows),
+                        "hr_sessions": len(hr_rows),
+                        "video_presence_sessions": len(video_rows),
+                        "technical_score": _row_avg(technical_rows),
+                        "hr_score": _row_avg(hr_rows),
+                        "video_presence_score": _row_avg(video_rows),
+                        "average_score": _row_avg(rows),
+                        "last_practiced": last_practiced,
+                        "weak_areas": weak_areas,
+                        "streak": streak,
+                        "has_data": True
+                    }
+
+        except Exception as e:
+            print(f"[UnifiedAnalytics] DB interview summary failed, falling back to engine: {e}")
+
+        # --- Fallback: Read from in-memory engine ---
+        try:
+            from routes.interview import get_engine
+            engine = get_engine()
+            user_sessions = [
+                session for session in engine.sessions.values()
+                if session.get("user_id") == user_id
+            ]
+
+            if not user_sessions:
+                return {
+                    "total_sessions": 0, "technical_sessions": 0, "hr_sessions": 0,
+                    "video_presence_sessions": 0, "technical_score": 0, "hr_score": 0,
+                    "video_presence_score": 0, "average_score": 0, "last_practiced": None,
+                    "weak_areas": [], "streak": 0, "has_data": False
+                }
+
+            def _get_cat_avg(sessions):
+                scores = []
+                for s in sessions:
+                    s_scores = s.get("scores", [])
+                    if s_scores:
+                        scores.extend(s_scores)
+                    elif "indicators" in s:
+                        scores.append(s["indicators"].get("overall_score", 0))
+                return round(sum(scores) / len(scores), 1) if scores else 0
+
+            technical_sessions = [s for s in user_sessions if s.get("interview_type") == "technical"]
+            hr_sessions = [s for s in user_sessions if s.get("interview_type") == "hr"]
+            video_sessions = [s for s in user_sessions if s.get("interview_type") == "video-practice"]
+
+            weak_areas = []
+            for session in user_sessions:
+                weak_areas.extend(session.get("weak_areas", []))
+            weak_areas = list(set(weak_areas))[:3]
+
+            activity_dates = []
+            for s in user_sessions:
+                start_time = s.get("start_time")
+                if start_time:
+                    if isinstance(start_time, str):
+                        try:
+                            activity_dates.append(datetime.fromisoformat(start_time))
+                        except: pass
+                    elif isinstance(start_time, datetime):
+                        activity_dates.append(start_time)
+
+            streak = UnifiedAnalyticsService._calculate_streak(activity_dates)
+            last_practiced = max(activity_dates).isoformat() if activity_dates else None
+
+            return {
+                "total_sessions": len(user_sessions),
+                "technical_sessions": len(technical_sessions),
+                "hr_sessions": len(hr_sessions),
+                "video_presence_sessions": len(video_sessions),
+                "technical_score": _get_cat_avg(technical_sessions),
+                "hr_score": _get_cat_avg(hr_sessions),
+                "video_presence_score": _get_cat_avg(video_sessions),
+                "average_score": _get_cat_avg(user_sessions),
+                "last_practiced": last_practiced,
+                "weak_areas": weak_areas,
+                "streak": streak,
+                "has_data": len(user_sessions) > 0
+            }
+        except Exception as e:
+            print(f"[UnifiedAnalytics] Error getting interview summary: {e}")
+            import traceback
+            traceback.print_exc()
+            return {
+                "total_sessions": 0, "technical_sessions": 0, "hr_sessions": 0,
+                "video_presence_sessions": 0, "technical_score": 0, "hr_score": 0,
+                "video_presence_score": 0, "average_score": 0, "last_practiced": None,
+                "weak_areas": [], "streak": 0, "has_data": False
+            }
+
+    @staticmethod
+    def _get_gd_summary(db: Session, user_id: str) -> Dict:
+        """Extract GD practice summary from Neon DB"""
+        try:
+            rows = db.query(GDSession).filter(GDSession.user_id == user_id).all()
+            if not rows:
+                return {
+                    "total_sessions": 0,
+                    "average_score": 0,
+                    "last_practiced": None,
+                    "streak": 0,
+                    "has_data": False
+                }
+
+            avg_score = round(sum(r.overall_score for r in rows if r.overall_score) / len(rows), 1)
+            activity_dates = [r.practiced_at for r in rows if r.practiced_at]
+            streak = UnifiedAnalyticsService._calculate_streak(activity_dates)
+            last_practiced = max(activity_dates).isoformat() if activity_dates else None
+
+            return {
+                "total_sessions": len(rows),
+                "average_score": avg_score,
+                "last_practiced": last_practiced,
+                "streak": streak,
+                "has_data": True
+            }
+        except Exception as e:
+            print(f"[UnifiedAnalytics] Error getting GD summary: {e}")
+            return {"total_sessions": 0, "average_score": 0, "has_data": False}
+
+    @staticmethod
+    def _get_resume_summary(db: Session, user_id: str) -> Dict:
+        """Extract Resume analysis summary from Neon DB"""
+        try:
+            rows = db.query(ResumeAnalysis).filter(ResumeAnalysis.user_id == user_id).all()
+            if not rows:
+                return {
+                    "total_analyses": 0,
+                    "average_score": 0,
+                    "last_analyzed": None,
+                    "has_data": False
+                }
+
+            avg_score = round(sum(r.overall_score for r in rows if r.overall_score) / len(rows), 1)
+            last_analyzed = max(r.analyzed_at for r in rows if r.analyzed_at).isoformat() if rows else None
+
+            return {
+                "total_analyses": len(rows),
+                "average_score": avg_score,
+                "last_analyzed": last_analyzed,
+                "has_data": True
+            }
+        except Exception as e:
+            print(f"[UnifiedAnalytics] Error getting Resume summary: {e}")
+            return {"total_analyses": 0, "average_score": 0, "has_data": False}
+
+    
+    @staticmethod
+    def _calculate_overall_summary(aptitude_data: Dict, coding_data: Dict, interview_data: Dict, gd_data: Dict = None, resume_data: Dict = None) -> Dict:
+        """Calculate overall practice summary across all modules"""
+        total_sessions = (
+            aptitude_data["sessions_count"] +
+            coding_data["sessions_count"] +
+            interview_data["total_sessions"] +
+            (gd_data["total_sessions"] if gd_data else 0)
+        )
+        
+        # Aggregate time from all sources
+        # 1. Aptitude (already in aptitude_data)
+        apt_time = aptitude_data.get("total_time_minutes", 0)
+        
+        # 2. Coding (Estimated for history: 10 mins per solved, 3 mins per attempt)
+        coding_solved = coding_data.get("problems_solved", 0)
+        coding_attempts = coding_data.get("total_attempts", 0)
+        coding_est_time = (coding_solved * 10) + (max(0, coding_attempts - coding_solved) * 3)
+        
+        # 3. Interviews
+        interview_sessions = interview_data.get("total_sessions", 0)
+        interview_est_time = interview_sessions * 15
+        
+        # 4. GD Practice
+        gd_sessions = gd_data.get("total_sessions", 0) if gd_data else 0
+        gd_est_time = gd_sessions * 10
+        
+        total_time_minutes = apt_time + coding_est_time + interview_est_time + gd_est_time
+        
+        # Calculate modules used
+        modules_used = []
+        if aptitude_data["has_data"]:
+            modules_used.append("Aptitude")
+        if coding_data["has_data"]:
+            modules_used.append("Coding")
+        if interview_data["has_data"]:
+            modules_used.append("Interviews")
+        if gd_data and gd_data["has_data"]:
+            modules_used.append("GD Practice")
+        if resume_data and resume_data["has_data"]:
+            modules_used.append("Resume")
+        
+        # Calculate overall streak as the maximum of module streaks
+        practice_streak = max(
+            aptitude_data.get("streak", 0),
+            coding_data.get("streak", 0),
+            interview_data.get("streak", 0),
+            (gd_data.get("streak", 0) if gd_data else 0)
+        )
+        
+        # Overall improvement trend (simplified)
+        trend = "stable"
+        if aptitude_data["has_data"] and aptitude_data["accuracy"] > 70:
+            trend = "improving"
+        elif coding_data["has_data"] and coding_data["success_rate"] > 60:
+            trend = "improving"
+        elif interview_data["has_data"] and interview_data["average_score"] > 70:
+            trend = "improving"
+        elif gd_data and gd_data["has_data"] and gd_data["average_score"] > 7:
+            trend = "improving"
+        elif resume_data and resume_data["has_data"] and resume_data["average_score"] > 75:
+            trend = "improving"
+        
+        return {
+            "total_sessions": total_sessions,
+            "total_time_minutes": total_time_minutes,
+            "total_time_hours": round(total_time_minutes / 60, 1),
+            "modules_used": modules_used,
+            "modules_count": len(modules_used),
+            "practice_streak": practice_streak,
+            "improvement_trend": trend
+        }
+    
+    @staticmethod
+    def _get_module_performance(aptitude_data: Dict, coding_data: Dict, interview_data: Dict, gd_data: Dict = None, resume_data: Dict = None) -> List[Dict]:
+        """Get performance data for each module"""
+        modules = []
+        
+        # Aptitude
+        modules.append({
+            "module": "Aptitude",
+            "sessions": aptitude_data["sessions_count"],
+            "performance_level": "Good" if aptitude_data["accuracy"] >= 70 else "Moderate" if aptitude_data["accuracy"] >= 50 else "Low",
+            "performance_score": aptitude_data["accuracy"],
+            "last_practiced": aptitude_data["last_practiced"],
+            "trend": "up" if aptitude_data["accuracy"] > 60 else "stable",
+            "streak": aptitude_data.get("streak", 0),
+            "has_data": aptitude_data["has_data"]
+        })
+        
+        # Coding
+        modules.append({
+            "module": "Coding",
+            "sessions": coding_data["sessions_count"],
+            "performance_level": "Good" if coding_data["success_rate"] >= 60 else "Moderate" if coding_data["success_rate"] >= 40 else "Low",
+            "performance_score": coding_data["success_rate"],
+            "progress_percentage": coding_data["progress_percentage"],
+            "last_practiced": coding_data["last_practiced"],
+            "trend": "up" if coding_data["success_rate"] > 50 else "stable",
+            "streak": coding_data.get("streak", 0),
+            "has_data": coding_data["has_data"]
+        })
+        
+        # Technical Interview
+        modules.append({
+            "module": "Technical Interview",
+            "sessions": interview_data["technical_sessions"],
+            "performance_level": "Good" if interview_data["technical_score"] >= 70 else "Moderate" if interview_data["technical_score"] >= 50 else "Low",
+            "performance_score": interview_data["technical_score"],
+            "last_practiced": interview_data["last_practiced"],
+            "trend": "up" if interview_data["technical_score"] > 60 else "stable",
+            "streak": interview_data.get("streak", 0),
+            "has_data": interview_data["technical_sessions"] > 0
+        })
+        
+        # HR Interview
+        modules.append({
+            "module": "HR Interview",
+            "sessions": interview_data["hr_sessions"],
+            "performance_level": "Good" if interview_data["hr_score"] >= 70 else "Moderate" if interview_data["hr_score"] >= 50 else "Low",
+            "performance_score": interview_data["hr_score"],
+            "last_practiced": interview_data["last_practiced"],
+            "trend": "stable",
+            "streak": interview_data.get("streak", 0),
+            "has_data": interview_data["hr_sessions"] > 0
+        })
+        
+        # Video Presence
+        modules.append({
+            "module": "Video Presence",
+            "sessions": interview_data["video_presence_sessions"],
+            "performance_level": "Good" if interview_data["video_presence_score"] >= 70 else "Moderate" if interview_data["video_presence_score"] >= 50 else "Low",
+            "performance_score": interview_data["video_presence_score"],
+            "last_practiced": interview_data["last_practiced"],
+            "trend": "stable",
+            "streak": interview_data.get("streak", 0),
+            "has_data": interview_data["video_presence_sessions"] > 0
+        })
+        
+        # GD Practice
+        if gd_data:
+            modules.append({
+                "module": "GD Practice",
+                "sessions": gd_data["total_sessions"],
+                "performance_level": "Good" if gd_data["average_score"] >= 7.5 else "Moderate" if gd_data["average_score"] >= 6 else "Low",
+                "performance_score": gd_data["average_score"] * 10,
+                "last_practiced": gd_data["last_practiced"],
+                "trend": "stable",
+                "streak": gd_data.get("streak", 0),
+                "has_data": gd_data["has_data"]
+            })
+
+        # Resume Analysis
+        if resume_data:
+            modules.append({
+                "module": "Resume Analysis",
+                "sessions": resume_data["total_analyses"],
+                "performance_level": "Good" if resume_data["average_score"] >= 70 else "Moderate" if resume_data["average_score"] >= 50 else "Low",
+                "performance_score": resume_data["average_score"],
+                "last_practiced": resume_data["last_analyzed"],
+                "trend": "stable",
+                "streak": 0,
+                "has_data": resume_data["has_data"]
+            })
+        
+        return modules
+    
+    @staticmethod
+    def _aggregate_skill_breakdown(aptitude_data: Dict, coding_data: Dict, interview_data: Dict, gd_data: Dict = None) -> List[Dict]:
+        """Aggregate data into skill categories"""
+        skills = []
+        
+        # Problem Solving (Aptitude + Coding)
+        problem_solving_score = 0
+        if aptitude_data["has_data"] and coding_data["has_data"]:
+            problem_solving_score = (aptitude_data["accuracy"] + coding_data["success_rate"]) / 2
+        elif aptitude_data["has_data"]:
+            problem_solving_score = aptitude_data["accuracy"]
+        elif coding_data["has_data"]:
+            problem_solving_score = coding_data["success_rate"]
+        
+        skills.append({
+            "skill": "Problem Solving",
+            "score": round(problem_solving_score, 1),
+            "level": "Good" if problem_solving_score >= 70 else "Moderate" if problem_solving_score >= 50 else "Low"
+        })
+        
+        # Technical Knowledge (Coding + Technical Interview)
+        technical_score = 0
+        if coding_data["has_data"] and interview_data["technical_sessions"] > 0:
+            technical_score = (coding_data["success_rate"] + interview_data["average_score"]) / 2
+        elif coding_data["has_data"]:
+            technical_score = coding_data["success_rate"]
+        elif interview_data["technical_sessions"] > 0:
+            technical_score = interview_data["average_score"]
+        
+        skills.append({
+            "skill": "Technical Knowledge",
+            "score": round(technical_score, 1),
+            "level": "Good" if technical_score >= 70 else "Moderate" if technical_score >= 50 else "Low"
+        })
+        
+        # Communication (HR Interview + GD Practice)
+        comm_score = 0
+        if interview_data["hr_sessions"] > 0 and gd_data and gd_data["has_data"]:
+            comm_score = (interview_data["average_score"] + (gd_data["average_score"] * 10)) / 2
+        elif interview_data["hr_sessions"] > 0:
+            comm_score = interview_data["average_score"]
+        elif gd_data and gd_data["has_data"]:
+            comm_score = gd_data["average_score"] * 10
+            
+        skills.append({
+            "skill": "Communication",
+            "score": round(comm_score, 1),
+            "level": "Good" if comm_score >= 70 else "Moderate" if comm_score >= 50 else "Low"
+        })
+        
+        # Video Presence (Aggregated)
+        confidence_score = interview_data.get("average_score", 0) if interview_data["video_presence_sessions"] > 0 else 0
+        skills.append({
+            "skill": "Video Presence",
+            "score": round(confidence_score, 1),
+            "level": "Good" if confidence_score >= 70 else "Moderate" if confidence_score >= 50 else "Low"
+        })
+        
+        # Consistency / Practice Habit
+        consistency_score = 0
+        total_sessions = aptitude_data["sessions_count"] + coding_data["sessions_count"] + interview_data["total_sessions"]
+        if total_sessions >= 20:
+            consistency_score = 80
+        elif total_sessions >= 10:
+            consistency_score = 60
+        elif total_sessions >= 5:
+            consistency_score = 40
+        
+        skills.append({
+            "skill": "Practice Consistency",
+            "score": round(consistency_score, 1),
+            "level": "Good" if consistency_score >= 70 else "Moderate" if consistency_score >= 50 else "Low"
+        })
+        
+        return skills
+    
+    @staticmethod
+    def _identify_weak_areas(aptitude_data: Dict, coding_data: Dict, interview_data: Dict, gd_data: Dict = None) -> List[Dict]:
+        """Identify top weak areas across all modules with actionable suggestions"""
+        weak_areas = []
+        
+        # GD Practice weak area
+        if gd_data and gd_data["has_data"] and gd_data["average_score"] < 7:
+            weak_areas.append({
+                "module": "GD Practice",
+                "area": "Communication & Coherence",
+                "score": gd_data["average_score"] * 10,
+                "suggestion": "Focus on structuring your thoughts before speaking. Use more real-world examples to support your points."
+            })
+
+        
+        # Aptitude weak topics
+        for topic in aptitude_data["weak_topics"]:
+            weak_areas.append({
+                "area": topic,
+                "module": "Aptitude",
+                "suggestion": f"Practice more {topic} questions",
+                "action": "practice_aptitude"
+            })
+        
+        # Coding weak areas
+        if coding_data["has_data"] and coding_data["success_rate"] < 50:
+            weak_areas.append({
+                "area": "Coding Problem Solving",
+                "module": "Coding",
+                "suggestion": "Focus on solving easier problems first",
+                "action": "practice_coding"
+            })
+        
+        # Interview weak areas
+        for area in interview_data["weak_areas"]:
+            weak_areas.append({
+                "area": area,
+                "module": "Interview",
+                "suggestion": f"Review {area} concepts",
+                "action": "practice_interview"
+            })
+        
+        # Return top 3
+        return weak_areas[:3]
+    
+    @staticmethod
+    def _get_recent_activity(db: Session, user_id: str, aptitude_data: Dict, coding_data: Dict, interview_data: Dict, gd_data: Dict = None, resume_data: Dict = None) -> List[Dict]:
+        """Get recent activity timeline across all modules"""
+        activities = []
+        
+        # 1. GD Practice
+        try:
+            gd_rows = db.query(GDSession).filter(
+                GDSession.user_id == user_id
+            ).order_by(GDSession.practiced_at.desc()).limit(5).all()
+            
+            for row in gd_rows:
+                activities.append({
+                    "date": row.practiced_at.isoformat(),
+                    "module": "GD Practice",
+                    "type": "Group Discussion",
+                    "score": round(row.overall_score * 10, 1) if row.overall_score else 0,
+                    "description": f"Practiced GD on {row.topic}"
+                })
+        except: pass
+
+        # 2. Resume Analysis
+        try:
+            resume_rows = db.query(ResumeAnalysis).filter(
+                ResumeAnalysis.user_id == user_id
+            ).order_by(ResumeAnalysis.analyzed_at.desc()).limit(5).all()
+            
+            for row in resume_rows:
+                activities.append({
+                    "date": row.analyzed_at.isoformat(),
+                    "module": "Resume",
+                    "type": "Analysis",
+                    "score": round(row.overall_score, 1) if row.overall_score else 0,
+                    "description": f"Analyzed resume for {row.job_role}"
+                })
+        except: pass
+
+        
+        try:
+            # Get recent aptitude attempts
+            recent_aptitude = db.query(MockTestAttempt)\
+                .filter(MockTestAttempt.user_id == user_id)\
+                .filter(MockTestAttempt.status == "completed")\
+                .order_by(MockTestAttempt.completed_at.desc())\
+                .limit(5).all()
+            
+            for attempt in recent_aptitude:
+                activities.append({
+                    "module": "Aptitude",
+                    "type": "Mock Test",
+                    "date": attempt.completed_at.isoformat() if attempt.completed_at else None,
+                    "result": f"{round(attempt.accuracy_percentage, 1)}% accuracy",
+                    "score": attempt.accuracy_percentage
+                })
+            
+            # Get recent coding submissions
+            recent_coding = db.query(UserCodingProgress)\
+                .filter(UserCodingProgress.user_id == user_id)\
+                .order_by(UserCodingProgress.last_submission_date.desc())\
+                .limit(5).all()
+            
+            for submission in recent_coding:
+                if submission.last_submission_date:
+                    activities.append({
+                        "module": "Coding",
+                        "type": "Problem Solved" if submission.is_solved else "Problem Attempted",
+                        "date": submission.last_submission_date.isoformat(),
+                        "result": "Solved" if submission.is_solved else f"{submission.attempts} attempts",
+                        "score": 100 if submission.is_solved else 0
+                    })
+            
+            # Get recent interview sessions
+            from routes.interview import get_engine
+            engine = get_engine()
+            user_sessions = [
+                session for session in engine.sessions.values()
+                if session.get("user_id") == user_id
+            ]
+            
+            # Sort by start time desc
+            user_sessions.sort(key=lambda x: str(x.get("start_time", "")), reverse=True)
+            
+            for session in user_sessions[:5]:
+                start_time = session.get("start_time")
+                if start_time:
+                    # Convert to ISO string if it's a datetime object
+                    date_str = start_time.isoformat() if hasattr(start_time, "isoformat") else str(start_time)
+                    
+                    scores = session.get("scores", [])
+                    avg_score = round(sum(scores) / len(scores), 1) if scores else 0
+                    
+                    category = session.get("interview_type", "Interview")
+                    # Map category names for UI
+                    display_category = {
+                        "technical": "Technical Interview",
+                        "hr": "HR Interview",
+                        "video-practice": "Video Presence"
+                    }.get(category, category.title())
+                    
+                    activities.append({
+                        "module": display_category,
+                        "type": "Practice Session",
+                        "date": date_str,
+                        "result": f"{avg_score}% score",
+                        "score": avg_score
+                    })
+            
+            # Sort all activities by date (most recent first)
+            # Need to handle potential None dates
+            activities.sort(key=lambda x: x["date"] if x.get("date") else "", reverse=True)
+            
+            # Return top 10 most recent
+            return activities[:10]
+            
+        except Exception as e:
+            print(f"[UnifiedAnalytics] Error getting recent activity: {e}")
+            return activities # Return what we have so far
