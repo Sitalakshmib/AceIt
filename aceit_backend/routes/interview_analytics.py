@@ -152,6 +152,20 @@ def get_category_analytics(
 
 
 
+def _ensure_datetime(val):
+    """Safely convert string or datetime to datetime object for comparison."""
+    if not val:
+        return None
+    if isinstance(val, datetime):
+        return val
+    if isinstance(val, str):
+        try:
+            return datetime.fromisoformat(val)
+        except:
+            return None
+    return None
+
+
 def _get_iso_timestamp(timestamp):
     """Safely get ISO timestamp from string or datetime."""
     if not timestamp:
@@ -168,16 +182,11 @@ def _calculate_streak(dates: List[datetime]) -> int:
     if not dates:
         return 0
     
-    # Extract unique dates and sort descending
     processed_dates = []
     for d in dates:
-        if not d: continue
-        if isinstance(d, datetime):
-            processed_dates.append(d.date())
-        elif isinstance(d, str):
-            try:
-                processed_dates.append(datetime.fromisoformat(d).date())
-            except: pass
+        dt = _ensure_datetime(d)
+        if dt:
+            processed_dates.append(dt.date())
             
     active_dates = sorted(set(processed_dates), reverse=True)
     if not active_dates:
@@ -254,10 +263,10 @@ def _aggregate_technical_interviews(sessions: List[Dict]) -> Dict:
     # Get last interview date
     last_interview = None
     if sessions:
-        start_times = [s.get("start_time") for s in sessions if s.get("start_time")]
-        if start_times:
-            last_interview = _get_iso_timestamp(max(start_times))
-
+        valid_times = [t for t in [s.get("start_time") for s in sessions] if t]
+        if valid_times:
+            last_interview_dt = max(valid_times, key=lambda x: _ensure_datetime(x))
+            last_interview = _get_iso_timestamp(last_interview_dt)
     
     return {
         "sessions_count": len(sessions),
@@ -290,10 +299,10 @@ def _aggregate_hr_interviews(sessions: List[Dict]) -> Dict:
     # Get last interview date
     last_interview = None
     if sessions:
-        start_times = [s.get("start_time") for s in sessions if s.get("start_time")]
-        if start_times:
-            last_interview = _get_iso_timestamp(max(start_times))
-
+        valid_times = [t for t in [s.get("start_time") for s in sessions] if t]
+        if valid_times:
+            last_interview_dt = max(valid_times, key=lambda x: _ensure_datetime(x))
+            last_interview = _get_iso_timestamp(last_interview_dt)
     
     # Determine strengths and improvement areas based on score
     strengths = []
@@ -347,10 +356,10 @@ def _aggregate_video_presence(sessions: List[Dict]) -> Dict:
     # Get last interview date
     last_interview = None
     if sessions:
-        start_times = [s.get("start_time") for s in sessions if s.get("start_time")]
-        if start_times:
-            last_interview = _get_iso_timestamp(max(start_times))
-
+        valid_times = [t for t in [s.get("start_time") for s in sessions] if t]
+        if valid_times:
+            last_interview_dt = max(valid_times, key=lambda x: _ensure_datetime(x))
+            last_interview = _get_iso_timestamp(last_interview_dt)
             
     # Aggregate feedback for strengths/weaknesses
     all_strengths = []
@@ -467,10 +476,11 @@ def _calculate_overall_summary(
     # Get last interview date
     last_interview = None
     if all_sessions:
-        start_times = [s.get("start_time") for s in all_sessions if s.get("start_time")]
-        if start_times:
+        valid_times = [t for t in [s.get("start_time") for s in all_sessions] if t]
+        if valid_times:
             try:
-                last_interview = _get_iso_timestamp(max(start_times))
+                last_interview_dt = max(valid_times, key=lambda x: _ensure_datetime(x))
+                last_interview = _get_iso_timestamp(last_interview_dt)
             except:
                 last_interview = None
 
@@ -625,7 +635,7 @@ def _calculate_trend(sessions: List[Dict]) -> str:
     # Sort sessions by start time
     sorted_sessions = sorted(
         sessions,
-        key=lambda s: str(s.get("start_time", ""))  # Compare as strings
+        key=lambda s: _ensure_datetime(s.get("start_time", "")) or datetime.min
     )
 
     

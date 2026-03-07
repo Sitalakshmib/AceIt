@@ -271,7 +271,9 @@ const ResumeCreator = () => {
                 experience: formData.experience, // Same for bullets
                 certifications: formData.certifications,
                 target_role: formData.target_role,
-                references: formData.references
+                references: formData.references,
+                professional_profile: formData.professional_profile,
+                template_type: formData.template_type
             };
 
             const response = await resumeAPI.download(userData, generatedContent, formData.template_type, styleOptions);

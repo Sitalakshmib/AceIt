@@ -65,6 +65,8 @@ const Interview = () => {
   const [showEndConfirmation, setShowEndConfirmation] = useState(false);
   const [showTimeoutModal, setShowTimeoutModal] = useState(false);
   const [timeoutQuote, setTimeoutQuote] = useState('');
+  const messagesEndRef = useRef(null);
+
 
   // Results State (must be at top level, not inside conditional)
   const [results, setResults] = useState(null);
@@ -176,6 +178,14 @@ const Interview = () => {
       }
     }
   }, [messages]);
+
+  // Scroll to bottom when messages change or loading state changes
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isLoading]);
+
 
   // Fetch results when view changes to 'completed'
   useEffect(() => {
@@ -368,7 +378,8 @@ const Interview = () => {
         {/* Back to Dashboard Button */}
         <button
           onClick={() => navigate('/')}
-          className="absolute top-8 left-8 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-indigo-600 transition-all shadow-sm group z-50"
+          className="absolute top-8 left-8 flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 font-bold rounded-xl hover:bg-gray-50 hover:text-indigo-600 transition-all shadow-sm group z-40"
+
         >
           <ArrowLeft className="h-5 w-5 group-hover:-translate-x-1 transition-transform" />
           Dashboard
@@ -1039,7 +1050,7 @@ const Interview = () => {
               </div>
             </div>
           )}
-          <div ref={(el) => el && el.scrollIntoView({ behavior: 'smooth' })}></div>
+          <div ref={messagesEndRef}></div>
         </div>
       </div>
 

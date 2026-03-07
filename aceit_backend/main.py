@@ -32,6 +32,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        # Local development (unchanged)
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:5174",
@@ -41,7 +42,14 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:8000",
         "http://localhost:8000",
+        # Production (Vercel) — update after deploying
+        "https://aceit.vercel.app",
+        "https://aceit-frontend.vercel.app",
+        os.getenv("FRONTEND_URL", ""),       # set on Render = your Vercel prod URL
+        os.getenv("FRONTEND_URL_2", ""),     # optional: extra custom domain slot
     ],
+    # Allows ALL Vercel preview/branch deployments automatically
+    allow_origin_regex=r"https://aceit.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
