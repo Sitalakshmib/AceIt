@@ -90,9 +90,9 @@ def execute_code(language: str, code: str, test_cases: list = None, function_nam
         from services.piston_wrappers import wrap_c_for_piston
         return wrap_c_for_piston(code, test_cases, function_name)
     
-    # R: Piston API
+    # R: Local execution
     elif language == "r":
-        return _execute_with_piston("r", "4.1.1", code, test_cases, function_name)
+        return _execute_r(code, test_cases, function_name)
     
     else:
         return {
@@ -172,6 +172,16 @@ def _execute_with_piston(language: str, version: str, code: str, test_cases: lis
         
         response = requests.post(PISTON_API_URL, json=payload, timeout=30)
         result = response.json()
+        
+        # Check if API returned an error message directly (e.g. whitelist restriction)
+        if 'message' in result and 'run' not in result:
+            return {
+                "error": "Execution Service Unavailable",
+                "message": result['message'],
+                "passed": 0,
+                "total": 0,
+                "results": []
+            }
         
         # Parse output
         stdout = result.get('run', {}).get('stdout', '')
@@ -608,6 +618,117 @@ def _run_python_code(code: str) -> dict:
             "results": []
         }
 
+
+
+def _execute_r(code: str, test_cases: list, function_name: str = None):
+    """Execute R code with test cases."""
+    if not test_cases:
+        return {
+            "error": "No test cases provided",
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
+    
+    if not function_name:
+        return {
+            "error": "Could not detect function name.",
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
+    
+    # Check if Rscript is installed
+    rscript_path = shutil.which("Rscript")
+    if not rscript_path:
+        return {
+            "error": "Rscript Not Found",
+            "message": "Local R execution requires Rscript in PATH.",
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
+        
+    from services.piston_wrappers import wrap_r_for_piston
+    # Re-use the wrapper we wrote for piston, since it outputs the exact JSON string we need!
+    runner_code = wrap_r_for_piston(code, test_cases, function_name)
+    
+    return _run_r_code(runner_code, rscript_path)
+
+
+def _run_r_code(code: str, rscript_path: str) -> dict:
+    """Execute R code in a subprocess and return results."""
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.r', delete=False, encoding='utf-8') as f:
+            f.write(code)
+            temp_file = f.name
+        
+        try:
+            result = subprocess.run(
+                [rscript_path, temp_file],
+                capture_output=True,
+                text=True,
+                timeout=EXECUTION_TIMEOUT,
+                cwd=os.path.dirname(temp_file)
+            )
+            
+            stdout = result.stdout.strip()
+            stderr = result.stderr.strip()
+            
+            # Note: R often writes non-errors to stderr. 
+            # We rely on JSON parsing to determine actual test errors.
+            if result.returncode != 0:
+                return {
+                    "error": "Runtime Error",
+                    "message": stderr or "Unknown R execution error",
+                    "passed": 0,
+                    "total": 0,
+                    "results": []
+                }
+            
+            # Find the JSON output string in stdout. R cat() outputs it exactly.
+            try:
+                # Sometimes R prints warnings before the output. Find the last line that looks like {
+                json_lines = [line for line in stdout.split('\\n') if line.startswith('{') and '"results"' in line]
+                if json_lines:
+                    output = json.loads(json_lines[-1])
+                    return output
+                else:
+                    output = json.loads(stdout)
+                    return output
+            except json.JSONDecodeError:
+                return {
+                    "error": "Output Parse Error",
+                    "message": f"Could not parse output: {stdout}",
+                    "stderr": stderr,
+                    "passed": 0,
+                    "total": 0,
+                    "results": []
+                }
+                
+        except subprocess.TimeoutExpired:
+            return {
+                "error": "Time Limit Exceeded",
+                "message": f"Code execution exceeded {EXECUTION_TIMEOUT} seconds",
+                "passed": 0,
+                "total": 0,
+                "results": []
+            }
+        finally:
+            try:
+                os.unlink(temp_file)
+            except:
+                pass
+                
+    except Exception as e:
+        logger.error(f"R execution error: {e}")
+        return {
+            "error": "Execution Error",
+            "message": str(e),
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
 
 def _build_c_runner(user_code: str, test_cases: list, function_name: str) -> str:
     """Build a complete C program with test harness."""

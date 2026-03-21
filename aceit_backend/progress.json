@@ -1,15 +1,54 @@
 [
   {
-    "id": "fa9bf6af-884e-4497-9bf2-3755dd9fdc1a",
+    "id": "57952270-5121-4fbe-9a40-bf4854cac14e",
     "module": "coding",
-    "problem_id": "premium-24",
-    "problem_title": "Flood Fill",
+    "problem_id": "premium-11",
+    "problem_title": "Binary Search",
+    "passed_tests": 3,
+    "total_tests": 3,
+    "percentage": 100.0,
+    "timestamp": "2026-03-21T16:36:02.774261",
+    "code_submitted": "def binarySearch(nums, target):\n    left = 0\n    right = len(nums) - 1\n\n    while left <= right:\n        mid = left + (right - left) // 2  # safe mid calculation\n\n        if nums[mid] == target:\n            return mid\n        elif nums[mid] < target:\n            left = mid + 1   # search right half\n        else:\n            right = mid - 1  # search left half\n\n    return -1",
+    "user_id": "c2b874c7-0886-4008-9bde-f95e83e64fbf",
+    "action": "run"
+  },
+  {
+    "id": "7ec31230-8205-4d77-a525-b08480ccbed8",
+    "module": "coding",
+    "problem_id": "premium-11",
+    "problem_title": "Binary Search",
     "passed_tests": 0,
     "total_tests": 0,
     "percentage": 0,
-    "timestamp": "2026-02-14T09:05:17.308947",
-    "code_submitted": "print('Hello World')",
-    "user_id": "fac9d729-1297-48ba-adcf-611f112ce881",
+    "timestamp": "2026-03-21T16:39:07.853972",
+    "code_submitted": "binarySearch <- function(nums, target) {\n    left <- 1\n    right <- length(nums)\n    \n    while (left <= right) {\n        mid <- left + (right - left) %/% 2  # integer division\n        \n        if (nums[mid] == target) {\n            return(mid - 1)  # convert to 0-based index (as per problem)\n        } else if (nums[mid] < target) {\n            left <- mid + 1   # search right half\n        } else {\n            right <- mid - 1  # search left half\n        }\n    }\n    \n    return(-1)  # not found\n}",
+    "user_id": "c2b874c7-0886-4008-9bde-f95e83e64fbf",
+    "action": "run"
+  },
+  {
+    "id": "44afaadc-50e5-45b6-b8eb-b1d99a194ebe",
+    "module": "coding",
+    "problem_id": "premium-11",
+    "problem_title": "Binary Search",
+    "passed_tests": 0,
+    "total_tests": 0,
+    "percentage": 0,
+    "timestamp": "2026-03-21T16:39:12.356905",
+    "code_submitted": "binarySearch <- function(nums, target) {\n    left <- 1\n    right <- length(nums)\n    \n    while (left <= right) {\n        mid <- left + (right - left) %/% 2  # integer division\n        \n        if (nums[mid] == target) {\n            return(mid - 1)  # convert to 0-based index (as per problem)\n        } else if (nums[mid] < target) {\n            left <- mid + 1   # search right half\n        } else {\n            right <- mid - 1  # search left half\n        }\n    }\n    \n    return(-1)  # not found\n}",
+    "user_id": "c2b874c7-0886-4008-9bde-f95e83e64fbf",
+    "action": "run"
+  },
+  {
+    "id": "4adf46c8-31a1-4d72-ba79-17e2f697a9e4",
+    "module": "coding",
+    "problem_id": "premium-11",
+    "problem_title": "Binary Search",
+    "passed_tests": 0,
+    "total_tests": 0,
+    "percentage": 0,
+    "timestamp": "2026-03-21T16:39:36.834362",
+    "code_submitted": "binarySearch <- function(nums, target) {\n    left <- 1\n    right <- length(nums)\n    \n    while (left <= right) {\n        mid <- left + (right - left) %/% 2  # integer division\n        \n        if (nums[mid] == target) {\n            return(mid - 1)  # convert to 0-based index (as per problem)\n        } else if (nums[mid] < target) {\n            left <- mid + 1   # search right half\n        } else {\n            right <- mid - 1  # search left half\n        }\n    }\n    \n    return(-1)  # not found\n}",
+    "user_id": "c2b874c7-0886-4008-9bde-f95e83e64fbf",
     "action": "run"
   }
 ]
