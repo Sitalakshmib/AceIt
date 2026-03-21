@@ -367,7 +367,7 @@ int main() {{
 
 
 def _execute_c(code: str, test_cases: list, function_name: str = None):
-    """Execute C code with test cases using GCC."""
+    """Execute C code with test cases using GCC locally, running each case in isolation."""
     if not test_cases:
         return {
             "error": "No test cases provided",
@@ -383,12 +383,51 @@ def _execute_c(code: str, test_cases: list, function_name: str = None):
             "total": 0,
             "results": []
         }
+        
+    gcc_path = shutil.which("gcc")
+    if not gcc_path:
+        return {
+            "error": "Compiler Not Found",
+            "message": "GCC compiler is not installed or not in PATH.",
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
+        
+    from services.piston_wrappers import build_c_test_case
     
-    # Build complete C program with test runner
-    c_program = _build_c_runner(code, test_cases, function_name)
+    # Remove any user main function
+    user_code_no_main = re.sub(r'int\s+main\s*\([^)]*\)\s*\{.*?\}', '', code, flags=re.DOTALL)
     
-    # Compile and run
-    return _run_c_code(c_program)
+    results = {"passed": 0, "total": len(test_cases), "results": []}
+    
+    for i, tc in enumerate(test_cases):
+        inp = tc.get("input", [])
+        expected = tc.get("output")
+        
+        # Build complete C program for this test case
+        c_program = build_c_test_case(user_code_no_main, function_name, i, inp, expected)
+        
+        # Compile and run this isolated test case
+        tc_res = _run_single_c_test(c_program, gcc_path)
+        
+        if tc_res.get("error"):
+            # Return complete structure with the error
+            return {
+                "error": tc_res["error"],
+                "message": tc_res.get("message", ""),
+                "passed": results["passed"],
+                "total": len(test_cases),
+                "results": results["results"]
+            }
+            
+        if tc_res.get("passed"):
+            results["passed"] += 1
+            results["results"].append({"status": "passed", "input": inp, "expected": expected, "actual": "match"})
+        else:
+            results["results"].append({"status": "failed", "input": inp, "expected": expected, "actual": "mismatch"})
+            
+    return results
 
 
 def _detect_function_name(code: str) -> str:
@@ -729,125 +768,14 @@ def _run_r_code(code: str, rscript_path: str) -> dict:
             "results": []
         }
 
-def _build_c_runner(user_code: str, test_cases: list, function_name: str) -> str:
-    """Build a complete C program with test harness."""
-    
-    # C test runner template
-    c_template = '''
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-
-// User code starts here
-{user_code}
-// User code ends here
-
-// Test runner
-int main() {{
-    int passed = 0;
-    int total = 0;
-    
-    printf("{{\\\"results\\\":[");
-    
-{test_code}
-    
-    printf("],\\\"passed\\\":%d,\\\"total\\\":%d}}", passed, total);
-    return 0;
-}}
-'''
-    
-    # Generate test code based on function name
-    test_code_lines = []
-    
-    for i, tc in enumerate(test_cases):
-        inp = tc.get("input", [])
-        expected = tc.get("output")
-        
-        # Handle different problem types
-        if function_name == "isPalindrome":
-            x_val = inp[0] if isinstance(inp, list) else inp
-            exp_str = "true" if expected else "false"
-            test_code_lines.append(f'''
-    // Test {i+1}
-    total++;
-    if ({i} > 0) printf(",");
-    {{
-        bool result = isPalindrome({x_val});
-        bool expected = {'true' if expected else 'false'};
-        if (result == expected) {{
-            passed++;
-            printf("{{\\"status\\":\\"passed\\",\\"input\\":{x_val},\\"expected\\":{exp_str},\\"actual\\":%s}}", result ? "true" : "false");
-        }} else {{
-            printf("{{\\"status\\":\\"failed\\",\\"input\\":{x_val},\\"expected\\":{exp_str},\\"actual\\":%s}}", result ? "true" : "false");
-        }}
-    }}''')
-        elif function_name == "reverse":
-            x_val = inp[0] if isinstance(inp, list) else inp
-            test_code_lines.append(f'''
-    // Test {i+1}
-    total++;
-    if ({i} > 0) printf(",");
-    {{
-        int result = reverse({x_val});
-        int expected = {expected};
-        if (result == expected) {{
-            passed++;
-            printf("{{\\"status\\":\\"passed\\",\\"input\\":{x_val},\\"expected\\":%d,\\"actual\\":%d}}", expected, result);
-        }} else {{
-            printf("{{\\"status\\":\\"failed\\",\\"input\\":{x_val},\\"expected\\":%d,\\"actual\\":%d}}", expected, result);
-        }}
-    }}''')
-        elif function_name == "isValid":
-            s_val = inp[0] if isinstance(inp, list) else inp
-            exp_str = "true" if expected else "false"
-            test_code_lines.append(f'''
-    // Test {i+1}
-    total++;
-    if ({i} > 0) printf(",");
-    {{
-        bool result = isValid("{s_val}");
-        bool expected = {'true' if expected else 'false'};
-        if (result == expected) {{
-            passed++;
-            printf("{{\\"status\\":\\"passed\\",\\"input\\":\\"{s_val}\\",\\"expected\\":{exp_str},\\"actual\\":%s}}", result ? "true" : "false");
-        }} else {{
-            printf("{{\\"status\\":\\"failed\\",\\"input\\":\\"{s_val}\\",\\"expected\\":{exp_str},\\"actual\\":%s}}", result ? "true" : "false");
-        }}
-    }}''')
-        else:
-            # Generic case - skip for now
-            test_code_lines.append(f'''
-    // Test {i+1} - skipped (unsupported function type)
-    total++;
-    if ({i} > 0) printf(",");
-    printf("{{\\"status\\":\\"error\\",\\"error\\":\\"C execution for {function_name} not implemented\\"}}");''')
-    
-    test_code = "\\n".join(test_code_lines)
-    
-    return c_template.format(user_code=user_code, test_code=test_code)
-
-
-def _run_c_code(code: str) -> dict:
-    """Compile and run C code."""
+def _run_single_c_test(code: str, gcc_path: str) -> dict:
+    """Compile and execute a single C test case locally."""
     try:
-        # Find GCC - check common locations on Windows
-        gcc_path = _find_gcc()
-        if not gcc_path:
-            return {
-                "error": "GCC Not Found",
-                "message": "GCC compiler is not installed or not in PATH. Please install MinGW or add GCC to PATH.",
-                "passed": 0,
-                "total": 0,
-                "results": []
-            }
-        
-        # Create temporary files
         with tempfile.NamedTemporaryFile(mode='w', suffix='.c', delete=False, encoding='utf-8') as f:
             f.write(code)
             source_file = f.name
-        
-        exe_file = source_file.replace('.c', '.exe' if os.name == 'nt' else '')
+            
+        exe_file = source_file.replace('.c', '.exe' if os.name == 'nt' else '.out')
         
         try:
             # Compile with GCC
@@ -862,9 +790,7 @@ def _run_c_code(code: str) -> dict:
                 return {
                     "error": "Compilation Error",
                     "message": compile_result.stderr or "Failed to compile C code",
-                    "passed": 0,
-                    "total": 0,
-                    "results": []
+                    "passed": False
                 }
             
             # Run the executable
@@ -882,59 +808,32 @@ def _run_c_code(code: str) -> dict:
                 return {
                     "error": "Runtime Error",
                     "message": stderr or "Program crashed",
-                    "passed": 0,
-                    "total": 0,
-                    "results": []
+                    "passed": False
                 }
             
-            # Parse JSON output
-            try:
-                output = json.loads(stdout)
-                return output
-            except json.JSONDecodeError:
-                return {
-                    "error": "Output Parse Error",
-                    "message": f"Could not parse output: {stdout}",
-                    "passed": 0,
-                    "total": 0,
-                    "results": []
-                }
+            # The stdout should be "1" for pass, "0" for fail
+            return {"passed": stdout == "1"}
                 
         except subprocess.TimeoutExpired:
             return {
                 "error": "Time Limit Exceeded",
                 "message": f"Code execution exceeded {EXECUTION_TIMEOUT} seconds",
-                "passed": 0,
-                "total": 0,
-                "results": []
-            }
-        except FileNotFoundError:
-            return {
-                "error": "GCC Not Found",
-                "message": "GCC compiler is not installed. Please install MinGW or GCC.",
-                "passed": 0,
-                "total": 0,
-                "results": []
+                "passed": False
             }
         finally:
-            # Clean up temp files
             try:
                 os.unlink(source_file)
-            except:
-                pass
-            try:
-                os.unlink(exe_file)
+                if os.path.exists(exe_file):
+                    os.unlink(exe_file)
             except:
                 pass
                 
     except Exception as e:
-        logger.error(f"C code execution error: {e}")
+        logger.error(f"C execution error: {e}")
         return {
             "error": "Execution Error",
             "message": str(e),
-            "passed": 0,
-            "total": 0,
-            "results": []
+            "passed": False
         }
 
 def _execute_java(code: str, test_cases: list, function_name: str = None):
