@@ -77,18 +77,17 @@ def execute_code(language: str, code: str, test_cases: list = None, function_nam
     elif language == "javascript":
         return _execute_with_piston("javascript", "18.15.0", code, test_cases, function_name)
     
-    # Java: Piston API
+    # Java: Local execution (fails gracefully if not installed)
     elif language == "java":
-        return _execute_with_piston("java", "15.0.2", code, test_cases, function_name)
+        return _execute_java(code, test_cases, function_name)
     
-    # C++: Piston API
+    # C++: Local execution
     elif language in ["cpp", "c++"]:
-        return _execute_with_piston("cpp", "10.2.0", code, test_cases, function_name)
+        return _execute_cpp(code, test_cases, function_name)
     
-    # C: Isolated execution (each test run independently to prevent global state issues)
+    # C: Local execution
     elif language == "c":
-        from services.piston_wrappers import wrap_c_for_piston
-        return wrap_c_for_piston(code, test_cases, function_name)
+        return _execute_c(code, test_cases, function_name)
     
     # R: Local execution
     elif language == "r":
@@ -930,6 +929,135 @@ def _run_c_code(code: str) -> dict:
                 
     except Exception as e:
         logger.error(f"C code execution error: {e}")
+        return {
+            "error": "Execution Error",
+            "message": str(e),
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
+
+def _execute_java(code: str, test_cases: list, function_name: str = None):
+    """Execute Java code. Handles missing runtime gracefully."""
+    return {
+        "error": "Compiler Not Found",
+        "message": "Java (java/javac) is not installed on this host server. Please contact support or install Java.",
+        "passed": 0,
+        "total": 0,
+        "results": []
+    }
+
+def _execute_cpp(code: str, test_cases: list, function_name: str = None):
+    """Execute C++ code locally."""
+    if not test_cases:
+        return {
+            "error": "No test cases provided",
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
+    
+    # Find g++ path
+    gpp_path = shutil.which("g++")
+    if not gpp_path:
+        return {
+            "error": "Compiler Not Found",
+            "message": "G++ compiler is not installed or not in PATH.",
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
+        
+    from services.piston_wrappers import wrap_cpp_for_piston
+    runner_code = wrap_cpp_for_piston(code, test_cases, function_name)
+    
+    return _run_cpp_code(runner_code, gpp_path)
+
+
+def _run_cpp_code(code: str, gpp_path: str) -> dict:
+    """Compile and execute C++ code."""
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.cpp', delete=False, encoding='utf-8') as f:
+            f.write(code)
+            source_file = f.name
+            
+        exe_file = source_file.replace('.cpp', '.exe' if os.name == 'nt' else '.out')
+        
+        try:
+            # Compile
+            compile_result = subprocess.run(
+                [gpp_path, "-std=c++17", source_file, "-o", exe_file],
+                capture_output=True,
+                text=True,
+                timeout=EXECUTION_TIMEOUT
+            )
+            
+            if compile_result.returncode != 0:
+                return {
+                    "error": "Compilation Error",
+                    "message": compile_result.stderr or "Failed to compile C++ code",
+                    "passed": 0,
+                    "total": 0,
+                    "results": []
+                }
+                
+            # Execute
+            run_result = subprocess.run(
+                [exe_file],
+                capture_output=True,
+                text=True,
+                timeout=EXECUTION_TIMEOUT
+            )
+            
+            stdout = run_result.stdout.strip()
+            stderr = run_result.stderr.strip()
+            
+            if run_result.returncode != 0:
+                return {
+                    "error": "Runtime Error",
+                    "message": stderr or "Program crashed",
+                    "passed": 0,
+                    "total": 0,
+                    "results": []
+                }
+                
+            # Parse output
+            try:
+                # Find the JSON output string in stdout
+                json_lines = [line for line in stdout.split('\\n') if line.startswith('{') and '"results"' in line]
+                if json_lines:
+                    output = json.loads(json_lines[-1])
+                    return output
+                else:
+                    output = json.loads(stdout)
+                    return output
+            except json.JSONDecodeError:
+                return {
+                    "error": "Output Parse Error",
+                    "message": f"Could not parse output: {stdout}",
+                    "passed": 0,
+                    "total": 0,
+                    "results": []
+                }
+                
+        except subprocess.TimeoutExpired:
+            return {
+                "error": "Time Limit Exceeded",
+                "message": f"Code execution exceeded {EXECUTION_TIMEOUT} seconds",
+                "passed": 0,
+                "total": 0,
+                "results": []
+            }
+        finally:
+            try:
+                os.unlink(source_file)
+                if os.path.exists(exe_file):
+                    os.unlink(exe_file)
+            except:
+                pass
+                
+    except Exception as e:
+        logger.error(f"C++ execution error: {e}")
         return {
             "error": "Execution Error",
             "message": str(e),
