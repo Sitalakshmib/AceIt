@@ -938,14 +938,135 @@ def _run_c_code(code: str) -> dict:
         }
 
 def _execute_java(code: str, test_cases: list, function_name: str = None):
-    """Execute Java code. Handles missing runtime gracefully."""
-    return {
-        "error": "Compiler Not Found",
-        "message": "Java (java/javac) is not installed on this host server. Please contact support or install Java.",
-        "passed": 0,
-        "total": 0,
-        "results": []
-    }
+    """Execute Java code locally. Handles missing runtime gracefully."""
+    if not test_cases:
+        return {
+            "error": "No test cases provided",
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
+    
+    # Needs javac to compile and java to run
+    javac_path = shutil.which("javac")
+    java_path = shutil.which("java")
+    
+    # macOS includes a stub javac in /usr/bin that fails if Java isn't symlinked.
+    # Prefer Homebrew's openjdk if it exists.
+    brew_javac = "/opt/homebrew/opt/openjdk/bin/javac"
+    brew_java = "/opt/homebrew/opt/openjdk/bin/java"
+    if os.path.exists(brew_javac) and os.path.exists(brew_java):
+        javac_path = brew_javac
+        java_path = brew_java
+        
+    if not javac_path or not java_path:
+        return {
+            "error": "Compiler Not Found",
+            "message": "Java (javac/java) is not installed or not in PATH. Please contact support.",
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
+        
+    from services.piston_wrappers import wrap_java_for_piston
+    runner_code = wrap_java_for_piston(code, test_cases, function_name)
+    
+    return _run_java_code(runner_code, javac_path, java_path)
+
+
+def _run_java_code(code: str, javac_path: str, java_path: str) -> dict:
+    """Compile and execute Java code."""
+    temp_dir = None
+    try:
+        temp_dir = tempfile.mkdtemp()
+        source_file = os.path.join(temp_dir, "Main.java")
+        
+        with open(source_file, 'w', encoding='utf-8') as f:
+            f.write(code)
+            
+        try:
+            # Compile
+            compile_result = subprocess.run(
+                [javac_path, "Main.java"],
+                capture_output=True,
+                text=True,
+                timeout=EXECUTION_TIMEOUT,
+                cwd=temp_dir
+            )
+            
+            if compile_result.returncode != 0:
+                return {
+                    "error": "Compilation Error",
+                    "message": compile_result.stderr or "Failed to compile Java code",
+                    "passed": 0,
+                    "total": 0,
+                    "results": []
+                }
+                
+            # Execute
+            run_result = subprocess.run(
+                [java_path, "Main"],
+                capture_output=True,
+                text=True,
+                timeout=EXECUTION_TIMEOUT,
+                cwd=temp_dir
+            )
+            
+            stdout = run_result.stdout.strip()
+            stderr = run_result.stderr.strip()
+            
+            if run_result.returncode != 0:
+                return {
+                    "error": "Runtime Error",
+                    "message": stderr or "Program crashed",
+                    "passed": 0,
+                    "total": 0,
+                    "results": []
+                }
+                
+            # Parse output
+            try:
+                # Find the JSON output string in stdout.
+                json_lines = [line for line in stdout.split('\\n') if line.startswith('{') and '"results"' in line]
+                if json_lines:
+                    output = json.loads(json_lines[-1])
+                    return output
+                else:
+                    output = json.loads(stdout)
+                    return output
+            except json.JSONDecodeError:
+                return {
+                    "error": "Output Parse Error",
+                    "message": f"Could not parse output: {stdout}",
+                    "passed": 0,
+                    "total": 0,
+                    "results": []
+                }
+                
+        except subprocess.TimeoutExpired:
+            return {
+                "error": "Time Limit Exceeded",
+                "message": f"Code execution exceeded {EXECUTION_TIMEOUT} seconds",
+                "passed": 0,
+                "total": 0,
+                "results": []
+            }
+                
+    except Exception as e:
+        logger.error(f"Java execution error: {e}")
+        return {
+            "error": "Execution Error",
+            "message": str(e),
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
+    finally:
+        if temp_dir and os.path.exists(temp_dir):
+            try:
+                shutil.rmtree(temp_dir)
+            except:
+                pass
 
 def _execute_cpp(code: str, test_cases: list, function_name: str = None):
     """Execute C++ code locally."""
