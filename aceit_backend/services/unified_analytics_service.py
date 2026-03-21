@@ -16,10 +16,10 @@ from typing import Dict, List, Optional
 from models.aptitude_sql import UserAptitudeProgress
 from models.analytics_sql import QuestionAttempt
 from models.mock_test_sql import MockTestAttempt
-from models.user_coding_progress import UserCodingProgress
+from models.user_coding_progress import UserCodingProgress, CodingActivity
 from models.coding_problem_sql import CodingProblem
 from models.interview_models import InterviewSession
-from models.gd_resume_sql import GDSession, ResumeAnalysis
+from models.gd_resume_sql import GDSession, ResumeAnalysis, ResumeBuildSession, GDTopicGeneration
 
 
 class UnifiedAnalyticsService:
@@ -39,12 +39,16 @@ class UnifiedAnalyticsService:
         """
         print(f"[UnifiedAnalytics] Generating analytics for user: {user_id}")
         
-        # Get data from each module
-        aptitude_data = UnifiedAnalyticsService._get_aptitude_summary(db, user_id)
-        coding_data = UnifiedAnalyticsService._get_coding_summary(db, user_id)
-        interview_data = UnifiedAnalyticsService._get_interview_summary(user_id, db=db)
-        gd_data = UnifiedAnalyticsService._get_gd_summary(db, user_id)
-        resume_data = UnifiedAnalyticsService._get_resume_summary(db, user_id)
+        # Calculate cutoff for the last 7 days (as requested by user for performance cards)
+        cutoff = datetime.utcnow() - timedelta(days=7)
+        print(f"[UnifiedAnalytics] Using 7-day performance window (cutoff: {cutoff})")
+        
+        # Get data from each module (filtered by 7-day window where applicable)
+        aptitude_data = UnifiedAnalyticsService._get_aptitude_summary(db, user_id, cutoff)
+        coding_data = UnifiedAnalyticsService._get_coding_summary(db, user_id, cutoff)
+        interview_data = UnifiedAnalyticsService._get_interview_summary(user_id, db=db, cutoff=cutoff)
+        gd_data = UnifiedAnalyticsService._get_gd_summary(db, user_id, cutoff)
+        resume_data = UnifiedAnalyticsService._get_resume_summary(db, user_id, cutoff)
         
         # Calculate overall summary
         overall_summary = UnifiedAnalyticsService._calculate_overall_summary(
@@ -206,23 +210,33 @@ class UnifiedAnalyticsService:
         return streak
 
     @staticmethod
-    def _get_aptitude_summary(db: Session, user_id: str) -> Dict:
+    def _get_aptitude_summary(db: Session, user_id: str, cutoff: datetime = None) -> Dict:
         """Extract aptitude module summary from existing data"""
         try:
             # Get progress records
             progress_records = db.query(UserAptitudeProgress)\
                 .filter(UserAptitudeProgress.user_id == user_id).all()
             
-            # Get mock test attempts
-            mock_attempts = db.query(MockTestAttempt)\
-                .filter(MockTestAttempt.user_id == user_id)\
-                .filter(MockTestAttempt.status == "completed").all()
+            # Get mock test attempts in the last 7 days
+            mock_query = db.query(MockTestAttempt).filter(
+                MockTestAttempt.user_id == user_id,
+                MockTestAttempt.status == "completed"
+            )
+            if cutoff:
+                mock_query = mock_query.filter(MockTestAttempt.completed_at >= cutoff)
+            mock_attempts = mock_query.all()
             
-            # Calculate stats
-            total_questions = sum(p.questions_attempted or 0 for p in progress_records)
-            total_correct = sum(p.questions_correct or 0 for p in progress_records)
+            # Use QuestionAttempt for 7-day practice stats (Progress table is lifetime)
+            qa_query = db.query(QuestionAttempt).filter(QuestionAttempt.user_id == user_id)
+            if cutoff:
+                qa_query = qa_query.filter(QuestionAttempt.attempted_at >= cutoff)
+            recent_attempts = qa_query.all()
+            
+            # Calculate stats for the period
+            total_questions = len(recent_attempts)
+            total_correct = sum(1 for a in recent_attempts if a.is_correct)
             accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
-            total_time_minutes = sum(p.total_time_spent_seconds or 0 for p in progress_records) // 60
+            total_time_minutes = sum(a.time_spent_seconds or 0 for a in recent_attempts) // 60
             
             # Get activity dates for streak
             # 1. From QuestionAttempts
@@ -271,7 +285,7 @@ class UnifiedAnalyticsService:
             }
     
     @staticmethod
-    def _get_coding_summary(db: Session, user_id: str) -> Dict:
+    def _get_coding_summary(db: Session, user_id: str, cutoff: datetime = None) -> Dict:
         """Extract coding module summary from existing data"""
         try:
             # Get all coding progress records
@@ -281,15 +295,28 @@ class UnifiedAnalyticsService:
             # Get total problems in database
             total_db_problems = db.query(CodingProblem).count()
             
-            # Calculate stats
-            total_attempted = len(progress_records)
-            total_solved = sum(1 for p in progress_records if p.is_solved)
+            # Get coding activities in the last 7 days
+            ca_query = db.query(CodingActivity).filter(CodingActivity.user_id == user_id)
+            if cutoff:
+                ca_query = ca_query.filter(CodingActivity.created_at >= cutoff)
+            recent_activities = ca_query.all()
+            
+            # Calculate stats from activities
+            # Count unique problems attempted in this window
+            problems_attempted_ids = set(a.problem_id for a in recent_activities)
+            total_attempted = len(problems_attempted_ids)
+            
+            # Count unique problems solved in this window
+            problems_solved_ids = set(a.problem_id for a in recent_activities if a.is_solved)
+            total_solved = len(problems_solved_ids)
+            
             success_rate = (total_solved / total_attempted * 100) if total_attempted > 0 else 0
             
-            # Progress percentage based on total database problems
+            # Progress percentage based on total database problems (solved in this window)
             progress_percentage = (total_solved / total_db_problems * 100) if total_db_problems > 0 else 0
             
-            total_attempts = sum(p.attempts or 0 for p in progress_records)
+            # Total attempts in this window
+            total_attempts = len(recent_activities)
             
             # Get all activity dates for streak
             activity_dates = [p.last_submission_date for p in progress_records if p.last_submission_date]
@@ -328,7 +355,7 @@ class UnifiedAnalyticsService:
             }
     
     @staticmethod
-    def _get_interview_summary(user_id: str, db: Session = None) -> Dict:
+    def _get_interview_summary(user_id: str, db: Session = None, cutoff: datetime = None) -> Dict:
         """
         Extract interview module summary from Neon DB.
         
@@ -341,9 +368,13 @@ class UnifiedAnalyticsService:
 
             # --- Primary: Read from Neon DB ---
             if db is not None:
-                rows = db.query(InterviewSessionModel).filter(
+                query = db.query(InterviewSessionModel).filter(
                     InterviewSessionModel.user_id == user_id
-                ).all()
+                )
+                if cutoff:
+                    query = query.filter(InterviewSessionModel.created_at >= cutoff)
+                
+                rows = query.all()
 
                 if rows:
                     def _row_avg(rows_list):
@@ -465,10 +496,14 @@ class UnifiedAnalyticsService:
             }
 
     @staticmethod
-    def _get_gd_summary(db: Session, user_id: str) -> Dict:
+    def _get_gd_summary(db: Session, user_id: str, cutoff: datetime = None) -> Dict:
         """Extract GD practice summary from Neon DB"""
         try:
-            rows = db.query(GDSession).filter(GDSession.user_id == user_id).all()
+            query = db.query(GDSession).filter(GDSession.user_id == user_id)
+            if cutoff:
+                query = query.filter(GDSession.practiced_at >= cutoff)
+            
+            rows = query.all()
             if not rows:
                 return {
                     "total_sessions": 0,
@@ -495,10 +530,14 @@ class UnifiedAnalyticsService:
             return {"total_sessions": 0, "average_score": 0, "has_data": False}
 
     @staticmethod
-    def _get_resume_summary(db: Session, user_id: str) -> Dict:
+    def _get_resume_summary(db: Session, user_id: str, cutoff: datetime = None) -> Dict:
         """Extract Resume analysis summary from Neon DB"""
         try:
-            rows = db.query(ResumeAnalysis).filter(ResumeAnalysis.user_id == user_id).all()
+            query = db.query(ResumeAnalysis).filter(ResumeAnalysis.user_id == user_id)
+            if cutoff:
+                query = query.filter(ResumeAnalysis.analyzed_at >= cutoff)
+            
+            rows = query.all()
             if not rows:
                 return {
                     "total_analyses": 0,

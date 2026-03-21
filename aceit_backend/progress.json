@@ -37,5 +37,70 @@
     "code_submitted": "def solution(): return 0",
     "user_id": "guest_user",
     "action": "run"
+  },
+  {
+    "id": "c7227b24-65f2-4260-9936-1e2ba965504f",
+    "module": "coding",
+    "problem_id": "premium-1",
+    "problem_title": "Two Sum",
+    "passed_tests": 3,
+    "total_tests": 3,
+    "percentage": 100.0,
+    "timestamp": "2026-03-21T18:45:17.668985",
+    "code_submitted": "class Solution:\n    def twoSum(self, nums, target):\n        prevMap = {}\n        for i, n in enumerate(nums):\n            diff = target - n\n            if diff in prevMap:\n                return [prevMap[diff], i]\n            prevMap[n] = i",
+    "user_id": "test_full_lang_verify",
+    "action": "run"
+  },
+  {
+    "id": "24e5f4fa-e5be-4393-b440-ddcb16fb15e3",
+    "module": "coding",
+    "problem_id": "premium-1",
+    "problem_title": "Two Sum",
+    "passed_tests": 3,
+    "total_tests": 3,
+    "percentage": 100.0,
+    "timestamp": "2026-03-21T18:45:18.898924",
+    "code_submitted": "class Solution {\n    public int[] twoSum(int[] nums, int target) {\n        Map<Integer, Integer> prevMap = new HashMap<>();\n        for (int i = 0; i < nums.length; i++) {\n            int num = nums[i];\n            int diff = target - num;\n            if (prevMap.containsKey(diff)) {\n                return new int[] { prevMap.get(diff), i };\n            }\n            prevMap.put(num, i);\n        }\n        return new int[] {};\n    }\n}",
+    "user_id": "test_full_lang_verify",
+    "action": "run"
+  },
+  {
+    "id": "1a132143-9069-4828-a1f2-4bfb74e91b63",
+    "module": "coding",
+    "problem_id": "premium-1",
+    "problem_title": "Two Sum",
+    "passed_tests": 3,
+    "total_tests": 3,
+    "percentage": 100.0,
+    "timestamp": "2026-03-21T18:45:20.642002",
+    "code_submitted": "#include <unordered_map>\n#include <vector>\nusing namespace std;\nclass Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        unordered_map<int, int> prevMap;\n        for (int i = 0; i < nums.size(); i++) {\n            int diff = target - nums[i];\n            if (prevMap.find(diff) != prevMap.end()) {\n                return {prevMap[diff], i};\n            }\n            prevMap[nums[i]] = i;\n        }\n        return {};\n    }\n};",
+    "user_id": "test_full_lang_verify",
+    "action": "run"
+  },
+  {
+    "id": "066201a1-41ea-471b-9ad0-fb5056597376",
+    "module": "coding",
+    "problem_id": "premium-1",
+    "problem_title": "Two Sum",
+    "passed_tests": 3,
+    "total_tests": 3,
+    "percentage": 100.0,
+    "timestamp": "2026-03-21T18:45:22.987584",
+    "code_submitted": "#include <stdlib.h>\nint* twoSum(int* nums, int numsSize, int target, int* returnSize) {\n    *returnSize = 2;\n    int* result = (int*)malloc(2 * sizeof(int));\n    for (int i = 0; i < numsSize; i++) {\n        for (int j = i + 1; j < numsSize; j++) {\n            if (nums[i] + nums[j] == target) {\n                result[0] = i;\n                result[1] = j;\n                return result;\n            }\n        }\n    }\n    return result;\n}",
+    "user_id": "test_full_lang_verify",
+    "action": "run"
+  },
+  {
+    "id": "e793ff37-c352-4398-8ba6-879dba77188d",
+    "module": "coding",
+    "problem_id": "premium-1",
+    "problem_title": "Two Sum",
+    "passed_tests": 3,
+    "total_tests": 3,
+    "percentage": 100.0,
+    "timestamp": "2026-03-21T18:45:24.193886",
+    "code_submitted": "twoSum <- function(nums, target) {\n  prevMap <- list()\n  for (i in 1:length(nums)) {\n    diff <- target - nums[i]\n    if (as.character(diff) %in% names(prevMap)) {\n      return(c(prevMap[[as.character(diff)]] - 1, i - 1))\n    }\n    prevMap[[as.character(nums[i])]] <- i\n  }\n}",
+    "user_id": "test_full_lang_verify",
+    "action": "run"
   }
 ]
