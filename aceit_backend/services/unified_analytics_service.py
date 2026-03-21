@@ -821,11 +821,13 @@ class UnifiedAnalyticsService:
             ).order_by(GDSession.practiced_at.desc()).limit(5).all()
             
             for row in gd_rows:
+                score_val = round(row.overall_score * 10, 1) if row.overall_score else 0
                 activities.append({
                     "date": row.practiced_at.isoformat(),
                     "module": "GD Practice",
                     "type": "Group Discussion",
-                    "score": round(row.overall_score * 10, 1) if row.overall_score else 0,
+                    "score": score_val,
+                    "result": f"{score_val}% score",
                     "description": f"Practiced GD on {row.topic}"
                 })
         except: pass
@@ -837,11 +839,13 @@ class UnifiedAnalyticsService:
             ).order_by(ResumeAnalysis.analyzed_at.desc()).limit(5).all()
             
             for row in resume_rows:
+                score_val = round(row.overall_score, 1) if row.overall_score else 0
                 activities.append({
                     "date": row.analyzed_at.isoformat(),
                     "module": "Resume",
                     "type": "Analysis",
-                    "score": round(row.overall_score, 1) if row.overall_score else 0,
+                    "score": score_val,
+                    "result": f"{score_val}% ATS Match",
                     "description": f"Analyzed resume for {row.job_role}"
                 })
         except: pass
