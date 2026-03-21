@@ -88,6 +88,7 @@ const Dashboard = () => {
       case 'HR Interview': return <Users className="h-6 w-6" />;
       case 'Video Presence': return <Camera className="h-6 w-6" />;
       case 'GD Practice': return <MessageSquare className="h-6 w-6" />;
+      case 'Resume':
       case 'Resume Analysis': return <FileText className="h-6 w-6" />;
       default: return <BarChart3 className="h-6 w-6" />;
     }
@@ -101,6 +102,7 @@ const Dashboard = () => {
       case 'HR Interview': return 'from-emerald-500 to-teal-600';
       case 'Video Presence': return 'from-cyan-500 to-blue-600';
       case 'GD Practice': return 'from-violet-500 to-purple-600';
+      case 'Resume':
       case 'Resume Analysis': return 'from-rose-500 to-pink-600';
       default: return 'from-gray-500 to-slate-600';
     }
@@ -114,7 +116,8 @@ const Dashboard = () => {
       case 'HR Interview': return 'bg-emerald-100 text-emerald-600';
       case 'Video Presence': return 'bg-cyan-100 text-cyan-600';
       case 'GD Practice': return 'bg-violet-100 text-violet-600';
-      case 'Resume': return 'bg-rose-100 text-rose-600';
+      case 'Resume':
+      case 'Resume Analysis': return 'bg-rose-100 text-rose-600';
       default: return 'bg-purple-100 text-purple-600';
     }
   };
@@ -127,6 +130,7 @@ const Dashboard = () => {
       case 'HR Interview': return '/interview';
       case 'Video Presence': return '/video';
       case 'GD Practice': return '/group-discussion';
+      case 'Resume':
       case 'Resume Analysis': return '/resume';
       default: return '/';
     }

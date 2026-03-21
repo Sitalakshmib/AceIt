@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from database import questions_data, progress_data
 from database_postgres import get_db, SessionLocal
 from models.coding_problem_sql import CodingProblem
-from models.user_coding_progress import UserCodingProgress
+from models.user_coding_progress import UserCodingProgress, CodingActivity
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import pytz
@@ -428,6 +428,26 @@ def submit_code(payload: dict):
     else:
         feedback = "No test cases executed."
     
+    # Log this practice activity for the recent activity feed
+    db_log = SessionLocal()
+    try:
+        activity_log = CodingActivity(
+            user_id=user_id or "guest_user",
+            problem_id=problem_id,
+            problem_title=problem.get("title", "Problem"),
+            action=action,
+            passed_count=passed_tests,
+            total_count=total_tests,
+            is_solved=(action == "submit" and passed_tests == len(all_test_cases) and len(all_test_cases) > 0)
+        )
+        db_log.add(activity_log)
+        db_log.commit()
+    except Exception as e:
+        print(f"Error logging coding activity: {e}")
+        db_log.rollback()
+    finally:
+        db_log.close()
+
     return {
         "problem_id": problem_id,
         "problem_title": problem.get("title", ""),

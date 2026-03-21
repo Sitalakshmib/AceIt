@@ -905,7 +905,7 @@ class UnifiedAnalyticsService:
                 })
             
             # Get recent aptitude practice
-            from models.aptitude_sql import QuestionAttempt
+            from models.analytics_sql import QuestionAttempt
             recent_apt_practice = db.query(QuestionAttempt)\
                 .filter(QuestionAttempt.user_id == user_id)\
                 .order_by(QuestionAttempt.attempted_at.desc())\
@@ -920,56 +920,48 @@ class UnifiedAnalyticsService:
                     "score": 100 if attempt.is_correct else 0
                 })
             
-            # Get recent coding submissions
-            recent_coding = db.query(UserCodingProgress)\
-                .filter(UserCodingProgress.user_id == user_id)\
-                .order_by(UserCodingProgress.last_submission_date.desc())\
-                .limit(5).all()
+            # Get recent coding activities (Runs and Submits)
+            from models.user_coding_progress import CodingActivity
+            recent_coding = db.query(CodingActivity)\
+                .filter(CodingActivity.user_id == user_id)\
+                .order_by(CodingActivity.created_at.desc())\
+                .limit(10).all()
             
-            for submission in recent_coding:
-                if submission.last_submission_date:
-                    activities.append({
-                        "module": "Coding",
-                        "type": "Problem Solved" if submission.is_solved else "Problem Attempted",
-                        "date": submission.last_submission_date.isoformat(),
-                        "result": "Solved" if submission.is_solved else f"{submission.attempts} attempts",
-                        "score": 100 if submission.is_solved else 0
-                    })
+            for act in recent_coding:
+                activities.append({
+                    "module": "Coding",
+                    "type": "Problem Solved" if act.is_solved else ("Problem Submitted" if act.action == "submit" else "Problem Attempted"),
+                    "date": act.created_at.isoformat(),
+                    "result": "Solved" if act.is_solved else (f"{act.passed_count}/{act.total_count}" if act.total_count > 0 else "Attempted"),
+                    "score": 100 if act.is_solved else (round(act.passed_count/act.total_count * 100, 1) if act.total_count > 0 else 0),
+                    "description": f"{'Ran' if act.action == 'run' else 'Submitted'} {act.problem_title}"
+                })
             
-            # Get recent interview sessions
-            from routes.interview import get_engine
-            engine = get_engine()
-            user_sessions = [
-                session for session in engine.sessions.values()
-                if session.get("user_id") == user_id
-            ]
+            # Get recent interview sessions from DB
+            from models.interview_models import InterviewSession
+            db_sessions = db.query(InterviewSession).filter(
+                InterviewSession.user_id == user_id
+            ).order_by(InterviewSession.started_at.desc()).limit(10).all()
             
-            # Sort by start time desc
-            user_sessions.sort(key=lambda x: str(x.get("start_time", "")), reverse=True)
-            
-            for session in user_sessions[:5]:
-                start_time = session.get("start_time")
-                if start_time:
-                    # Convert to ISO string if it's a datetime object
-                    date_str = start_time.isoformat() if hasattr(start_time, "isoformat") else str(start_time)
+            for session in db_sessions:
+                if session.started_at:
+                    avg_score = 0
+                    if session.scores:
+                        avg_score = round(sum(session.scores) / len(session.scores), 1)
                     
-                    scores = session.get("scores", [])
-                    avg_score = round(sum(scores) / len(scores), 1) if scores else 0
-                    
-                    category = session.get("interview_type", "Interview")
-                    # Map category names for UI
                     display_category = {
                         "technical": "Technical Interview",
                         "hr": "HR Interview",
                         "video-practice": "Video Presence"
-                    }.get(category, category.title())
+                    }.get(session.interview_type, session.interview_type.title() if session.interview_type else "Interview")
                     
                     activities.append({
                         "module": display_category,
                         "type": "Practice Session",
-                        "date": date_str,
-                        "result": f"{avg_score}% score",
-                        "score": avg_score
+                        "date": session.started_at.isoformat(),
+                        "result": f"{avg_score}% score" if session.status == "completed" else session.status.title(),
+                        "score": avg_score,
+                        "description": f"Practiced {session.topic or 'General'} {display_category}"
                     })
             
             # Sort all activities by date (most recent first)
