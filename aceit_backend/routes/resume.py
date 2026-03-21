@@ -144,6 +144,17 @@ def extract_text_from_pdf(file_content: bytes) -> str:
     
     return text.strip()
 
+
+def extract_text_from_docx(file_content: bytes) -> str:
+    """Extract text from DOCX (and DOC) files using python-docx"""
+    try:
+        doc = Document(BytesIO(file_content))
+        paragraphs = [para.text for para in doc.paragraphs if para.text.strip()]
+        return "\n".join(paragraphs).strip()
+    except Exception as e:
+        print(f"DOCX extraction failed: {e}")
+        return ""
+
 def preprocess_text(text: str) -> str:
     """Clean and preprocess text for analysis"""
     # Convert to lowercase
@@ -513,21 +524,44 @@ def analyze_resume(
     """
     Analyze resume with accurate, realistic assessment
     """
-    # Extract text from PDF if provided
+    # Extract text from uploaded file (PDF, DOC, or DOCX)
     if file and file.filename:
-        # Read file content
         file_content = file.file.read()
         
-        # Extract text from PDF
-        resume_text = extract_text_from_pdf(file_content)
+        filename_lower = file.filename.lower()
+        content_type = (file.content_type or "").lower()
+        
+        is_pdf = (
+            content_type == "application/pdf"
+            or filename_lower.endswith(".pdf")
+        )
+        is_docx = (
+            content_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            or filename_lower.endswith(".docx")
+        )
+        is_doc = (
+            content_type == "application/msword"
+            or filename_lower.endswith(".doc")
+        )
+        
+        if is_pdf:
+            resume_text = extract_text_from_pdf(file_content)
+        elif is_docx or is_doc:
+            resume_text = extract_text_from_docx(file_content)
+        else:
+            return {
+                "error": "Unsupported file format. Please upload a PDF, DOC, or DOCX file."
+            }
         
         if not resume_text.strip():
             return {
-                "error": "Could not extract text from the uploaded PDF. Please ensure it's a text-based PDF (not scanned image)."
+                "error": "Could not extract text from the uploaded file. "
+                         "For PDFs, ensure it is text-based (not a scanned image). "
+                         "For Word documents, ensure the file is not corrupted."
             }
     elif not resume_text:
         return {
-            "error": "Please provide either a PDF file or resume text for analysis."
+            "error": "Please provide either a PDF/DOC/DOCX file or resume text for analysis."
         }
     
     # Preprocess text

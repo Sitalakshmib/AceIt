@@ -33,15 +33,21 @@ const Resume = () => {
     { id: 'product_manager', name: 'Product Manager' }
   ];
 
+  const ACCEPTED_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  ];
+
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (file) {
-      if (file.type === 'application/pdf') {
+      if (ACCEPTED_TYPES.includes(file.type)) {
         setResumeFile(file);
         setAnalysisResult(null);
         setError('');
       } else {
-        setError('Please upload a PDF file.');
+        setError('Unsupported format. Please upload a PDF, DOC, or DOCX file.');
       }
     }
   };
@@ -320,26 +326,26 @@ const Resume = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">PDF Document</label>
-                    <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer group">
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                        id="resume-upload"
-                      />
-                      <label htmlFor="resume-upload" className="cursor-pointer block">
-                        <div className="bg-blue-100 rounded-full h-12 w-12 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
-                          <FileText className="h-6 w-6 text-blue-600" />
-                        </div>
-                        <p className="text-sm font-medium text-gray-900 mb-1">
-                          {resumeFile ? resumeFile.name : 'Click to select file'}
-                        </p>
-                        <p className="text-xs text-gray-500">PDF files only (Max 5MB)</p>
-                      </label>
-                    </div>
-                  </div>
+                     <label className="block text-sm font-semibold text-gray-700 mb-2">Resume Document</label>
+                     <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition-all cursor-pointer group">
+                       <input
+                         type="file"
+                         accept=".pdf,.doc,.docx"
+                         onChange={handleFileUpload}
+                         className="hidden"
+                         id="resume-upload"
+                       />
+                       <label htmlFor="resume-upload" className="cursor-pointer block">
+                         <div className="bg-blue-100 rounded-full h-12 w-12 flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform">
+                           <FileText className="h-6 w-6 text-blue-600" />
+                         </div>
+                         <p className="text-sm font-medium text-gray-900 mb-1">
+                           {resumeFile ? resumeFile.name : 'Click to select file'}
+                         </p>
+                         <p className="text-xs text-gray-500">PDF, DOC, or DOCX (Max 5MB)</p>
+                       </label>
+                     </div>
+                   </div>
 
                   {error && (
                     <div className="flex items-start bg-red-50 p-3 rounded-lg text-sm text-red-700 gap-2">
