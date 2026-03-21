@@ -1,15 +1,41 @@
 [
   {
-    "id": "a73eb71b-f68f-49b6-bf9f-c47c2051857e",
+    "id": "8d02d3ad-cb08-468b-a582-0a0d4e00b1a1",
     "module": "coding",
     "problem_id": "premium-29",
     "problem_title": "Shortest Path in a Grid with Obstacles Elimination",
     "passed_tests": 0,
     "total_tests": 3,
     "percentage": 0.0,
-    "timestamp": "2026-03-21T17:35:07.197203",
+    "timestamp": "2026-03-21T18:40:50.736530",
     "code_submitted": "def solution(): return 0",
-    "user_id": "test_user_activity",
+    "user_id": "guest_user",
+    "action": "run"
+  },
+  {
+    "id": "50f49fb0-ffb8-46d2-b16c-54d7500aec29",
+    "module": "coding",
+    "problem_id": "premium-29",
+    "problem_title": "Shortest Path in a Grid with Obstacles Elimination",
+    "passed_tests": 0,
+    "total_tests": 3,
+    "percentage": 0.0,
+    "timestamp": "2026-03-21T18:40:51.529582",
+    "code_submitted": "def solution(): return 0",
+    "user_id": "guest_user",
+    "action": "run"
+  },
+  {
+    "id": "1d04adf4-d15d-406d-97ee-f1adf84b3f5d",
+    "module": "coding",
+    "problem_id": "premium-29",
+    "problem_title": "Shortest Path in a Grid with Obstacles Elimination",
+    "passed_tests": 0,
+    "total_tests": 3,
+    "percentage": 0.0,
+    "timestamp": "2026-03-21T18:40:52.779699",
+    "code_submitted": "def solution(): return 0",
+    "user_id": "guest_user",
     "action": "run"
   }
 ]

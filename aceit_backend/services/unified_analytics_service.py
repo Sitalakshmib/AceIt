@@ -599,16 +599,16 @@ class UnifiedAnalyticsService:
         """Get performance data for each module"""
         modules = []
         
-        # Aptitude
+        # Aptitude (Performance based on Mock Tests only as per user request)
         modules.append({
             "module": "Aptitude",
-            "sessions": aptitude_data["sessions_count"],
-            "performance_level": "Good" if aptitude_data["accuracy"] >= 70 else "Moderate" if aptitude_data["accuracy"] >= 50 else "Low",
-            "performance_score": aptitude_data["accuracy"],
+            "sessions": aptitude_data["sessions_count"], # This is mock test count
+            "performance_level": "Good" if aptitude_data["average_score"] >= 70 else "Moderate" if aptitude_data["average_score"] >= 50 else "Low",
+            "performance_score": aptitude_data["average_score"], # This is mock test average
             "last_practiced": aptitude_data["last_practiced"],
-            "trend": "up" if aptitude_data["accuracy"] > 60 else "stable",
+            "trend": "up" if aptitude_data["average_score"] > 60 else "stable",
             "streak": aptitude_data.get("streak", 0),
-            "has_data": aptitude_data["has_data"]
+            "has_data": aptitude_data["sessions_count"] > 0 # Performance card shows if mock tests taken
         })
         
         # Coding
@@ -965,12 +965,97 @@ class UnifiedAnalyticsService:
                     })
             
             # Sort all activities by date (most recent first)
-            # Need to handle potential None dates
             activities.sort(key=lambda x: x["date"] if x.get("date") else "", reverse=True)
             
+            # Cluster consecutive similar activities (new feature)
+            clustered_activities = UnifiedAnalyticsService._cluster_activities(activities)
+            
             # Return top 15 most recent
-            return activities[:15]
+            return clustered_activities[:15]
             
         except Exception as e:
             print(f"[UnifiedAnalytics] Error getting recent activity: {e}")
             return activities # Return what we have so far
+            
+    @staticmethod
+    def _cluster_activities(activities: List[Dict]) -> List[Dict]:
+        """Group consecutive similar activities within a 1-hour window."""
+        if not activities:
+            return []
+            
+        def parse_date(d):
+            if isinstance(d, datetime):
+                return d
+            if isinstance(d, str):
+                try: return datetime.fromisoformat(d)
+                except: return datetime.min
+            return datetime.min
+
+        clustered = []
+        if not activities: return []
+        
+        current_cluster = [activities[0]]
+        
+        for next_act in activities[1:]:
+            last_act = current_cluster[-1]
+            
+            # Check if same module and type
+            is_same_module = last_act["module"] == next_act["module"]
+            is_same_type = last_act["type"] == next_act["type"]
+            
+            # Special case for Coding: must be the same problem title to cluster
+            is_same_coding_problem = True
+            if is_same_module and last_act["module"] == "Coding":
+                # Description contains the problem title
+                is_same_coding_problem = last_act.get("description") == next_act.get("description")
+            
+            # Check time gap (1 hour)
+            time_gap = (parse_date(last_act["date"]) - parse_date(next_act["date"])).total_seconds()
+            
+            # Group if same module/type, close in time, and (if coding) same problem
+            should_cluster = is_same_module and is_same_type and time_gap < 3600 and is_same_coding_problem
+
+            if should_cluster:
+                current_cluster.append(next_act)
+            else:
+                clustered.append(UnifiedAnalyticsService._process_cluster(current_cluster))
+                current_cluster = [next_act]
+        
+        if current_cluster:
+            clustered.append(UnifiedAnalyticsService._process_cluster(current_cluster))
+            
+        return clustered
+
+    @staticmethod
+    def _process_cluster(cluster: List[Dict]) -> Dict:
+        """Merge a cluster of similar activities into one summary entry."""
+        if len(cluster) == 1:
+            return cluster[0]
+            
+        base = cluster[0].copy()
+        count = len(cluster)
+        
+        if base["module"] == "Aptitude" and base["type"] == "Practice Question":
+            correct = sum(1 for a in cluster if a.get("result") == "Correct")
+            base["type"] = "Aptitude Practice"
+            base["result"] = f"{correct}/{count} correct"
+            base["description"] = f"Practiced {count} aptitude questions"
+            base["score"] = round((correct / count) * 100, 1)
+            
+        elif base["module"] == "Coding":
+            solved = any(a.get("result") == "Solved" or a.get("is_solved") == True for a in cluster)
+            base["type"] = "Coding Practice"
+            base["result"] = "Solved" if solved else f"{count} attempts"
+            # Description is usually "Ran [Title]" or "Submitted [Title]"
+            # Extract title if possible
+            title = base.get("description", "").replace("Ran ", "").replace("Submitted ", "")
+            base["description"] = f"Practiced {title} ({count} attempts)"
+            base["score"] = max(a.get("score", 0) for a in cluster)
+        
+        else:
+            # General grouping
+            base["description"] = f"Multiple {base['type']} ({count} items)"
+            base.pop("result", None)
+            base["result"] = f"{count} actions"
+            
+        return base
