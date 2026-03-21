@@ -711,6 +711,7 @@ class ResumeDownloadRequest(BaseModel):
     generated_content: dict
     template_type: str
     style_options: dict
+    user_id: Optional[str] = "anonymous"
 
 # --- Resume Creator Logic ---
 
@@ -859,27 +860,46 @@ def generate_content(request: ResumeUserData):
 @router.post("/download-resume")
 def download_resume(request: ResumeDownloadRequest):
     """Generate and download resume as DOCX"""
+async def download_resume(request: ResumeDownloadRequest):
+    """Generate Word document from resume data"""
     try:
-        print(f"[DEBUG] Received download request")
-        print(f"[DEBUG] user_data type: {type(request.user_data)}")
-        print(f"[DEBUG] template_type: {request.template_type}")
-        
-        docx_bytes = create_word_resume(
-            request.user_data, 
-            request.generated_content, 
-            request.template_type, 
+        content = create_word_resume(
+            request.user_data,
+            request.generated_content,
+            request.template_type,
             request.style_options
         )
         
-        filename = f"{request.user_data.personal_info.name.replace(' ', '_')}_Resume.docx"
+        # Track Resume Build
+        if request.user_id and request.user_id != "anonymous" and request.user_id != "guest_user":
+            try:
+                from models.gd_resume_sql import ResumeBuildSession
+                db_gen = get_db()
+                db = next(db_gen)
+                try:
+                    record = ResumeBuildSession(
+                        user_id=request.user_id,
+                        target_role=request.user_data.target_role,
+                        template_type=request.template_type
+                    )
+                    db.add(record)
+                    db.commit()
+                finally:
+                    db.close()
+            except Exception as dbe:
+                print("[Resume_Build] Failed to track resume download:", dbe)
+
+        # Ensure filename is safe (replace spaces and remove weird chars)
+        safe_name = re.sub(r'[^a-zA-Z0-9_-]', '_', request.user_data.personal_info.name)
+        filename = f"{safe_name}_Resume.docx"
         
         return Response(
-            content=docx_bytes,
+            content=content,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
     except Exception as e:
-        print(f"[ERROR] Download Error: {e}")
+        print(f"Resume Download Error: {e}")
         import traceback
         traceback.print_exc()
-        return {"error": str(e)}
+        raise HTTPException(status_code=500, detail=str(e))

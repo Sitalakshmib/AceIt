@@ -16,6 +16,7 @@ llm = LLMClient()
 
 class GDRequest(BaseModel):
     topic: str
+    user_id: Optional[str] = "anonymous"
 
 class GDSubmitRequest(BaseModel):
     topic: str
@@ -86,7 +87,7 @@ GD_TOPICS = [
 ]
 
 @router.get("/topic")
-def generate_gd_topic():
+def generate_gd_topic(user_id: Optional[str] = None):
     """
     Generate a Group Discussion topic using a hybrid approach:
     - 50% chance: Select from curated high-quality list (Standard Topics)
@@ -112,6 +113,22 @@ Return ONLY the topic text, nothing else. No quotes."""
                 # Clean up
                 topic = topic.replace('"', '').replace("'", "").strip()
                 if len(topic) > 10: # Ensure valid topic length
+                    
+                    # Track Generation
+                    if user_id and user_id != "guest_user":
+                        try:
+                            from models.gd_resume_sql import GDTopicGeneration
+                            db_gen = get_db()
+                            db = next(db_gen)
+                            try:
+                                record = GDTopicGeneration(user_id=user_id, topic=topic)
+                                db.add(record)
+                                db.commit()
+                            finally:
+                                db.close()
+                        except Exception as dbe:
+                            print("[GD] Failed to save dynamic topic generation:", dbe)
+                            
                     return {"topic": topic}
             except Exception as e:
                 print(f"[WARN] Dynamic topic generation failed: {e}. Falling back to curated list.")
@@ -119,6 +136,22 @@ Return ONLY the topic text, nothing else. No quotes."""
 
         # Default / Fallback: Select from curated list
         topic = random.choice(GD_TOPICS)
+        
+        # Track Generation
+        if user_id and user_id != "guest_user":
+            try:
+                from models.gd_resume_sql import GDTopicGeneration
+                db_gen = get_db()
+                db = next(db_gen)
+                try:
+                    record = GDTopicGeneration(user_id=user_id, topic=topic)
+                    db.add(record)
+                    db.commit()
+                finally:
+                    db.close()
+            except Exception as dbe:
+                print("[GD] Failed to save topic generation:", dbe)
+
         return {"topic": topic}
         
     except Exception as e:
@@ -306,7 +339,22 @@ def generate_gd_points(request: GDRequest):
             "status": "error",
             "message": result["message"]
         }
-        
+    
+    # Track Generation
+    if request.user_id and request.user_id != "anonymous" and request.user_id != "guest_user":
+        try:
+            from models.gd_resume_sql import GDTopicGeneration
+            db_gen = get_db()
+            db = next(db_gen)
+            try:
+                record = GDTopicGeneration(user_id=request.user_id, topic=request.topic)
+                db.add(record)
+                db.commit()
+            finally:
+                db.close()
+        except Exception as dbe:
+            print("[GD_Analysis] Failed to track point generation:", dbe)
+            
     return {
         "status": "success",
         "topic": request.topic,

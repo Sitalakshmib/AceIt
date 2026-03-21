@@ -260,11 +260,13 @@ export const resumeAPI = {
   generateContent: (data) => api.post('/resume/generate-content', data),
 
   download: (userData, generatedContent, templateType, styleOptions) => {
+    const userId = getCurrentUserId();
     return api.post('/resume/download-resume', {
       user_data: userData,
       generated_content: generatedContent,
       template_type: templateType,
-      style_options: styleOptions
+      style_options: styleOptions,
+      user_id: userId
     }, {
       responseType: 'blob'
     });

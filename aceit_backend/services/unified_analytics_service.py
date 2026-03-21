@@ -831,6 +831,24 @@ class UnifiedAnalyticsService:
                     "description": f"Practiced GD on {row.topic}"
                 })
         except: pass
+        
+        # 1b. GD Topic Generation/Analysis
+        try:
+            from models.gd_resume_sql import GDTopicGeneration
+            topic_rows = db.query(GDTopicGeneration).filter(
+                GDTopicGeneration.user_id == user_id
+            ).order_by(GDTopicGeneration.generated_at.desc()).limit(5).all()
+            
+            for row in topic_rows:
+                activities.append({
+                    "date": row.generated_at.isoformat(),
+                    "module": "GD Practice",
+                    "type": "Topic Analysis",
+                    "score": 100,
+                    "result": "Generated",
+                    "description": f"Analyzed topic: {row.topic[:30]}..."
+                })
+        except: pass
 
         # 2. Resume Analysis
         try:
@@ -847,6 +865,24 @@ class UnifiedAnalyticsService:
                     "score": score_val,
                     "result": f"{score_val}% ATS Match",
                     "description": f"Analyzed resume for {row.job_role}"
+                })
+        except: pass
+        
+        # 2b. Resume Building
+        try:
+            from models.gd_resume_sql import ResumeBuildSession
+            build_rows = db.query(ResumeBuildSession).filter(
+                ResumeBuildSession.user_id == user_id
+            ).order_by(ResumeBuildSession.built_at.desc()).limit(5).all()
+            
+            for row in build_rows:
+                activities.append({
+                    "date": row.built_at.isoformat(),
+                    "module": "Resume",
+                    "type": "Resume Builder",
+                    "score": 100,
+                    "result": "Generated",
+                    "description": f"Built a {row.template_type} resume for {row.target_role}"
                 })
         except: pass
 
@@ -866,6 +902,22 @@ class UnifiedAnalyticsService:
                     "date": attempt.completed_at.isoformat() if attempt.completed_at else None,
                     "result": f"{round(attempt.accuracy_percentage, 1)}% accuracy",
                     "score": attempt.accuracy_percentage
+                })
+            
+            # Get recent aptitude practice
+            from models.aptitude_sql import QuestionAttempt
+            recent_apt_practice = db.query(QuestionAttempt)\
+                .filter(QuestionAttempt.user_id == user_id)\
+                .order_by(QuestionAttempt.attempted_at.desc())\
+                .limit(5).all()
+                
+            for attempt in recent_apt_practice:
+                activities.append({
+                    "module": "Aptitude",
+                    "type": "Practice Question",
+                    "date": attempt.attempted_at.isoformat() if attempt.attempted_at else None,
+                    "result": "Correct" if attempt.is_correct else "Incorrect",
+                    "score": 100 if attempt.is_correct else 0
                 })
             
             # Get recent coding submissions
@@ -924,8 +976,8 @@ class UnifiedAnalyticsService:
             # Need to handle potential None dates
             activities.sort(key=lambda x: x["date"] if x.get("date") else "", reverse=True)
             
-            # Return top 10 most recent
-            return activities[:10]
+            # Return top 15 most recent
+            return activities[:15]
             
         except Exception as e:
             print(f"[UnifiedAnalytics] Error getting recent activity: {e}")

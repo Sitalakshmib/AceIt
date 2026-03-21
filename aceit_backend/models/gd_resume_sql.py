@@ -59,3 +59,32 @@ class ResumeAnalysis(Base):
     __table_args__ = (
         Index('idx_resume_user_id', 'user_id'),
     )
+
+
+class GDTopicGeneration(Base):
+    """Tracks when a user generates or analyzes a GD topic"""
+    __tablename__ = "gd_topic_generations"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, nullable=False, index=True)
+    topic = Column(Text, nullable=False)
+    generated_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index('idx_gd_topic_user_id', 'user_id'),
+    )
+
+
+class ResumeBuildSession(Base):
+    """Tracks when a user builds and downloads a resume"""
+    __tablename__ = "resume_build_sessions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, nullable=False, index=True)
+    target_role = Column(String, nullable=True)
+    template_type = Column(String, nullable=True)
+    built_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index('idx_resume_build_user_id', 'user_id'),
+    )

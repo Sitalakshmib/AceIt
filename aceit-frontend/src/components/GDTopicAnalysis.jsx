@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import { Copy, Check, MessageSquare, ThumbsUp, ThumbsDown, X, Search, Lightbulb, Info } from 'lucide-react';
 
 const GDTopicAnalysis = () => {
+    const { user } = useAuth();
     const [topic, setTopic] = useState('');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
@@ -19,7 +21,11 @@ const GDTopicAnalysis = () => {
         setResult(null);
 
         try {
-            const response = await axios.post(`${API_URL}/gd-practice/generate`, { topic });
+            const userId = user?.id || user?.username || 'guest_user';
+            const response = await axios.post(`${API_URL}/gd-practice/generate`, { 
+                topic,
+                user_id: userId
+            });
 
             if (response.data.status === 'error') {
                 setError(response.data.message);

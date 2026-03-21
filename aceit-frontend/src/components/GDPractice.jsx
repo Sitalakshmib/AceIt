@@ -39,7 +39,8 @@ const GDPractice = () => {
         setTimerRunning(false);
 
         try {
-            const res = await fetch(`${API_BASE_URL}/gd-practice/topic`);
+            const userId = user?.id || user?.username || 'guest_user';
+            const res = await fetch(`${API_BASE_URL}/gd-practice/topic?user_id=${userId}`);
             const data = await res.json();
             setTopic(data.topic);
         } catch (error) {
