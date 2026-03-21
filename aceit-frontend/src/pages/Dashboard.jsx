@@ -9,7 +9,7 @@ import {
   TrendingUp, Target, Clock, Award, Brain, Users,
   Calendar, Zap, Star, AlertCircle, Trophy,
   BarChart3, PieChart as PieChartIcon, Activity, LayoutDashboard,
-  Code, Cpu, Camera
+  Code, Cpu, Camera, MessageSquare, FileText
 } from 'lucide-react';
 
 import { analyticsAPI } from '../services/api';
@@ -87,6 +87,8 @@ const Dashboard = () => {
       case 'Technical Interview': return <Cpu className="h-6 w-6" />;
       case 'HR Interview': return <Users className="h-6 w-6" />;
       case 'Video Presence': return <Camera className="h-6 w-6" />;
+      case 'GD Practice': return <MessageSquare className="h-6 w-6" />;
+      case 'Resume Analysis': return <FileText className="h-6 w-6" />;
       default: return <BarChart3 className="h-6 w-6" />;
     }
   };
@@ -98,8 +100,43 @@ const Dashboard = () => {
       case 'Technical Interview': return 'from-orange-500 to-red-600';
       case 'HR Interview': return 'from-emerald-500 to-teal-600';
       case 'Video Presence': return 'from-cyan-500 to-blue-600';
+      case 'GD Practice': return 'from-violet-500 to-purple-600';
+      case 'Resume Analysis': return 'from-rose-500 to-pink-600';
       default: return 'from-gray-500 to-slate-600';
     }
+  };
+
+  const getActivityColor = (moduleName) => {
+    switch (moduleName) {
+      case 'Aptitude': return 'bg-blue-100 text-blue-600';
+      case 'Coding': return 'bg-green-100 text-green-600';
+      case 'Technical Interview': return 'bg-orange-100 text-orange-600';
+      case 'HR Interview': return 'bg-emerald-100 text-emerald-600';
+      case 'Video Presence': return 'bg-cyan-100 text-cyan-600';
+      case 'GD Practice': return 'bg-violet-100 text-violet-600';
+      case 'Resume': return 'bg-rose-100 text-rose-600';
+      default: return 'bg-purple-100 text-purple-600';
+    }
+  };
+
+  const getModuleRoute = (name) => {
+    switch (name) {
+      case 'Aptitude': return '/aptitude';
+      case 'Coding': return '/coding';
+      case 'Technical Interview': return '/interview';
+      case 'HR Interview': return '/interview';
+      case 'Video Presence': return '/video';
+      case 'GD Practice': return '/group-discussion';
+      case 'Resume Analysis': return '/resume';
+      default: return '/';
+    }
+  };
+
+  const getProgressLabel = (name) => {
+    if (name === 'Coding') return 'Progress';
+    if (name === 'GD Practice') return 'Avg Score';
+    if (name === 'Resume Analysis') return 'ATS Score';
+    return 'Success Rate';
   };
 
   return (
@@ -190,7 +227,7 @@ const Dashboard = () => {
 
         {/* 2. MODULE BREAKDOWN GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {module_performance.filter(m => ['Aptitude', 'Coding', 'Technical Interview', 'HR Interview', 'Video Presence'].includes(m.module)).map((module, index) => (
+          {module_performance.map((module, index) => (
             <div
               key={index}
               className={`bg-white rounded-[2.5rem] shadow-xl shadow-gray-100 border border-gray-100 p-8 flex flex-col h-full hover:scale-[1.02] transition-all duration-300 relative overflow-hidden ${!module.has_data ? 'opacity-70' : ''}`}
@@ -201,10 +238,11 @@ const Dashboard = () => {
                   {getModuleIcon(module.module)}
                 </div>
                 <div className="text-right">
-                  <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full ${module.performance_level === 'Good' ? 'bg-green-100 text-green-600' :
+                  <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full ${
+                    module.performance_level === 'Good' ? 'bg-green-100 text-green-600' :
                     module.performance_level === 'Moderate' ? 'bg-orange-100 text-orange-600' :
-                      'bg-gray-100 text-gray-400'
-                    }`}>
+                    'bg-gray-100 text-gray-400'
+                  }`}>
                     {module.performance_level}
                   </span>
                 </div>
@@ -212,14 +250,16 @@ const Dashboard = () => {
 
               <h3 className="text-xl font-black text-gray-900 mb-2">{module.module}</h3>
               <p className="text-sm text-gray-500 mb-6 font-medium">
-                {module.sessions} sessions completed
+                {module.module === 'Resume Analysis'
+                  ? `${module.sessions} ${module.sessions === 1 ? 'analysis' : 'analyses'} done`
+                  : `${module.sessions} sessions completed`}
               </p>
 
               {/* Progress Section */}
               <div className="mt-auto">
                 <div className="flex justify-between items-end mb-2">
                   <span className="text-sm font-bold text-gray-400">
-                    {module.module === 'Coding' ? 'Progress' : 'Success Rate'}
+                    {getProgressLabel(module.module)}
                   </span>
                   <span className="text-2xl font-black text-gray-900">
                     {Math.round(module.module === 'Coding' && module.progress_percentage !== undefined
@@ -231,9 +271,9 @@ const Dashboard = () => {
                   <div
                     className={`h-full bg-gradient-to-r ${getModuleColor(module.module)} transition-all duration-1000`}
                     style={{
-                      width: `${module.module === 'Coding' && module.progress_percentage !== undefined
+                      width: `${Math.min(100, module.module === 'Coding' && module.progress_percentage !== undefined
                         ? module.progress_percentage
-                        : module.performance_score}%`
+                        : module.performance_score)}%`
                     }}
                   ></div>
                 </div>
@@ -241,7 +281,7 @@ const Dashboard = () => {
 
               {/* Action Button */}
               <button
-                onClick={() => navigate(`/${module.module.toLowerCase().replace(' interview', '').replace(' presence', '')}`)}
+                onClick={() => navigate(getModuleRoute(module.module))}
                 className="mt-8 flex items-center justify-center w-full py-4 rounded-2xl font-bold border-2 border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50 transition-all"
               >
                 Go to Module
@@ -262,19 +302,17 @@ const Dashboard = () => {
             <div className="space-y-6">
               {recent_activity.length > 0 ? recent_activity.map((activity, idx) => (
                 <div key={idx} className="flex items-center p-5 rounded-3xl bg-gray-50/50 border border-gray-100/50 hover:bg-white hover:shadow-lg transition-all">
-                  <div className={`p-4 rounded-2xl mr-5 ${activity.module === 'Aptitude' ? 'bg-blue-100 text-blue-600' :
-                    activity.module === 'Coding' ? 'bg-green-100 text-green-600' :
-                      'bg-purple-100 text-purple-600'
-                    }`}>
+                  <div className={`p-4 rounded-2xl mr-5 ${getActivityColor(activity.module)}`}>
                     {getModuleIcon(activity.module)}
                   </div>
                   <div className="flex-1">
                     <h4 className="font-bold text-gray-900">{activity.type}</h4>
                     <p className="text-sm text-gray-500">{new Date(activity.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                    <p className="text-xs text-gray-400 font-medium mt-0.5">{activity.module}</p>
                   </div>
                   <div className="text-right">
                     <span className="text-lg font-black text-gray-900">{activity.result}</span>
-                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-1">Status</p>
+                    <p className="text-[10px] text-gray-400 uppercase font-black tracking-widest mt-1">Result</p>
                   </div>
                 </div>
               )) : (
