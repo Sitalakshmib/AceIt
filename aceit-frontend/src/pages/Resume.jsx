@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { resumeAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 // Import jsPDF for PDF generation
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -14,6 +15,7 @@ import {
 import ResumeCreator from '../components/Resume/ResumeCreator';
 
 const Resume = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [viewMode, setViewMode] = useState('analyze'); // 'analyze' or 'create'
   const [resumeFile, setResumeFile] = useState(null);
@@ -66,7 +68,7 @@ const Resume = () => {
       const formData = new FormData();
       formData.append('file', resumeFile);
       formData.append('job_role', jobRole);
-      formData.append('user_id', 'user123'); // In a real app, this would come from auth context
+      formData.append('user_id', user?.id || user?.username || 'tester');
 
       console.log('[Resume] Sending analysis request...');
 
