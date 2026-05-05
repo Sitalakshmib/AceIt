@@ -79,6 +79,126 @@ def get_unified_analytics(user_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Failed to generate unified analytics: {str(e)}")
 
 
+@router.get("/gd/{user_id}")
+def get_gd_analytics(user_id: str, days: int = 30, db: Session = Depends(get_db)):
+    """
+    Get detailed GD (Group Discussion) performance analytics for the dashboard card.
+    Returns dimension scores, trend data, topic breakdown, and improvement insights.
+    """
+    try:
+        from models.gd_resume_sql import GDSession
+        from sqlalchemy import func
+        import datetime
+
+        cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=days)
+
+        # All GD sessions within the window
+        rows = (
+            db.query(GDSession)
+            .filter(GDSession.user_id == user_id, GDSession.practiced_at >= cutoff)
+            .order_by(GDSession.practiced_at.asc())
+            .all()
+        )
+
+        # All-time sessions count
+        total_all_time = db.query(func.count(GDSession.id)).filter(
+            GDSession.user_id == user_id
+        ).scalar() or 0
+
+        if not rows:
+            return {
+                "status": "success",
+                "data": {
+                    "has_data": False,
+                    "total_sessions": total_all_time,
+                    "sessions_in_window": 0,
+                    "average_score": 0,
+                    "average_clarity": 0,
+                    "average_coherence": 0,
+                    "average_relevance": 0,
+                    "weakest_dimension": None,
+                    "trend": [],
+                    "topic_breakdown": [],
+                    "last_practiced": None,
+                    "days_window": days,
+                },
+            }
+
+        # Dimension averages
+        def safe_avg(vals):
+            vals = [v for v in vals if v is not None]
+            return round(sum(vals) / len(vals), 2) if vals else 0
+
+        avg_clarity = safe_avg([r.clarity_score for r in rows])
+        avg_coherence = safe_avg([r.coherence_score for r in rows])
+        avg_relevance = safe_avg([r.relevance_score for r in rows])
+        avg_overall = safe_avg([r.overall_score for r in rows])
+
+        # Weakest dimension
+        dimensions = {
+            "Clarity": avg_clarity,
+            "Coherence": avg_coherence,
+            "Relevance": avg_relevance,
+        }
+        weakest_dim = min(dimensions, key=dimensions.get) if any(dimensions.values()) else None
+
+        # Trend data — last 10 sessions chronologically
+        trend = [
+            {
+                "date": r.practiced_at.strftime("%Y-%m-%d"),
+                "overall_score": round(r.overall_score, 2) if r.overall_score else 0,
+                "clarity_score": round(r.clarity_score, 2) if r.clarity_score else 0,
+                "coherence_score": round(r.coherence_score, 2) if r.coherence_score else 0,
+                "relevance_score": round(r.relevance_score, 2) if r.relevance_score else 0,
+                "topic": r.topic,
+            }
+            for r in rows[-10:]
+        ]
+
+        # Topic breakdown
+        topic_map: Dict = {}
+        for r in rows:
+            key = r.topic[:40] if r.topic else "Unknown"
+            if key not in topic_map:
+                topic_map[key] = {"count": 0, "scores": []}
+            topic_map[key]["count"] += 1
+            if r.overall_score is not None:
+                topic_map[key]["scores"].append(r.overall_score)
+
+        topic_breakdown = [
+            {
+                "topic": t,
+                "sessions": info["count"],
+                "avg_score": safe_avg(info["scores"]),
+            }
+            for t, info in sorted(topic_map.items(), key=lambda x: -x[1]["count"])
+        ][:10]
+
+        last_practiced = rows[-1].practiced_at.isoformat() if rows else None
+
+        return {
+            "status": "success",
+            "data": {
+                "has_data": True,
+                "total_sessions": total_all_time,
+                "sessions_in_window": len(rows),
+                "average_score": avg_overall,
+                "average_clarity": avg_clarity,
+                "average_coherence": avg_coherence,
+                "average_relevance": avg_relevance,
+                "weakest_dimension": weakest_dim,
+                "trend": trend,
+                "topic_breakdown": topic_breakdown,
+                "last_practiced": last_practiced,
+                "days_window": days,
+            },
+        }
+
+    except Exception as e:
+        print(f"[ERROR] GD analytics failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate GD analytics: {str(e)}")
+
+
 
 @router.get("/progress/{user_id}")
 def get_progress_history(user_id: str, days: int = 30, db: Session = Depends(get_db)):

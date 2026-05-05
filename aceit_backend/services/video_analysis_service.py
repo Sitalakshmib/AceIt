@@ -21,17 +21,17 @@ IMPORTANT RULES:
 Author: AceIt Backend Team
 """
 
-import whisper
 import re
 from typing import Dict, List, Optional, Tuple
 import os
 import statistics
+from datetime import datetime
 
 # Professional hesitation words to detect (case-insensitive)
 # Focused on true filler sounds as requested
 FILLER_WORDS = [
     'uh', 'um', 'ah', 'mm', 'hmm',
-    'er', 'erm', 'uhm'
+    'er', 'erm', 'uhm', 'umm', 'uhh', 'hmm', 'huh'
 ]
 
 # Common conversational fillers (separate from true hesitation sounds)
@@ -68,50 +68,75 @@ def analyze_audio_hesitation(audio_file_path: str) -> Dict:
         client = Groq(api_key=api_key)
         
         print(f"[GROQ] Transcribing audio: {audio_file_path}")
-        with open(audio_file_path, "rb") as audio_file:
-            result_obj = client.audio.transcriptions.create(
-                file=(os.path.basename(audio_file_path), audio_file.read()),
-                model="whisper-large-v3-turbo",
-                response_format="verbose_json",
-                language="en",
-                temperature=0.0,
-                prompt="Umm, let me think. Uh, okay, well, like, I think that... um, so basically...",
-                timestamp_granularities=["word", "segment"]
-            )
-        
-        # Groq returns an object, local Whisper returns a dict. 
-        # Convert Groq object to a format compatible with our analysis functions.
-        # Handle both dict-like and attribute-like access just in case
-        def get_attr(obj, attr, default=None):
-            if isinstance(obj, dict):
-                return obj.get(attr, default)
-            return getattr(obj, attr, default)
+        try:
+            with open(audio_file_path, "rb") as audio_file:
+                # Use turbo for speed to avoid axios timeouts
+                # verbose_json provides segments by default
+                result_obj = client.audio.transcriptions.create(
+                    file=(os.path.basename(audio_file_path), audio_file.read()),
+                    model="whisper-large-v3-turbo",
+                    response_format="verbose_json",
+                    language="en",
+                    temperature=0.0,
+                    prompt="Um, well, uh, I think... let me see, umm, so basically... uhh, like, you know..."
+                )
+            print(f"[GROQ] Transcription successful for {audio_file_path}")
+            
+            # Robust extraction of text and segments
+            # Groq SDK returns Pydantic models (Transcription, Segment, etc.)
+            if hasattr(result_obj, 'model_dump'):
+                res_dict = result_obj.model_dump()
+            elif isinstance(result_obj, dict):
+                res_dict = result_obj
+            else:
+                # Manual extraction for non-pydantic objects
+                res_dict = {
+                    "text": getattr(result_obj, "text", ""),
+                    "segments": getattr(result_obj, "segments", [])
+                }
+            
+            transcript_text = res_dict.get("text", "")
+            segments_raw = res_dict.get("segments", [])
+            
+            # Helper for nested attribute/dict access
+            def get_attr(obj, attr, default=None):
+                if isinstance(obj, dict):
+                    return obj.get(attr, default)
+                return getattr(obj, attr, default)
 
-        segments_raw = get_attr(result_obj, "segments", [])
-        
-        result = {
-            "text": get_attr(result_obj, "text", ""),
-            "segments": [
-                {
-                    "start": get_attr(s, "start"),
-                    "end": get_attr(s, "end"),
-                    "text": get_attr(s, "text"),
-                    "words": [
-                        {
-                            "word": get_attr(w, "word"),
-                            "start": get_attr(w, "start"),
-                            "end": get_attr(w, "end")
-                        } for w in get_attr(s, "words", [])
-                    ]
-                } for s in segments_raw
-            ]
-        }
+            # Convert to our internal format with strict defaults
+            result = {
+                "text": transcript_text,
+                "segments": []
+            }
+            
+            for s in segments_raw:
+                seg = {
+                    "start": get_attr(s, "start", 0) or 0,
+                    "end": get_attr(s, "end", 0) or 0,
+                    "text": get_attr(s, "text", ""),
+                    "words": []
+                }
+                
+                # Try to get words if available (Groq sometimes includes them)
+                words_raw = get_attr(s, "words", []) or []
+                for w in words_raw:
+                    seg["words"].append({
+                        "word": get_attr(w, "word", ""),
+                        "start": get_attr(w, "start", 0) or 0,
+                        "end": get_attr(w, "end", 0) or 0
+                    })
+                result["segments"].append(seg)
+                
+        except Exception as groq_err:
+            print(f"[GROQ ERROR] API call or parsing failed: {groq_err}")
+            raise RuntimeError(f"Groq transcription failed: {str(groq_err)}")
         
         transcript = result.get("text", "").strip()
         segments = result.get("segments", [])
         
         # If no speech detected
-        if not transcript or len(transcript) < 5:
+        if not transcript or len(transcript) < 2:
             return {
                 "status": "no_speech",
                 "message": "No speech detected. Please check your microphone.",
@@ -121,6 +146,13 @@ def analyze_audio_hesitation(audio_file_path: str) -> Dict:
         
         # Calculate total duration for temporal analysis
         total_duration = segments[-1].get("end", 0) if segments else 0
+        
+        # Fallback for duration if segments are missing or zero
+        if total_duration <= 0 and transcript:
+            # Estimate duration based on word count (avg 130 words per minute / 2.1 words per sec)
+            words = transcript.split()
+            total_duration = max(1.0, (len(words) / 2.1))
+            print(f"[AUDIO] Estimated duration from word count: {total_duration:.2f}s")
         
         # PROFESSIONAL ENHANCEMENTS
         
@@ -178,7 +210,9 @@ def analyze_audio_hesitation(audio_file_path: str) -> Dict:
         }
         
     except Exception as e:
-        print(f"[ERROR] Audio analysis failed: {e}")
+        error_msg = f"[ERROR] Audio analysis failed: {str(e)}"
+        print(error_msg)
+            
         return {
             "status": "error",
             "message": "Audio analysis unavailable",

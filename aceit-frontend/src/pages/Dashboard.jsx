@@ -9,7 +9,7 @@ import {
   TrendingUp, Target, Clock, Award, Brain, Users,
   Calendar, Zap, Star, AlertCircle, Trophy,
   BarChart3, PieChart as PieChartIcon, Activity, LayoutDashboard,
-  Code, Cpu, Camera
+  Code, Cpu, Camera, MessageSquare
 } from 'lucide-react';
 
 import { analyticsAPI } from '../services/api';
@@ -87,6 +87,7 @@ const Dashboard = () => {
       case 'Technical Interview': return <Cpu className="h-6 w-6" />;
       case 'HR Interview': return <Users className="h-6 w-6" />;
       case 'Video Presence': return <Camera className="h-6 w-6" />;
+      case 'GD Practice': return <MessageSquare className="h-6 w-6" />;
       default: return <BarChart3 className="h-6 w-6" />;
     }
   };
@@ -98,12 +99,14 @@ const Dashboard = () => {
       case 'Technical Interview': return 'from-orange-500 to-red-600';
       case 'HR Interview': return 'from-emerald-500 to-teal-600';
       case 'Video Presence': return 'from-cyan-500 to-blue-600';
+      case 'GD Practice': return 'from-violet-500 to-purple-600';
       default: return 'from-gray-500 to-slate-600';
     }
   };
 
   return (
-    <div className="p-8 min-h-screen bg-gray-50">
+    <div className="p-8 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+
       {/* 1. OVERALL PERFORMANCE HEADER */}
       <div className="max-w-7xl mx-auto mb-10">
         <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-200/50 p-8 md:p-10 border border-gray-100 relative overflow-hidden">
@@ -190,64 +193,78 @@ const Dashboard = () => {
 
         {/* 2. MODULE BREAKDOWN GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-          {module_performance.filter(m => ['Aptitude', 'Coding', 'Technical Interview', 'HR Interview', 'Video Presence'].includes(m.module)).map((module, index) => (
-            <div
-              key={index}
-              className={`bg-white rounded-[2.5rem] shadow-xl shadow-gray-100 border border-gray-100 p-8 flex flex-col h-full hover:scale-[1.02] transition-all duration-300 relative overflow-hidden ${!module.has_data ? 'opacity-70' : ''}`}
-            >
-              {/* Module Header */}
-              <div className="flex justify-between items-start mb-6">
-                <div className={`p-4 rounded-2xl bg-gradient-to-br ${getModuleColor(module.module)} text-white shadow-lg`}>
-                  {getModuleIcon(module.module)}
-                </div>
-                <div className="text-right">
-                  <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full ${module.performance_level === 'Good' ? 'bg-green-100 text-green-600' :
-                    module.performance_level === 'Moderate' ? 'bg-orange-100 text-orange-600' :
-                      'bg-gray-100 text-gray-400'
-                    }`}>
-                    {module.performance_level}
-                  </span>
-                </div>
-              </div>
+          {module_performance
+            .filter(m => ['Aptitude', 'Coding', 'Technical Interview', 'HR Interview', 'Video Presence', 'GD Practice'].includes(m.module))
+            .map((module, index) => {
+              // Label shown above the progress bar
+              const progressLabel =
+                module.module === 'Coding' ? 'Progress' :
+                module.module === 'GD Practice' ? 'Avg Score' :
+                'Success Rate';
 
-              <h3 className="text-xl font-black text-gray-900 mb-2">{module.module}</h3>
-              <p className="text-sm text-gray-500 mb-6 font-medium">
-                {module.sessions} sessions completed
-              </p>
+              // Score value (0-100)
+              const scoreValue = Math.round(
+                module.module === 'Coding' && module.progress_percentage !== undefined
+                  ? module.progress_percentage
+                  : module.performance_score
+              );
 
-              {/* Progress Section */}
-              <div className="mt-auto">
-                <div className="flex justify-between items-end mb-2">
-                  <span className="text-sm font-bold text-gray-400">
-                    {module.module === 'Coding' ? 'Progress' : 'Success Rate'}
-                  </span>
-                  <span className="text-2xl font-black text-gray-900">
-                    {Math.round(module.module === 'Coding' && module.progress_percentage !== undefined
-                      ? module.progress_percentage
-                      : module.performance_score)}%
-                  </span>
-                </div>
-                <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full bg-gradient-to-r ${getModuleColor(module.module)} transition-all duration-1000`}
-                    style={{
-                      width: `${module.module === 'Coding' && module.progress_percentage !== undefined
-                        ? module.progress_percentage
-                        : module.performance_score}%`
-                    }}
-                  ></div>
-                </div>
-              </div>
+              // Navigation URL per module
+              const moduleUrl =
+                module.module === 'GD Practice' ? '/group-discussion' :
+                ['Technical Interview', 'HR Interview', 'Video Presence'].includes(module.module) ? '/interview' :
+                `/${module.module.toLowerCase()}`;
 
-              {/* Action Button */}
-              <button
-                onClick={() => navigate(`/${module.module.toLowerCase().replace(' interview', '').replace(' presence', '')}`)}
-                className="mt-8 flex items-center justify-center w-full py-4 rounded-2xl font-bold border-2 border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50 transition-all"
-              >
-                Go to Module
-              </button>
-            </div>
-          ))}
+              return (
+                <div
+                  key={index}
+                  className={`bg-white rounded-[2.5rem] shadow-xl shadow-gray-100 border border-gray-100 p-8 flex flex-col h-full hover:scale-[1.02] transition-all duration-300 relative overflow-hidden ${!module.has_data ? 'opacity-70' : ''}`}
+                >
+                  {/* Module Header */}
+                  <div className="flex justify-between items-start mb-6">
+                    <div className={`p-4 rounded-2xl bg-gradient-to-br ${getModuleColor(module.module)} text-white shadow-lg`}>
+                      {getModuleIcon(module.module)}
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full ${
+                        module.performance_level === 'Good' ? 'bg-green-100 text-green-600' :
+                        module.performance_level === 'Moderate' ? 'bg-orange-100 text-orange-600' :
+                        'bg-gray-100 text-gray-400'
+                      }`}>
+                        {module.performance_level}
+                      </span>
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl font-black text-gray-900 mb-2">{module.module}</h3>
+                  <p className="text-sm text-gray-500 mb-6 font-medium">
+                    {module.sessions} sessions completed
+                  </p>
+
+                  {/* Progress Section */}
+                  <div className="mt-auto">
+                    <div className="flex justify-between items-end mb-2">
+                      <span className="text-sm font-bold text-gray-400">{progressLabel}</span>
+                      <span className="text-2xl font-black text-gray-900">{scoreValue}%</span>
+                    </div>
+                    <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full bg-gradient-to-r ${getModuleColor(module.module)} transition-all duration-1000`}
+                        style={{ width: `${scoreValue}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Action Button */}
+                  <button
+                    onClick={() => navigate(moduleUrl)}
+                    className="mt-8 flex items-center justify-center w-full py-4 rounded-2xl font-bold border-2 border-gray-100 text-gray-600 hover:border-gray-200 hover:bg-gray-50 transition-all"
+                  >
+                    Go to Module
+                  </button>
+                </div>
+              );
+            })}
         </div>
 
         {/* 3. RECENT ACTIVITY & TRENDS */}
@@ -285,24 +302,67 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Tips Section */}
-          <div className="bg-gradient-to-br from-indigo-600 to-blue-700 rounded-[2.5rem] shadow-xl p-10 text-white relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full"></div>
+          {/* Smart Analysis Section */}
+          <div className="bg-white rounded-[2.5rem] shadow-xl shadow-gray-100 p-10 border border-gray-100 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-bl-full opacity-50"></div>
+            
             <div className="relative z-10 flex flex-col h-full">
-              <div className="p-3 bg-white/20 rounded-xl w-fit mb-6">
-                <Brain className="h-6 w-6" />
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+                  <Zap className="h-6 w-6" />
+                </div>
+                <h3 className="text-2xl font-black text-gray-900 tracking-tight">Smart Analysis</h3>
               </div>
-              <h3 className="text-2xl font-black mb-4">Daily Tip</h3>
-              <p className="text-blue-50 text-lg leading-relaxed mb-10">
-                "{progressData.weak_areas?.[0]?.suggestion || "Focus on consistency to see rapid improvement in your mock interview scores."}"
-              </p>
 
-              <div className="mt-auto pt-8 border-t border-white/10">
+              <div className="space-y-5 mb-8">
+                {progressData.weak_areas && progressData.weak_areas.length > 0 ? (
+                  progressData.weak_areas.map((item, idx) => {
+                    const isAptitude = item.module === 'Aptitude';
+                    const isCoding = item.module === 'Coding';
+                    return (
+                      <div key={idx} className="group p-5 rounded-3xl bg-gray-50 border border-gray-100 hover:bg-white hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-start gap-4">
+                          <div className={`p-3 rounded-2xl ${
+                            isAptitude ? 'bg-blue-100 text-blue-600' :
+                            isCoding ? 'bg-green-100 text-green-600' :
+                            'bg-purple-100 text-purple-600'
+                          }`}>
+                            {isAptitude ? <Brain className="h-5 w-5" /> : 
+                             isCoding ? <Code className="h-5 w-5" /> : 
+                             <MessageSquare className="h-5 w-5" />}
+                          </div>
+                          <div>
+                            <span className={`text-[10px] font-black uppercase tracking-widest ${
+                              isAptitude ? 'text-blue-500' :
+                              isCoding ? 'text-green-500' :
+                              'text-purple-500'
+                            }`}>{item.module}</span>
+                            <p className="text-sm font-bold text-gray-800 leading-snug mt-1">{item.suggestion}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="p-10 rounded-3xl bg-green-50 border border-green-100 text-center">
+                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
+                      <Trophy className="h-8 w-8 text-green-500" />
+                    </div>
+                    <p className="text-sm font-bold text-green-800">Elite Performance!</p>
+                    <p className="text-xs text-green-600 mt-2 font-medium leading-relaxed">
+                      You're currently excelling in all tracked categories. Keep practicing to stay sharp.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-auto">
                 <button
-                  onClick={() => navigate('/aptitude')}
-                  className="w-full bg-white text-blue-600 py-4 rounded-2xl font-black shadow-lg hover:scale-105 transition-all"
+                  onClick={() => navigate('/analytics/unified')}
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-4 rounded-2xl font-black shadow-lg shadow-blue-200 hover:scale-[1.02] transition-all flex items-center justify-center gap-2 group"
                 >
-                  Quick Practice
+                  <Activity className="h-5 w-5 group-hover:animate-pulse" />
+                  View Detailed Analysis
                 </button>
               </div>
             </div>

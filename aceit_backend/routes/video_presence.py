@@ -112,6 +112,8 @@ def analyze_video_presence_answer(
         # Generate unique filenames to avoid collisions
         session_uuid = session_id or str(uuid.uuid4())
         
+        logger.info(f"[VIDEO-PRESENCE] Processing request for user: {user_id or 'anonymous'}, file: {audio_file.filename}")
+        
         # Save audio file temporarily
         audio_extension = os.path.splitext(audio_file.filename)[1] or ".webm"
         unique_audio_filename = f"{session_uuid}_{uuid.uuid4()}{audio_extension}"
@@ -180,9 +182,9 @@ def analyze_video_presence_answer(
             }
         
         # Perform audio hesitation analysis
-        logger.info(f"[AUDIO] Analyzing audio for hesitation patterns...")
+        logger.info(f"[AUDIO] Analyzing audio for hesitation patterns: {temp_audio_path}")
         audio_analysis = analyze_audio_hesitation(temp_audio_path)
-        logger.info(f"[AUDIO] Audio analysis complete: {audio_analysis.get('status')}")
+        logger.info(f"[AUDIO] Audio analysis status: {audio_analysis.get('status')}")
         
         # Check if we have any valid analysis
         has_audio = audio_analysis.get("status") == "success"

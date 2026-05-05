@@ -19,6 +19,14 @@ node_modules/
 Thumbs.db
 
 # Backend specific
-aceit-backend/.env
-aceit-backend/__pycache__/
 aceit_backend/__pycache__/
+aceit_backend/temp_audio/
+aceit_backend/temp_video/
+backend_error.log
+
+# Local backups and temporary files
+origin_*
+local_*
+generate_graphs.py
+generate_table.py
+graphs/

@@ -299,7 +299,7 @@ const VideoPractice = ({ userId, onBack, onComplete }) => {
                     formData,
                     {
                         headers: { 'Content-Type': 'multipart/form-data' },
-                        timeout: 30000
+                        timeout: 60000
                     }
                 );
 

@@ -177,6 +177,10 @@ export const analyticsAPI = {
     const formData = new FormData();
     formData.append('text', text);
     return api.post('/analytics/coach/audio', formData);
+  },
+  getGDAnalytics: (days = 30) => {
+    const userId = getCurrentUserId();
+    return api.get(`/analytics/gd/${userId}`, { params: { days } });
   }
 };
 

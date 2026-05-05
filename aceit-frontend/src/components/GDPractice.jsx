@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API_BASE_URL } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { Target, RefreshCw, CheckCircle2, Lightbulb, Send } from 'lucide-react';
 
 const GDPractice = () => {
+    const { user } = useAuth();
     const [topic, setTopic] = useState('');
     const [userResponse, setUserResponse] = useState('');
     const [timeSpent, setTimeSpent] = useState(0);
@@ -64,7 +66,8 @@ const GDPractice = () => {
                 body: JSON.stringify({
                     topic,
                     user_input: userResponse,
-                    time_taken: timeSpent
+                    time_taken: timeSpent,
+                    user_id: user?.id || user?.user_id || 'guest_user'
                 })
             });
 
