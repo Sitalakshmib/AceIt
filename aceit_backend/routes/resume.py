@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, Form
 import re
 from datetime import datetime
-from database import progress_data
+from database_postgres import SessionLocal
 import pdfplumber
 from PyPDF2 import PdfReader
 from io import BytesIO
@@ -615,15 +615,25 @@ def analyze_resume(
             db.close()
     except Exception as db_err:
         print(f"[Resume] DB save failed (non-critical): {db_err}")
-        # Fallback: keep in-memory list
-        progress_data.append({
-            "user_id": user_id,
-            "module": "resume_analysis",
-            "score": analysis["overall_score"],
-            "timestamp": datetime.utcnow(),
-            "job_role": job_role,
-            "analysis": analysis
-        })
+        # Fallback: keep in ActivityProgress table
+        try:
+            from models.activity_progress_sql import ActivityProgress
+            db_fallback = SessionLocal()
+            activity = ActivityProgress(
+                user_id=user_id,
+                module="resume_analysis",
+                timestamp=datetime.utcnow(),
+                payload={
+                    "score": analysis["overall_score"],
+                    "job_role": job_role,
+                    "analysis": analysis
+                }
+            )
+            db_fallback.add(activity)
+            db_fallback.commit()
+            db_fallback.close()
+        except Exception as fallback_err:
+            print(f"[Resume] ActivityProgress fallback failed: {fallback_err}")
     
     return analysis
 

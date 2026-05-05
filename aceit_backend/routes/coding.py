@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
-from database import questions_data, progress_data
+# removed deprecated database import
 from database_postgres import get_db, SessionLocal
 from models.coding_problem_sql import CodingProblem
 from models.user_coding_progress import UserCodingProgress
+from models.activity_progress_sql import ActivityProgress
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import pytz
@@ -386,24 +387,30 @@ def submit_code(payload: dict):
         finally:
             db.close()
     
-    # Save to in-memory progress for backward compatibility
-    progress_record_memory = {
-        "id": str(uuid.uuid4()),
-        "module": "coding",
-        "problem_id": problem_id,
-        "problem_title": problem.get("title", ""),
-        "passed_tests": passed_tests,
-        "total_tests": total_tests,
-        "percentage": percentage,
-        "timestamp": datetime.utcnow().isoformat(),
-        "code_submitted": code,
-        "user_id": user_id,
-        "action": action
-    }
-    progress_data.append(progress_record_memory)
-    
-    from database import save_progress
-    save_progress()
+    # Save to ActivityProgress for the dashboard activity feed
+    try:
+        activity = ActivityProgress(
+            id=str(uuid.uuid4()),
+            user_id=user_id,
+            module="coding",
+            timestamp=datetime.utcnow(),
+            payload={
+                "problem_id": problem_id,
+                "problem_title": problem.get("title", ""),
+                "passed_tests": passed_tests,
+                "total_tests": total_tests,
+                "percentage": percentage,
+                "action": action,
+                "code_submitted": code
+            }
+        )
+        # Using a new session to avoid affecting existing db logic in the scope
+        db = SessionLocal()
+        db.add(activity)
+        db.commit()
+        db.close()
+    except Exception as e:
+        print(f"Failed to log ActivityProgress: {e}")
     
     # Generate feedback message
     if "error" in result and result["error"]:

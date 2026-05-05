@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Form
 from datetime import datetime
-from database import progress_data
+from database_postgres import SessionLocal
+from models.activity_progress_sql import ActivityProgress
 
 router = APIRouter()
 
@@ -24,13 +25,22 @@ def evaluate_speech(
 ):
     analysis_results = analyze_speech_content(response_text, question)
     
-    progress_data.append({
-        "user_id": user_id,
-        "module": "communication",
-        "score": analysis_results["overall_score"],
-        "timestamp": datetime.utcnow(),
-        "details": analysis_results
-    })
+    try:
+        db = SessionLocal()
+        activity = ActivityProgress(
+            user_id=user_id,
+            module="communication",
+            timestamp=datetime.utcnow(),
+            payload={
+                "score": analysis_results["overall_score"],
+                "details": analysis_results
+            }
+        )
+        db.add(activity)
+        db.commit()
+        db.close()
+    except Exception as e:
+        print(f"Failed to save communication progress: {e}")
     
     return analysis_results
 

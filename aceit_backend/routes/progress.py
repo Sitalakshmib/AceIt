@@ -1,16 +1,19 @@
-from fastapi import APIRouter
-from database import progress_data
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from database_postgres import get_db
+from models.activity_progress_sql import ActivityProgress
 
 router = APIRouter()
 
 # Get user's overall progress and statistics
 @router.get("/{user_id}")
-def get_user_progress(user_id: str):
+def get_user_progress(user_id: str, db: Session = Depends(get_db)):
     """
     Get comprehensive progress data for a user
     """
-    # Get all progress records for this user
-    user_progress = [p for p in progress_data if p.get("user_id") == user_id]
+    # Get all progress records for this user from DB
+    records = db.query(ActivityProgress).filter(ActivityProgress.user_id == user_id).all()
+    user_progress = [r.to_dict() for r in records]
     
     # Separate progress by module type
     aptitude_progress = [p for p in user_progress if p.get("module") == "aptitude"]

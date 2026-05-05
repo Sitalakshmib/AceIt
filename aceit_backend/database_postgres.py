@@ -33,5 +33,6 @@ def get_db():
 def init_db():
     """Initialize database tables"""
     from models.user_sql import User
+    from models.activity_progress_sql import ActivityProgress
     Base.metadata.create_all(bind=engine)
-    print("✅ Database tables created successfully!")
+    print("Database tables created successfully!")
