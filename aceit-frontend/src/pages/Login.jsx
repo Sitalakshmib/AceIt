@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
+import loginLogo from '../assets/login-logo.png';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -76,13 +77,18 @@ const Login = () => {
         {/* Logo/brand area */}
         <div className="flex flex-col items-center mb-6">
           <div
-            className="w-14 h-14 rounded-full flex items-center justify-center mb-3"
+            className="w-20 h-20 rounded-full flex items-center justify-center mb-4 overflow-hidden"
             style={{
-              background: 'linear-gradient(135deg, #6C63FF 0%, #3ECFDF 100%)',
-              boxShadow: '0 4px 20px rgba(108,99,255,0.5)',
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
             }}
           >
-            <span style={{ fontSize: 26 }}>🎯</span>
+            <img 
+              src={loginLogo} 
+              alt="AceIt Logo" 
+              className="w-full h-full object-cover"
+            />
           </div>
           <h2
             className="text-3xl font-bold text-center"

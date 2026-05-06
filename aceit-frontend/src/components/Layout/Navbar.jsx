@@ -29,17 +29,6 @@ const Navbar = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
-  const settingsItems = [
-    { icon: Bell, color: 'blue', label: 'Notifications', sub: 'Manage alerts & reminders' },
-    { icon: Settings, color: 'indigo', label: 'Preferences', sub: 'Theme, language & display' },
-    { icon: HelpCircle, color: 'teal', label: 'Help & Support', sub: 'FAQs and contact us' },
-  ];
-
-  const privacyItems = [
-    { icon: Shield, color: 'green', label: 'Data Privacy', sub: 'How we store your data' },
-    { icon: Lock, color: 'orange', label: 'Account Security', sub: 'Password & 2FA settings' },
-    { icon: FileText, color: 'slate', label: 'Terms of Service', sub: 'Read our terms' },
-  ];
 
   return (
     <>
@@ -218,58 +207,14 @@ const Navbar = () => {
                     </p>
                   </div>
 
-                  {/* ── Settings ── */}
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 pl-2 pt-4">Settings</h3>
-                  <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-                    {settingsItems.map(({ icon: Icon, color, label, sub }, i) => (
-                      <div
-                        key={label}
-                        onClick={() => {
-                          const path = label === 'Notifications' ? '/settings/notifications' :
-                            label === 'Preferences' ? '/settings/preferences' : '/settings/help';
-                          navigate(path);
-                          setIsProfileOpen(false);
-                        }}
-                        className={`flex items-center space-x-3 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer ${i < settingsItems.length - 1 ? 'border-b border-slate-100' : ''
-                          }`}
-                      >
-                        <div className={`w-8 h-8 bg-${color}-100 rounded-lg flex items-center justify-center flex-shrink-0`}>
-                          <Icon className={`w-4 h-4 text-${color}-600`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-800">{label}</p>
-                          <p className="text-xs text-slate-400 truncate">{sub}</p>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* ── Privacy & Data ── */}
-                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 pl-2 pt-2">Privacy &amp; Data</h3>
-                  <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
-                    {privacyItems.map(({ icon: Icon, color, label, sub }, i) => (
-                      <div
-                        key={label}
-                        onClick={() => {
-                          const path = label === 'Data Privacy' ? '/settings/privacy' :
-                            label === 'Account Security' ? '/settings/security' : '/settings/terms';
-                          navigate(path);
-                          setIsProfileOpen(false);
-                        }}
-                        className={`flex items-center space-x-3 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer ${i < privacyItems.length - 1 ? 'border-b border-slate-100' : ''
-                          }`}
-                      >
-                        <div className={`w-8 h-8 bg-${color}-100 rounded-lg flex items-center justify-center flex-shrink-0`}>
-                          <Icon className={`w-4 h-4 text-${color}-600`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-800">{label}</p>
-                          <p className="text-xs text-slate-400 truncate">{sub}</p>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />
-                      </div>
-                    ))}
+                  {/* ── Upcoming Features ── */}
+                  <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 pl-2 pt-4">App Updates</h3>
+                  <div className="bg-slate-100 border border-slate-200 rounded-2xl p-4 shadow-sm text-center">
+                    <Settings className="w-6 h-6 text-slate-400 mx-auto mb-2" />
+                    <h4 className="font-bold text-slate-700 text-sm mb-1">More Features Coming Soon</h4>
+                    <p className="text-slate-500 text-xs leading-relaxed">
+                      We're working hard on new settings and privacy controls for the upcoming app version. Stay tuned!
+                    </p>
                   </div>
 
                 </div>
