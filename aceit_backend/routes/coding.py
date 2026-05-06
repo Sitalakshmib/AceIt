@@ -310,8 +310,8 @@ def submit_code(payload: dict):
     result = execute_code(language, code, test_cases_to_run, function_name)
     
     # Process Result
-    passed_tests = result.get("passed", 0)
-    total_tests = result.get("total", 0)
+    passed_tests = int(result.get("passed") or 0)
+    total_tests = int(result.get("total") or 0)
     results_details = result.get("results", [])
     
     # Mark which test cases are visible (first 3)

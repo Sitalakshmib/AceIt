@@ -1,11 +1,21 @@
 """
-Working test runner wrappers for Piston API
-Handles Java, C++, C, and R code execution with test cases
+Test runner wrappers for JDoodle API
+Handles Java, C++, C, and R code execution with test cases.
+Previously used Piston API (https://emkc.org/api/v2/piston/execute);
+now uses JDoodle API (https://api.jdoodle.com/v1/execute).
 """
 
 import json
 import re
 import requests
+import os
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
+
+JDOODLE_API_URL = "https://api.jdoodle.com/v1/execute"
+JDOODLE_CLIENT_ID = os.environ.get("JDOODLE_CLIENT_ID", "")
+JDOODLE_CLIENT_SECRET = os.environ.get("JDOODLE_CLIENT_SECRET", "")
 
 
 def wrap_java_for_piston(user_code: str, test_cases: list, function_name: str) -> str:
@@ -15,7 +25,7 @@ def wrap_java_for_piston(user_code: str, test_cases: list, function_name: str) -
         """Convert Python value to Java syntax"""
         if isinstance(val, list):
             if len(val) == 0:
-                return "new String[0]"  # Changed default to String for safety
+                return "new int[0]"  # Default to int array to match wrapper logic
             elif isinstance(val[0], list):
                 # 2D array - check element type
                 if val[0] and isinstance(val[0][0], str):
@@ -36,9 +46,9 @@ def wrap_java_for_piston(user_code: str, test_cases: list, function_name: str) -
             else:
                 # 1D int array
                 if is_nested:
-                    return "{" + ", ".join(map(str, val)) + "}"
+                    return "{" + ", ".join(map(lambda x: java_format_value(x, True), val)) + "}"
                 else:
-                    return "new int[] {" + ", ".join(map(str, val)) + "}"
+                    return "new int[] {" + ", ".join(map(lambda x: java_format_value(x, True), val)) + "}"
         elif isinstance(val, str):
             return f'"{val}"'
         elif isinstance(val, bool):
@@ -154,7 +164,7 @@ def wrap_cpp_for_piston(user_code: str, test_cases: list, function_name: str) ->
                     return "vector<vector<int>>{" + ", ".join(rows) + "}"
             else:
                 # 1D vector: {1,2,3}
-                vals = ", ".join(map(str, val))
+                vals = ", ".join(map(lambda x: cpp_format_value(x, True), val))
                 if is_nested:
                     return "{" + vals + "}"
                 else:
@@ -269,66 +279,75 @@ int main() {{
 """
 
 
-def wrap_c_for_piston(user_code: str, test_cases: list, function_name: str) -> dict:
+def wrap_c_for_jdoodle(user_code: str, test_cases: list, function_name: str) -> dict:
     """
-    C wrapper with ISOLATED execution - each test case runs independently
-    This prevents global state contamination between tests
-    Returns a dict with aggregated results from individual executions
+    C wrapper with ISOLATED execution via JDoodle - each test case runs independently.
+    This prevents global state contamination between tests.
+    Returns a dict with aggregated results from individual executions.
     """
-    import requests
-    import json
-    
     # Remove any user main function
     user_code_no_main = re.sub(r'int\s+main\s*\([^)]*\)\s*\{.*?\}', '', user_code, flags=re.DOTALL)
-    
+
     results = {"passed": 0, "total": len(test_cases), "results": [], "error": False}
-    
+
+    if not JDOODLE_CLIENT_ID or not JDOODLE_CLIENT_SECRET:
+        results["error"] = True
+        results["message"] = "JDoodle credentials not configured. Set JDOODLE_CLIENT_ID and JDOODLE_CLIENT_SECRET in .env"
+        return results
+
     for i, tc in enumerate(test_cases):
         inp = tc['input']
         expected = tc['output']
-        
+
         # Build test code for THIS test case only
         test_code = build_c_test_case(user_code_no_main, function_name, i, inp, expected)
-        
-        # Execute this single test via Piston
+
+        # Execute this single test via JDoodle
         try:
+            payload = {
+                "clientId": JDOODLE_CLIENT_ID,
+                "clientSecret": JDOODLE_CLIENT_SECRET,
+                "script": test_code,
+                "language": "c",
+                "versionIndex": "5",
+            }
             response = requests.post(
-                "https://emkc.org/api/v2/piston/execute",
-                json={
-                    "language": "c",
-                    "version": "10.2.0",
-                    "files": [{"name": "main.c", "content": test_code}]
-                },
-                timeout=10
+                JDOODLE_API_URL,
+                json=payload,
+                timeout=15
             )
-            
+
             if response.status_code != 200:
                 results["error"] = True
-                results["message"] = f"Test {i+1}: Piston API error"
+                results["message"] = f"Test {i+1}: JDoodle API error (HTTP {response.status_code})"
                 continue
-                
+
             data = response.json()
-            
-            if data.get("compile") and data["compile"].get("code") != 0:
+
+            # JDoodle puts all output (stdout + stderr) in 'output'
+            output_text = data.get("output", "").strip()
+            status_code = data.get("statusCode", 200)
+
+            if status_code != 200:
                 results["error"] = True
-                results["message"] = f"Test {i+1} Compilation Error:\n{data['compile'].get('stderr', '')}"
+                results["message"] = f"Test {i+1} Execution Error:\n{output_text}"
                 continue
-                
-            if data.get("run", {}).get("code") != 0:
+
+            # Detect compile/runtime errors
+            if any(kw in output_text.lower() for kw in ["error:", "undefined", "segmentation fault"]):
                 results["error"] = True
-                results["message"] = f"Test {i+1} Runtime Error:\n{data['run'].get('stderr', '')}"
+                results["message"] = f"Test {i+1} Error:\n{output_text[:300]}"
                 continue
-            
-            # Parse output (should be "1" for pass, "0" for fail)
-            output = data.get("run", {}).get("stdout", "").strip()
-            if output == "1":
+
+            # Parse output: should be "1" for pass, "0" for fail
+            if output_text.strip() == "1":
                 results["passed"] += 1
-            
+
         except Exception as e:
             results["error"] = True
             results["message"] = f"Test {i+1}: {str(e)}"
             continue
-    
+
     return results
 
 
@@ -346,7 +365,7 @@ def build_c_test_case(user_code: str, function_name: str, test_idx: int, inp: an
                 return "{" + ", ".join(rows) + "}"
             else:
                 # 1D array: {1,2,3}
-                return "{" + ", ".join(map(str, val)) + "}"
+                return "{" + ", ".join(map(lambda x: c_format_value(x, True), val)) + "}"
         elif isinstance(val, str):
             return f'"{val}"'
         elif isinstance(val, bool):
@@ -617,13 +636,13 @@ def wrap_r_for_piston(user_code: str, test_cases: list, function_name: str) -> s
                 return f"matrix(c({values_str}), nrow={rows}, ncol={cols}, byrow=TRUE)"
             else:
                 # Simple vector
-                return "c(" + ", ".join(map(str, val)) + ")"
+                return "c(" + ", ".join(map(r_format_value, val)) + ")"
         elif isinstance(val, str):
             return f'"{val}"'
         elif isinstance(val, bool):
             return "TRUE" if val else "FALSE"
         elif val is None:
-            return "NULL"
+            return "NA"
         else:
             return str(val)
     

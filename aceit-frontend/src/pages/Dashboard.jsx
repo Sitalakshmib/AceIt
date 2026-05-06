@@ -238,7 +238,9 @@ const Dashboard = () => {
 
                   <h3 className="text-xl font-black text-gray-900 mb-2">{module.module}</h3>
                   <p className="text-sm text-gray-500 mb-6 font-medium">
-                    {module.sessions} sessions completed
+                    {module.module === 'Coding' 
+                      ? `${module.sessions} problems solved` 
+                      : `${module.sessions} sessions completed`}
                   </p>
 
                   {/* Progress Section */}

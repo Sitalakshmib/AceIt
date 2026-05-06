@@ -7,11 +7,19 @@ import logging
 import re
 import shutil
 import requests
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
 
 logger = logging.getLogger(__name__)
 
 # Timeout for code execution (seconds)
 EXECUTION_TIMEOUT = 10
+
+# JDoodle API for remote code execution (replaces Piston)
+JDOODLE_API_URL = "https://api.jdoodle.com/v1/execute"
+JDOODLE_CLIENT_ID = os.environ.get("JDOODLE_CLIENT_ID", "")
+JDOODLE_CLIENT_SECRET = os.environ.get("JDOODLE_CLIENT_SECRET", "")
 
 
 def _find_gcc() -> str:
@@ -49,54 +57,57 @@ def _find_gcc() -> str:
     return None
 
 
-# Piston API for remote code execution
-PISTON_API_URL = "https://emkc.org/api/v2/piston/execute"
+# JDoodle language/version mappings
+# Each tuple: (jdoodle_language, versionIndex)
+JDOODLE_LANG_MAP = {
+    "java":       ("java",   "4"),   # Java 17
+    "cpp":        ("cpp17",  "0"),   # C++ 17
+    "c++":        ("cpp17",  "0"),
+    "c":          ("c",      "5"),   # C (GCC 11)
+    "r":          ("r",      "3"),   # R 4.x
+}
 
 
 def execute_code(language: str, code: str, test_cases: list = None, function_name: str = None):
     """
-    Execute code using local execution (Python) or Piston API (other languages).
-    Supports Python, JavaScript, Java, C++, C.
-    
+    Execute code using local execution (Python) or JDoodle API (Java, C++, C, R).
+    Supports Python, Java, C++, C, R.
+
     Args:
         language: Programming language
         code: User submitted code
         test_cases: List of test cases with 'input' and 'output' keys
         function_name: Name of the function/method to call
-    
+
     Returns:
         dict with passed, total, results, and any error information
     """
     language = language.lower()
-    
-    # Python: Local execution (fastest)
+
+    # Python: Local execution (fastest, no API needed)
     if language == "python":
         return _execute_python(code, test_cases, function_name)
-    
-    # JavaScript: Piston API
-    elif language == "javascript":
-        return _execute_with_piston("javascript", "18.15.0", code, test_cases, function_name)
-    
-    # Java: Piston API
+
+    # Java: JDoodle API
     elif language == "java":
-        return _execute_with_piston("java", "15.0.2", code, test_cases, function_name)
-    
-    # C++: Piston API
+        return _execute_with_jdoodle("java", code, test_cases, function_name)
+
+    # C++: JDoodle API
     elif language in ["cpp", "c++"]:
-        return _execute_with_piston("cpp", "10.2.0", code, test_cases, function_name)
-    
-    # C: Isolated execution (each test run independently to prevent global state issues)
+        return _execute_with_jdoodle("cpp", code, test_cases, function_name)
+
+    # C: JDoodle API (isolated per test case to prevent global state issues)
     elif language == "c":
-        from services.piston_wrappers import wrap_c_for_piston
-        return wrap_c_for_piston(code, test_cases, function_name)
-    
-    # R: Piston API
+        from services.piston_wrappers import wrap_c_for_jdoodle
+        return wrap_c_for_jdoodle(code, test_cases, function_name)
+
+    # R: JDoodle API
     elif language == "r":
-        return _execute_with_piston("r", "4.1.1", code, test_cases, function_name)
-    
+        return _execute_with_jdoodle("r", code, test_cases, function_name)
+
     else:
         return {
-            "error": f"Language '{language}' is not supported. Available: Python, R, Java, C++, C",
+            "error": f"Language '{language}' is not supported. Available: Python, Java, C++, C, R",
             "passed": 0,
             "total": 0,
             "results": []
@@ -135,8 +146,11 @@ def _execute_python(code: str, test_cases: list, function_name: str = None):
     return _run_python_code(runner_code)
 
 
-def _execute_with_piston(language: str, version: str, code: str, test_cases: list, function_name: str = None):
-    """Execute code using Piston API (for JS, Java, C++, C)."""
+def _execute_with_jdoodle(language: str, code: str, test_cases: list, function_name: str = None):
+    """
+    Execute code using JDoodle API (for Java, C++, C, R).
+    Replaces the former Piston API integration.
+    """
     if not test_cases:
         return {
             "error": "No test cases provided",
@@ -144,7 +158,7 @@ def _execute_with_piston(language: str, version: str, code: str, test_cases: lis
             "total": 0,
             "results": []
         }
-    
+
     if not function_name:
         return {
             "error": "Function name is required",
@@ -152,54 +166,96 @@ def _execute_with_piston(language: str, version: str, code: str, test_cases: lis
             "total": 0,
             "results": []
         }
-    
-    # Build wrapped code with test runner based on language
-    wrapped_code = _wrap_code_for_piston(language, code, test_cases, function_name)
-    
-    # Call Piston API
-    try:
-        # For Java, specify filename to match public class name
-        filename = "Main.java" if language == "java" else ""
-        
-        payload = {
-            "language": language,
-            "version": version,
-            "files": [{
-                "name": filename,
-                "content": wrapped_code
-            }] if filename else [{"content": wrapped_code}]
+
+    if not JDOODLE_CLIENT_ID or not JDOODLE_CLIENT_SECRET:
+        return {
+            "error": "JDoodle credentials not configured",
+            "message": "Set JDOODLE_CLIENT_ID and JDOODLE_CLIENT_SECRET in .env",
+            "passed": 0,
+            "total": 0,
+            "results": []
         }
-        
-        response = requests.post(PISTON_API_URL, json=payload, timeout=30)
+
+    # Map internal language key to JDoodle lang + versionIndex
+    lang_key = language.lower()
+    jdoodle_lang, version_index = JDOODLE_LANG_MAP.get(lang_key, (None, None))
+    if not jdoodle_lang:
+        return {
+            "error": f"Language '{language}' not supported via JDoodle",
+            "passed": 0,
+            "total": 0,
+            "results": []
+        }
+
+    # Build wrapped code with test runner based on language
+    wrapped_code = _wrap_code_for_jdoodle(lang_key, code, test_cases, function_name)
+
+    # Call JDoodle API
+    try:
+        payload = {
+            "clientId": JDOODLE_CLIENT_ID,
+            "clientSecret": JDOODLE_CLIENT_SECRET,
+            "script": wrapped_code,
+            "language": jdoodle_lang,
+            "versionIndex": version_index,
+        }
+
+        response = requests.post(JDOODLE_API_URL, json=payload, timeout=30)
         result = response.json()
-        
-        # Parse output
-        stdout = result.get('run', {}).get('stdout', '')
-        stderr = result.get('run', {}).get('stderr', '')
-        
-        if stderr and not stdout:
+
+        # JDoodle error handling
+        if response.status_code != 200:
             return {
-                "error": "Runtime Error",
-                "message": stderr[:500],
+                "error": "JDoodle API Error",
+                "message": result.get("error", f"HTTP {response.status_code}"),
                 "passed": 0,
                 "total": 0,
                 "results": []
             }
-        
-        # Try to parse JSON output from our test runner
+
+        stdout = result.get("output", "")
+        # JDoodle returns statusCode 200 in body for success
+        if result.get("statusCode") and result["statusCode"] != 200:
+            return {
+                "error": "JDoodle Execution Error",
+                "message": stdout or "Unknown error",
+                "passed": 0,
+                "total": 0,
+                "results": []
+            }
+
+        # Detect compilation/runtime errors in the output
+        stderr_indicators = ["error:", "Error:", "Exception", "Traceback"]
+        if stdout and not any(stdout.strip().startswith("{") for _ in [1]):
+            # Check if the output looks like an error rather than JSON
+            lower_out = stdout.lower()
+            if any(ind.lower() in lower_out for ind in stderr_indicators) and not stdout.strip().startswith("{"):
+                return {
+                    "error": "Runtime Error",
+                    "message": stdout[:500],
+                    "passed": 0,
+                    "total": 0,
+                    "results": []
+                }
+
+        # Parse JSON output from our test runner
         try:
-            output = json.loads(stdout.strip())
+            # Find the JSON part in case there's extra output
+            json_start = stdout.find("{")
+            if json_start != -1:
+                output = json.loads(stdout[json_start:].strip())
+            else:
+                output = json.loads(stdout.strip())
             return output
         except json.JSONDecodeError:
             return {
                 "error": "Output Parse Error",
                 "message": f"Could not parse output: {stdout[:200]}",
-                "stderr": stderr[:200] if stderr else "",
                 "passed": 0,
                 "total": 0,
                 "results": []
             }
-            
+
     except requests.exceptions.Timeout:
         return {
             "error": "Time Limit Exceeded",
@@ -209,7 +265,7 @@ def _execute_with_piston(language: str, version: str, code: str, test_cases: lis
             "results": []
         }
     except Exception as e:
-        logger.error(f"Piston API error: {e}")
+        logger.error(f"JDoodle API error: {e}")
         return {
             "error": "Execution Error",
             "message": str(e),
@@ -219,21 +275,18 @@ def _execute_with_piston(language: str, version: str, code: str, test_cases: lis
         }
 
 
-def _wrap_code_for_piston(language: str, user_code: str, test_cases: list, function_name: str) -> str:
-    """Wrap user code with test runner for Piston execution."""
+def _wrap_code_for_jdoodle(language: str, user_code: str, test_cases: list, function_name: str) -> str:
+    """Wrap user code with test runner for JDoodle execution."""
     from services.piston_wrappers import (
-        wrap_java_for_piston, 
-        wrap_cpp_for_piston, 
-        wrap_c_for_piston, 
+        wrap_java_for_piston,
+        wrap_cpp_for_piston,
         wrap_r_for_piston
     )
-    
+
     if language == "java":
         return wrap_java_for_piston(user_code, test_cases, function_name)
-    elif language == "cpp":
+    elif language in ["cpp", "c++"]:
         return wrap_cpp_for_piston(user_code, test_cases, function_name)
-    elif language == "c":
-        return wrap_c_for_piston(user_code, test_cases, function_name)
     elif language == "r":
         return wrap_r_for_piston(user_code, test_cases, function_name)
     else:

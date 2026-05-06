@@ -186,7 +186,7 @@ class UnifiedAnalyticsService:
         if not active_dates:
             return 0
         
-        today = datetime.now().date()
+        today = datetime.utcnow().date()
         yesterday = today - timedelta(days=1)
         
         # Check if user was active today or yesterday
@@ -254,7 +254,8 @@ class UnifiedAnalyticsService:
                 "last_practiced": last_practiced.isoformat() if last_practiced else None,
                 "weak_topics": weak_topics[:3],
                 "streak": streak,
-                "has_data": len(progress_records) > 0 or len(mock_attempts) > 0
+                "has_data": len(progress_records) > 0 or len(mock_attempts) > 0,
+                "activity_dates": all_dates
             }
         except Exception as e:
             print(f"[UnifiedAnalytics] Error getting aptitude summary: {e}")
@@ -267,7 +268,8 @@ class UnifiedAnalyticsService:
                 "last_practiced": None,
                 "weak_topics": [],
                 "streak": 0,
-                "has_data": False
+                "has_data": False,
+                "activity_dates": []
             }
     
     @staticmethod
@@ -310,7 +312,8 @@ class UnifiedAnalyticsService:
                 "total_attempts": total_attempts,
                 "last_practiced": last_practiced.isoformat() if last_practiced else None,
                 "streak": streak,
-                "has_data": total_attempted > 0
+                "has_data": total_attempted > 0,
+                "activity_dates": activity_dates
             }
         except Exception as e:
             print(f"[UnifiedAnalytics] Error getting coding summary: {e}")
@@ -324,7 +327,8 @@ class UnifiedAnalyticsService:
                 "total_attempts": 0,
                 "last_practiced": None,
                 "streak": 0,
-                "has_data": False
+                "has_data": False,
+                "activity_dates": []
             }
     
     @staticmethod
@@ -383,7 +387,8 @@ class UnifiedAnalyticsService:
                         "last_practiced": last_practiced,
                         "weak_areas": weak_areas,
                         "streak": streak,
-                        "has_data": True
+                        "has_data": True,
+                        "activity_dates": activity_dates
                     }
 
         except Exception as e:
@@ -403,7 +408,7 @@ class UnifiedAnalyticsService:
                     "total_sessions": 0, "technical_sessions": 0, "hr_sessions": 0,
                     "video_presence_sessions": 0, "technical_score": 0, "hr_score": 0,
                     "video_presence_score": 0, "average_score": 0, "last_practiced": None,
-                    "weak_areas": [], "streak": 0, "has_data": False
+                    "weak_areas": [], "streak": 0, "has_data": False, "activity_dates": []
                 }
 
             def _get_cat_avg(sessions):
@@ -451,7 +456,8 @@ class UnifiedAnalyticsService:
                 "last_practiced": last_practiced,
                 "weak_areas": weak_areas,
                 "streak": streak,
-                "has_data": len(user_sessions) > 0
+                "has_data": len(user_sessions) > 0,
+                "activity_dates": activity_dates
             }
         except Exception as e:
             print(f"[UnifiedAnalytics] Error getting interview summary: {e}")
@@ -461,7 +467,7 @@ class UnifiedAnalyticsService:
                 "total_sessions": 0, "technical_sessions": 0, "hr_sessions": 0,
                 "video_presence_sessions": 0, "technical_score": 0, "hr_score": 0,
                 "video_presence_score": 0, "average_score": 0, "last_practiced": None,
-                "weak_areas": [], "streak": 0, "has_data": False
+                "weak_areas": [], "streak": 0, "has_data": False, "activity_dates": []
             }
 
     @staticmethod
@@ -475,7 +481,8 @@ class UnifiedAnalyticsService:
                     "average_score": 0,
                     "last_practiced": None,
                     "streak": 0,
-                    "has_data": False
+                    "has_data": False,
+                    "activity_dates": []
                 }
 
             avg_score = round(sum(r.overall_score for r in rows if r.overall_score) / len(rows), 1)
@@ -488,11 +495,12 @@ class UnifiedAnalyticsService:
                 "average_score": avg_score,
                 "last_practiced": last_practiced,
                 "streak": streak,
-                "has_data": True
+                "has_data": True,
+                "activity_dates": activity_dates
             }
         except Exception as e:
             print(f"[UnifiedAnalytics] Error getting GD summary: {e}")
-            return {"total_sessions": 0, "average_score": 0, "has_data": False}
+            return {"total_sessions": 0, "average_score": 0, "has_data": False, "activity_dates": []}
 
     @staticmethod
     def _get_resume_summary(db: Session, user_id: str) -> Dict:
@@ -504,7 +512,8 @@ class UnifiedAnalyticsService:
                     "total_analyses": 0,
                     "average_score": 0,
                     "last_analyzed": None,
-                    "has_data": False
+                    "has_data": False,
+                    "activity_dates": []
                 }
 
             avg_score = round(sum(r.overall_score for r in rows if r.overall_score) / len(rows), 1)
@@ -514,11 +523,12 @@ class UnifiedAnalyticsService:
                 "total_analyses": len(rows),
                 "average_score": avg_score,
                 "last_analyzed": last_analyzed,
-                "has_data": True
+                "has_data": True,
+                "activity_dates": [r.analyzed_at for r in rows if r.analyzed_at]
             }
         except Exception as e:
             print(f"[UnifiedAnalytics] Error getting Resume summary: {e}")
-            return {"total_analyses": 0, "average_score": 0, "has_data": False}
+            return {"total_analyses": 0, "average_score": 0, "has_data": False, "activity_dates": []}
 
     
     @staticmethod
@@ -563,13 +573,15 @@ class UnifiedAnalyticsService:
         if resume_data and resume_data["has_data"]:
             modules_used.append("Resume")
         
-        # Calculate overall streak as the maximum of module streaks
-        practice_streak = max(
-            aptitude_data.get("streak", 0),
-            coding_data.get("streak", 0),
-            interview_data.get("streak", 0),
-            (gd_data.get("streak", 0) if gd_data else 0)
+        # Combine all activity dates to calculate the true overall streak
+        all_activity_dates = (
+            aptitude_data.get("activity_dates", []) +
+            coding_data.get("activity_dates", []) +
+            interview_data.get("activity_dates", []) +
+            (gd_data.get("activity_dates", []) if gd_data else []) +
+            (resume_data.get("activity_dates", []) if resume_data else [])
         )
+        practice_streak = UnifiedAnalyticsService._calculate_streak(all_activity_dates)
         
         # Overall improvement trend (simplified)
         trend = "stable"
@@ -614,7 +626,7 @@ class UnifiedAnalyticsService:
         # Coding
         modules.append({
             "module": "Coding",
-            "sessions": coding_data["sessions_count"],
+            "sessions": coding_data["problems_solved"],
             "performance_level": "Good" if coding_data["success_rate"] >= 60 else "Moderate" if coding_data["success_rate"] >= 40 else "Low",
             "performance_score": coding_data["success_rate"],
             "progress_percentage": coding_data["progress_percentage"],
