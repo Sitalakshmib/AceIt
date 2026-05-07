@@ -16,3 +16,6 @@ class UserResponse(BaseModel):
     username: str
     email: str
     created_at: datetime
+
+class GoogleLogin(BaseModel):
+    credential: str

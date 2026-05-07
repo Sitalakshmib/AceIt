@@ -406,7 +406,7 @@ def build_c_test_case(user_code: str, function_name: str, test_idx: int, inp: an
             col_sizes_block = "\n    int* colSizes = NULL;"
 
         expected_block = ""
-        if len(expected) > 0:
+        if isinstance(expected, (list, tuple)) and len(expected) > 0:
             expected_block = f"""
     static int expected_arr[] = {c_format_value(expected)};
     int* expected = expected_arr;"""
@@ -420,7 +420,7 @@ int main() {{
     int returnSize = 0;
     int* result = {function_name}({'ptrs' if k > 0 else 'NULL'}, {k}, colSizes, &returnSize);
 {expected_block}
-    int expected_size = {len(expected)};
+    int expected_size = {len(expected) if isinstance(expected, (list, tuple)) else 0};
     
     int match = (returnSize == expected_size);
     for(int j=0; j<returnSize && match; j++) {{

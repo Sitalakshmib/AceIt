@@ -46,6 +46,27 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: error.response?.data?.detail || 'Registration failed' };
     }
   };
+  
+  const loginWithGoogle = async (credential) => {
+    try {
+      console.log('Attempting Google login');
+      const response = await authAPI.loginWithGoogle(credential);
+      console.log('Google login response:', response.data);
+
+      const { user: userData, access_token } = response.data;
+
+      // Store both in state and localStorage
+      setUser(userData);
+      setToken(access_token);
+      localStorage.setItem('aceit_access_token', access_token);
+      localStorage.setItem('aceit_user', JSON.stringify(userData));
+
+      return { success: true };
+    } catch (error) {
+      console.error('Google login failed:', error);
+      return { success: false, error: error.response?.data?.detail || 'Google login failed' };
+    }
+  };
 
   const logout = () => {
     setUser(null);
@@ -55,7 +76,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider value={{ user, token, login, register, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

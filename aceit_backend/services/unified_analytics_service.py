@@ -837,6 +837,7 @@ class UnifiedAnalyticsService:
                     "date": row.practiced_at.isoformat(),
                     "module": "GD Practice",
                     "type": "Group Discussion",
+                    "result": "Attempted",
                     "score": round(row.overall_score * 10, 1) if row.overall_score else 0,
                     "description": f"Practiced GD on {row.topic}"
                 })
@@ -853,6 +854,7 @@ class UnifiedAnalyticsService:
                     "date": row.analyzed_at.isoformat(),
                     "module": "Resume",
                     "type": "Analysis",
+                    "result": "Analyzed",
                     "score": round(row.overall_score, 1) if row.overall_score else 0,
                     "description": f"Analyzed resume for {row.job_role}"
                 })

@@ -2,7 +2,9 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from database_postgres import get_db
 from models.user_sql import User
-from models.user import User as UserSchema, UserLogin, UserResponse
+from models.user import User as UserSchema, UserLogin, UserResponse, GoogleLogin
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 import os
@@ -90,6 +92,67 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "user": {"id": str(db_user.id), "email": db_user.email, "username": db_user.username},
     }
+
+# Google login endpoint
+@router.post("/google")
+def google_login(data: GoogleLogin, db: Session = Depends(get_db)):
+    print(f"Google login attempt")
+    
+    try:
+        # Get Client ID from environment
+        GOOGLE_CLIENT_ID = os.getenv("VITE_GOOGLE_CLIENT_ID")
+        if not GOOGLE_CLIENT_ID:
+            # Try to get it from the frontend .env if not set in backend
+            from dotenv import load_dotenv
+            load_dotenv("../aceit-frontend/.env")
+            GOOGLE_CLIENT_ID = os.getenv("VITE_GOOGLE_CLIENT_ID")
+
+        if not GOOGLE_CLIENT_ID:
+            print("GOOGLE_CLIENT_ID not found in environment")
+            raise HTTPException(status_code=500, detail="Google Client ID not configured")
+
+        # Verify the token
+        idinfo = id_token.verify_oauth2_token(data.credential, google_requests.Request(), GOOGLE_CLIENT_ID)
+
+        # ID token is valid. Get the user's Google ID information from the decoded token.
+        email = idinfo['email']
+        name = idinfo.get('name', email.split('@')[0])
+        
+        # Check if user exists
+        db_user = db.query(User).filter(User.email == email).first()
+        
+        if not db_user:
+            # Create new user for Google login
+            print(f"Creating new user for Google login: {email}")
+            db_user = User(
+                email=email,
+                username=name,
+                password=hash_password(str(uuid.uuid4())) # Random password for OAuth users
+            )
+            db.add(db_user)
+            db.commit()
+            db.refresh(db_user)
+        
+        # Issue JWT access token
+        payload = {"sub": str(db_user.id), "email": db_user.email, "iat": datetime.utcnow()}
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        payload.update({"exp": expire})
+        access_token = jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALG)
+
+        print(f"Google login successful for user {email}")
+        return {
+            "message": "Login successful",
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": {"id": str(db_user.id), "email": db_user.email, "username": db_user.username},
+        }
+    except ValueError as e:
+        # Invalid token
+        print(f"Invalid Google token: {str(e)}")
+        raise HTTPException(status_code=400, detail="Invalid Google token")
+    except Exception as e:
+        print(f"Google login error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # Get user details by ID endpoint
 @router.get("/user/{user_id}", response_model=UserResponse)
